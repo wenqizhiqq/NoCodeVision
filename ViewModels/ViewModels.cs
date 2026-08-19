@@ -136,6 +136,15 @@ public class VisionFlowStep : ViewModelBase
     public double OutputValue { get => _outputValue; set => SetField(ref _outputValue, value); }
     private double _outputValue = 1;
 
+    public string StatusText { get => _statusText; set => SetField(ref _statusText, value); }
+    private string _statusText = "";
+
+    public string Operator { get => _operator; set => SetField(ref _operator, value); }
+    private string _operator = "大于";
+
+    public string InputValue { get => _inputValue; set => SetField(ref _inputValue, value); }
+    private string _inputValue = "";
+
     public string AiHint
     {
         get => _aiHint;
@@ -474,11 +483,11 @@ public class FlowViewModel : ViewModelBase
             Name = "主流程", Icon = "🔀",
             Steps = new ObservableCollection<VisionFlowStep>
             {
-                new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集左视野", ParamSummary = "Camera_0 / Mono8", Timeout = 5000, CostMs = 12.3, ActualValue = "OK", Icon = "📷", StepType = "ImageCapture", ImageSource = "Camera_0" },
-                new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "定位基准", ParamSummary = "tpl_A / score≥0.85", Timeout = 3000, CostMs = 8.7, ActualValue = "(120,88)", Icon = "🎯", StepType = "TemplateMatch", ImageSource = "tpl_A.png", TemplateFile = "tpl_A.png", RoiX=80, RoiY=60, RoiW=160, RoiH=120, ScoreThreshold=0.85 },
-                new VisionFlowStep { Index = 3, Function = "几何测量", Name = "测量孔径", ParamSummary = "圆径 / 12.00±0.05", Timeout = 2000, CostMs = 5.4, ActualValue = "12.03", Icon = "📐", StepType = "Measure" },
-                new VisionFlowStep { Index = 4, Function = "逻辑判断", Name = "判定合格", ParamSummary = "孔径 OK", Timeout = 1000, CostMs = 0.2, ActualValue = "Pass", Icon = "✅", StepType = "Logic" },
-                new VisionFlowStep { Index = 5, Function = "结果输出", Name = "输出结果", ParamSummary = "PLC_D200=1", Timeout = 1000, CostMs = 0.5, ActualValue = "Done", Icon = "📤", StepType = "Output" },
+                new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集左视野", ParamSummary = "Camera_0 / Mono8", Timeout = 5000, CostMs = 12.3, ActualValue = "OK", Icon = "📷", StepType = "ImageCapture", ImageSource = "Camera_0", StatusText = "采集成功" },
+                new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "定位基准", ParamSummary = "tpl_A / score≥0.85", Timeout = 3000, CostMs = 8.7, ActualValue = "(120,88)", Icon = "🎯", StepType = "TemplateMatch", ImageSource = "tpl_A.png", TemplateFile = "tpl_A.png", RoiX=80, RoiY=60, RoiW=160, RoiH=120, ScoreThreshold=0.85, StatusText = "匹配成功" },
+                new VisionFlowStep { Index = 3, Function = "几何测量", Name = "测量孔径", ParamSummary = "圆径 / 12.00±0.05", Timeout = 2000, CostMs = 5.4, ActualValue = "12.03", Icon = "📐", StepType = "Measure", StatusText = "尺寸合格" },
+                new VisionFlowStep { Index = 4, Function = "逻辑判断", Name = "判定合格", ParamSummary = "孔径 OK", Timeout = 1000, CostMs = 0.2, ActualValue = "Pass", Icon = "✅", StepType = "Logic", StatusText = "通过" },
+                new VisionFlowStep { Index = 5, Function = "结果输出", Name = "输出结果", ParamSummary = "PLC_D200=1", Timeout = 1000, CostMs = 0.5, ActualValue = "Done", Icon = "📤", StepType = "Output", StatusText = "已完成" },
             }
         },
         new VisionFlow
@@ -486,8 +495,8 @@ public class FlowViewModel : ViewModelBase
             Name = "定位流程", Icon = "🧭",
             Steps = new ObservableCollection<VisionFlowStep>
             {
-                new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集顶视野", ParamSummary = "Camera_2 / RGB8", Timeout = 5000, CostMs = 15.1, ActualValue = "OK", Icon = "📷", StepType = "ImageCapture", ImageSource = "Camera_2" },
-                new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "找中心点", ParamSummary = "tpl_center / score≥0.80", Timeout = 3000, CostMs = 9.2, ActualValue = "(512,384)", Icon = "🎯", StepType = "TemplateMatch", ImageSource = "tpl_center.png", TemplateFile = "tpl_center.png", RoiX=200, RoiY=150, RoiW=180, RoiH=140, ScoreThreshold=0.80 },
+                new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集顶视野", ParamSummary = "Camera_2 / RGB8", Timeout = 5000, CostMs = 15.1, ActualValue = "OK", Icon = "📷", StepType = "ImageCapture", ImageSource = "Camera_2", StatusText = "采集成功" },
+                new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "找中心点", ParamSummary = "tpl_center / score≥0.80", Timeout = 3000, CostMs = 9.2, ActualValue = "(512,384)", Icon = "🎯", StepType = "TemplateMatch", ImageSource = "tpl_center.png", TemplateFile = "tpl_center.png", RoiX=200, RoiY=150, RoiW=180, RoiH=140, ScoreThreshold=0.80, StatusText = "匹配成功" },
             }
         },
         new VisionFlow
@@ -495,8 +504,8 @@ public class FlowViewModel : ViewModelBase
             Name = "检测流程", Icon = "🔍",
             Steps = new ObservableCollection<VisionFlowStep>
             {
-                new VisionFlowStep { Index = 1, Function = "图像预处理", Name = "灰度化", ParamSummary = "RGB→Gray", Timeout = 2000, CostMs = 3.1, ActualValue = "Done", Icon = "🎨", StepType = "Preprocess" },
-                new VisionFlowStep { Index = 2, Function = "几何测量", Name = "测量边距", ParamSummary = "距离 / 45.0±0.1", Timeout = 2000, CostMs = 6.8, ActualValue = "45.02", Icon = "📐", StepType = "Measure" },
+                new VisionFlowStep { Index = 1, Function = "图像预处理", Name = "灰度化", ParamSummary = "RGB→Gray", Timeout = 2000, CostMs = 3.1, ActualValue = "Done", Icon = "🎨", StepType = "Preprocess", StatusText = "已完成" },
+                new VisionFlowStep { Index = 2, Function = "几何测量", Name = "测量边距", ParamSummary = "距离 / 45.0±0.1", Timeout = 2000, CostMs = 6.8, ActualValue = "45.02", Icon = "📐", StepType = "Measure", StatusText = "尺寸合格" },
             }
         },
     };
@@ -504,7 +513,9 @@ public class FlowViewModel : ViewModelBase
     public string[] StepFunctions { get; } = { "图像采集", "图像预处理", "模板匹配", "几何测量", "逻辑判断", "Lua脚本", "结果输出" };
     public string[] PreprocessTypes { get; } = { "灰度化", "二值化", "高斯模糊", "中值滤波", "边缘检测" };
     public string[] MeasureTypes { get; } = { "圆径", "边距", "角度", "面积", "中心距" };
-    public string[] LogicRelations { get; } = { "如果", "并且" };
+    public string[] LogicRelations { get; } = { "如果", "并且", "或者", "否则", "循环", "跳出", "并行", "等待" };
+    public string[] Operators { get; } = { "大于", "小于", "等于", "大于等于", "小于等于", "不等于", "包含", "不包含", "开头为", "结尾为" };
+    public string[] StatusOptions { get; } = { "未开始", "运行中", "已完成", "已跳过", "等待中", "错误", "超时", "已暂停", "通过", "不通过", "告警", "采集成功", "采集失败", "匹配成功", "匹配失败", "ROI 内", "ROI 外", "尺寸合格", "尺寸超差", "亮度正常", "亮度异常", "通讯正常", "通讯中断" };
     public string[] PropTabs { get; } = { "图像", "Lua", "参数设置" };
 
     private VisionFlow? _selectedFlow;
