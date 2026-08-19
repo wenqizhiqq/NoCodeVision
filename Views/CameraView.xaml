@@ -45,6 +45,8 @@
         <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel Margin="0,2,0,8">
 
+                <TextBlock Style="{StaticResource iOSTitle}" Text="相机" />
+
                 <!-- 实时预览 -->
                 <Border Style="{StaticResource AppleGroupCard}">
                     <StackPanel>

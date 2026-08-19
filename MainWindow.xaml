@@ -87,7 +87,7 @@
             </Grid>
         </Border>
 
-        <!-- 内容区 -->
-        <ContentControl x:Name="ContentHost" Margin="22,20" />
+        <!-- 内容区（iOS 内缩 16） -->
+        <ContentControl x:Name="ContentHost" Margin="16" />
     </DockPanel>
 </Window>

@@ -59,12 +59,50 @@ public class VarItem
     public string Value { get; set; } = "";
 }
 
-public class FlowStepItem
+public class VisionFlowStep : ViewModelBase
 {
-    public int Index { get; set; }
+    public int Index { get => _index; set => SetField(ref _index, value); }
+    private int _index;
+
+    public string Function { get => _function; set => SetField(ref _function, value); }
+    private string _function = "";
+
+    public string Name { get => _name; set => SetField(ref _name, value); }
+    private string _name = "";
+
+    public string ParamSummary { get => _paramSummary; set => SetField(ref _paramSummary, value); }
+    private string _paramSummary = "";
+
+    public int Timeout { get => _timeout; set => SetField(ref _timeout, value); }
+    private int _timeout = 3000;
+
+    public double CostMs { get => _costMs; set => SetField(ref _costMs, value); }
+    private double _costMs;
+
+    public string ActualValue { get => _actualValue; set => SetField(ref _actualValue, value); }
+    private string _actualValue = "";
+
+    public string Icon { get => _icon; set => SetField(ref _icon, value); }
+    private string _icon = "➕";
+
+    public string StepType { get => _stepType; set => SetField(ref _stepType, value); }
+    private string _stepType = "";
+
+    public string ImageSource { get => _imageSource; set => SetField(ref _imageSource, value); }
+    private string _imageSource = "";
+
+    public string LuaScript { get => _luaScript; set => SetField(ref _luaScript, value); }
+    private string _luaScript = "";
+
+    public string Parameters { get => _parameters; set => SetField(ref _parameters, value); }
+    private string _parameters = "";
+}
+
+public class VisionFlow
+{
     public string Name { get; set; } = "";
-    public string Type { get; set; } = "";
-    public string Icon { get; set; } = "";
+    public string Icon { get; set; } = "🔀";
+    public ObservableCollection<VisionFlowStep> Steps { get; set; } = new();
 }
 
 #endregion
@@ -377,51 +415,162 @@ public class VariablesViewModel : ViewModelBase
 
 public class FlowViewModel : ViewModelBase
 {
-    public ObservableCollection<FlowStepItem> Steps { get; } = new()
+    public ObservableCollection<VisionFlow> Flows { get; } = new()
     {
-        new FlowStepItem { Index = 1, Name = "采集左视野", Type = "图像采集", Icon = "📷" },
-        new FlowStepItem { Index = 2, Name = "灰度化", Type = "图像预处理", Icon = "🎨" },
-        new FlowStepItem { Index = 3, Name = "定位基准", Type = "模板匹配", Icon = "🎯" },
-        new FlowStepItem { Index = 4, Name = "测量孔径", Type = "几何测量", Icon = "📐" },
-        new FlowStepItem { Index = 5, Name = "判定合格", Type = "逻辑判断", Icon = "✅" },
-        new FlowStepItem { Index = 6, Name = "输出结果", Type = "结果输出", Icon = "📤" },
+        new VisionFlow
+        {
+            Name = "主流程", Icon = "🔀",
+            Steps = new ObservableCollection<VisionFlowStep>
+            {
+                new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集左视野", ParamSummary = "Camera_0 / Mono8", Timeout = 5000, CostMs = 12.3, ActualValue = "OK", Icon = "📷", StepType = "ImageCapture", ImageSource = "Camera_0" },
+                new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "定位基准", ParamSummary = "tpl_A / score≥0.85", Timeout = 3000, CostMs = 8.7, ActualValue = "(120,88)", Icon = "🎯", StepType = "TemplateMatch", ImageSource = "tpl_A.png" },
+                new VisionFlowStep { Index = 3, Function = "几何测量", Name = "测量孔径", ParamSummary = "圆径 / 12.00±0.05", Timeout = 2000, CostMs = 5.4, ActualValue = "12.03", Icon = "📐", StepType = "Measure" },
+                new VisionFlowStep { Index = 4, Function = "逻辑判断", Name = "判定合格", ParamSummary = "孔径 OK", Timeout = 1000, CostMs = 0.2, ActualValue = "Pass", Icon = "✅", StepType = "Logic" },
+                new VisionFlowStep { Index = 5, Function = "结果输出", Name = "输出结果", ParamSummary = "PLC_D200=1", Timeout = 1000, CostMs = 0.5, ActualValue = "Done", Icon = "📤", StepType = "Output" },
+            }
+        },
+        new VisionFlow
+        {
+            Name = "定位流程", Icon = "🧭",
+            Steps = new ObservableCollection<VisionFlowStep>
+            {
+                new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集顶视野", ParamSummary = "Camera_2 / RGB8", Timeout = 5000, CostMs = 15.1, ActualValue = "OK", Icon = "📷", StepType = "ImageCapture", ImageSource = "Camera_2" },
+                new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "找中心点", ParamSummary = "tpl_center / score≥0.80", Timeout = 3000, CostMs = 9.2, ActualValue = "(512,384)", Icon = "🎯", StepType = "TemplateMatch", ImageSource = "tpl_center.png" },
+            }
+        },
+        new VisionFlow
+        {
+            Name = "检测流程", Icon = "🔍",
+            Steps = new ObservableCollection<VisionFlowStep>
+            {
+                new VisionFlowStep { Index = 1, Function = "图像预处理", Name = "灰度化", ParamSummary = "RGB→Gray", Timeout = 2000, CostMs = 3.1, ActualValue = "Done", Icon = "🎨", StepType = "Preprocess" },
+                new VisionFlowStep { Index = 2, Function = "几何测量", Name = "测量边距", ParamSummary = "距离 / 45.0±0.1", Timeout = 2000, CostMs = 6.8, ActualValue = "45.02", Icon = "📐", StepType = "Measure" },
+            }
+        },
     };
 
-    public string[] Toolbox { get; } = { "图像采集", "图像预处理", "模板匹配", "几何测量", "逻辑判断", "结果输出" };
+    public string[] StepFunctions { get; } = { "图像采集", "图像预处理", "模板匹配", "几何测量", "逻辑判断", "Lua脚本", "结果输出" };
+    public string[] PropTabs { get; } = { "图像", "Lua", "参数设置" };
 
-    private string _newStepType = "图像预处理";
-    public string NewStepType { get => _newStepType; set => SetField(ref _newStepType, value); }
+    private VisionFlow? _selectedFlow;
+    public VisionFlow? SelectedFlow { get => _selectedFlow; set => SetField(ref _selectedFlow, value); }
 
-    private FlowStepItem? _selected;
-    public FlowStepItem? Selected { get => _selected; set => SetField(ref _selected, value); }
+    private VisionFlowStep? _selectedStep;
+    public VisionFlowStep? SelectedStep { get => _selectedStep; set => SetField(ref _selectedStep, value); }
 
-    private string _status = "流程就绪";
+    private string _newStepFunction = "模板匹配";
+    public string NewStepFunction { get => _newStepFunction; set => SetField(ref _newStepFunction, value); }
+
+    private string _activePropTab = "图像";
+    public string ActivePropTab { get => _activePropTab; set => SetField(ref _activePropTab, value); }
+
+    private string _status = "就绪";
     public string Status { get => _status; set => SetField(ref _status, value); }
 
+    public ICommand AddFlowCmd { get; }
+    public ICommand DeleteFlowCmd { get; }
     public ICommand AddStepCmd { get; }
-    public ICommand DeleteCmd { get; }
+    public ICommand DeleteStepCmd { get; }
+    public ICommand MoveUpCmd { get; }
+    public ICommand MoveDownCmd { get; }
+    public ICommand SetPropTabCmd { get; }
     public ICommand RunCmd { get; }
     public ICommand ClearCmd { get; }
 
     public FlowViewModel()
     {
+        SelectedFlow = Flows[0];
+        SelectedStep = SelectedFlow.Steps[0];
+
+        AddFlowCmd = new RelayCommand(_ =>
+        {
+            var next = Flows.Count + 1;
+            Flows.Add(new VisionFlow { Name = $"新流程-{next}", Icon = "🔀" });
+        });
+        DeleteFlowCmd = new RelayCommand(_ =>
+        {
+            if (_selectedFlow != null)
+            {
+                Flows.Remove(_selectedFlow);
+                SelectedFlow = Flows.Count > 0 ? Flows[0] : null;
+                SelectedStep = _selectedFlow?.Steps.FirstOrDefault();
+            }
+        }, _ => _selectedFlow != null);
+
         AddStepCmd = new RelayCommand(_ =>
         {
-            var next = Steps.Count + 1;
-            var icon = _newStepType switch
+            if (_selectedFlow == null) return;
+            var next = _selectedFlow.Steps.Count + 1;
+            var (icon, type) = _newStepFunction switch
             {
-                "图像采集" => "📷", "图像预处理" => "🎨", "模板匹配" => "🎯",
-                "几何测量" => "📐", "逻辑判断" => "✅", "结果输出" => "📤", _ => "➕"
+                "图像采集" => ("📷", "ImageCapture"),
+                "图像预处理" => ("🎨", "Preprocess"),
+                "模板匹配" => ("🎯", "TemplateMatch"),
+                "几何测量" => ("📐", "Measure"),
+                "逻辑判断" => ("✅", "Logic"),
+                "Lua脚本" => ("📝", "Lua"),
+                "结果输出" => ("📤", "Output"),
+                _ => ("➕", "Other")
             };
-            Steps.Add(new FlowStepItem { Index = next, Name = $"{_newStepType} {next}", Type = _newStepType, Icon = icon });
-        });
-        DeleteCmd = new RelayCommand(_ =>
+            var step = new VisionFlowStep
+            {
+                Index = next,
+                Function = _newStepFunction,
+                Name = $"{_newStepFunction}{next}",
+                ParamSummary = "-",
+                Timeout = 3000,
+                CostMs = 0,
+                ActualValue = "-",
+                Icon = icon,
+                StepType = type
+            };
+            _selectedFlow.Steps.Add(step);
+            Reindex(_selectedFlow);
+            SelectedStep = step;
+        }, _ => _selectedFlow != null);
+
+        DeleteStepCmd = new RelayCommand(_ =>
         {
-            if (_selected != null) Steps.Remove(_selected);
-            Selected = Steps.Count > 0 ? Steps[0] : null;
-        }, _ => _selected != null);
-        RunCmd = new RelayCommand(_ => Status = $"流程运行中 · 共 {Steps.Count} 步 · {DateTime.Now:HH:mm:ss}");
-        ClearCmd = new RelayCommand(_ => { Steps.Clear(); Status = "流程已清空"; });
+            if (_selectedFlow == null || _selectedStep == null) return;
+            _selectedFlow.Steps.Remove(_selectedStep);
+            Reindex(_selectedFlow);
+            SelectedStep = _selectedFlow.Steps.Count > 0 ? _selectedFlow.Steps[0] : null;
+        }, _ => _selectedFlow != null && _selectedStep != null);
+
+        MoveUpCmd = new RelayCommand(_ =>
+        {
+            if (_selectedFlow == null || _selectedStep == null) return;
+            var list = _selectedFlow.Steps;
+            var idx = list.IndexOf(_selectedStep);
+            if (idx > 0) { list.Move(idx, idx - 1); Reindex(_selectedFlow); }
+        }, _ => _selectedFlow != null && _selectedStep != null && _selectedFlow.Steps.IndexOf(_selectedStep) > 0);
+
+        MoveDownCmd = new RelayCommand(_ =>
+        {
+            if (_selectedFlow == null || _selectedStep == null) return;
+            var list = _selectedFlow.Steps;
+            var idx = list.IndexOf(_selectedStep);
+            if (idx < list.Count - 1) { list.Move(idx, idx + 1); Reindex(_selectedFlow); }
+        }, _ => _selectedFlow != null && _selectedStep != null && _selectedFlow.Steps.IndexOf(_selectedStep) < _selectedFlow.Steps.Count - 1);
+
+        SetPropTabCmd = new RelayCommand(p => { if (p is string s) ActivePropTab = s; });
+
+        RunCmd = new RelayCommand(_ => Status = $"运行中 · {_selectedFlow?.Name} · 共 {_selectedFlow?.Steps.Count ?? 0} 步 · {DateTime.Now:HH:mm:ss}");
+        ClearCmd = new RelayCommand(_ =>
+        {
+            if (_selectedFlow != null)
+            {
+                _selectedFlow.Steps.Clear();
+                Reindex(_selectedFlow);
+                SelectedStep = null;
+                Status = "已清空";
+            }
+        }, _ => _selectedFlow != null && _selectedFlow.Steps.Count > 0);
+    }
+
+    private static void Reindex(VisionFlow flow)
+    {
+        for (int i = 0; i < flow.Steps.Count; i++) flow.Steps[i].Index = i + 1;
     }
 }
 

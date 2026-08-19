@@ -11,73 +11,204 @@
             <DockPanel LastChildFill="True" Margin="0,4,0,4">
                 <ctrl:AppleIconTile Glyph="{Binding Icon}" TileSize="26" Margin="0,0,10,0" VerticalAlignment="Center" />
                 <TextBlock Style="{StaticResource AppleSubLabel}" DockPanel.Dock="Right"
-                           Text="{Binding Type}" Foreground="{StaticResource TextSecondaryBrush}" />
+                           Text="{Binding Steps.Count, StringFormat='{}{0} 步'}" Foreground="{StaticResource TextSecondaryBrush}" />
                 <TextBlock Style="{StaticResource AppleLabel}" Text="{Binding Name}" Margin="0,0,12,0" />
             </DockPanel>
         </DataTemplate>
+
+        <Style x:Key="FlowGridHeader" TargetType="GridViewColumnHeader">
+            <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource LineBrush}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        </Style>
+        <Style x:Key="FlowGridRow" TargetType="ListViewItem">
+            <Setter Property="Padding" Value="2,4"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource LineBrush}"/>
+            <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
     </UserControl.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="260" />
+            <ColumnDefinition Width="280" />
             <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="320" />
         </Grid.ColumnDefinitions>
 
-        <ctrl:AppleMasterList Grid.Column="0" Header="流程步骤" HeaderIcon="🔀"
-                              ItemsSource="{Binding Steps}"
-                              SelectedItem="{Binding Selected}"
-                              AddCommand="{Binding AddStepCmd}"
-                              DeleteCommand="{Binding DeleteCmd}"
+        <!-- 左侧：流程方案列表（添加/删除流程） -->
+        <ctrl:AppleMasterList Grid.Column="0" Header="流程方案" HeaderIcon="🔀"
+                              ItemsSource="{Binding Flows}" SelectedItem="{Binding SelectedFlow}"
+                              AddCommand="{Binding AddFlowCmd}" DeleteCommand="{Binding DeleteFlowCmd}"
                               ItemTemplate="{StaticResource FlowItemTemplate}" />
 
-        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Margin="0,2,0,8">
+        <!-- 中间：工具栏 + 流程步骤表格 -->
+        <Grid Grid.Column="1" Margin="16,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-                <!-- 选中步骤 -->
-                <Border Style="{StaticResource AppleGroupCard}">
+            <TextBlock Grid.Row="0" Style="{StaticResource iOSTitle}" Text="{Binding SelectedFlow.Name, FallbackValue='流程'}" />
+
+            <!-- 添加步骤类型 -->
+            <DockPanel Grid.Row="1" Margin="0,12,0,10" LastChildFill="False">
+                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="新建步骤类型" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="150"
+                          ItemsSource="{Binding StepFunctions}" SelectedItem="{Binding NewStepFunction}" />
+            </DockPanel>
+
+            <!-- 工具栏 -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,12">
+                <Button Style="{StaticResource AppleBtn}" Content="添加步骤" Command="{Binding AddStepCmd}" />
+                <Button Style="{StaticResource AppleBtnSecondary}" Content="删除" Command="{Binding DeleteStepCmd}" />
+                <Button Style="{StaticResource AppleBtnSecondary}" Content="上移" Command="{Binding MoveUpCmd}" />
+                <Button Style="{StaticResource AppleBtnSecondary}" Content="下移" Command="{Binding MoveDownCmd}" />
+                <Button Style="{StaticResource AppleBtnSecondary}" Content="清空" Command="{Binding ClearCmd}" />
+                <Border Style="{StaticResource AppleStatusPill}" Background="{StaticResource AccentSoftBrush}" Margin="12,0,0,0">
+                    <TextBlock Text="{Binding Status}" FontSize="12" Foreground="{StaticResource AccentBrush}" />
+                </Border>
+            </StackPanel>
+
+            <!-- 步骤表格 -->
+            <Border Grid.Row="3" Style="{StaticResource AppleGroupCard}" Padding="0">
+                <ListView ItemsSource="{Binding SelectedFlow.Steps}" SelectedItem="{Binding SelectedStep}"
+                          BorderThickness="0" Background="Transparent" HorizontalContentAlignment="Stretch">
+                    <ListView.Resources>
+                        <Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource FlowGridHeader}" />
+                        <Style TargetType="ListViewItem" BasedOn="{StaticResource FlowGridRow}" />
+                    </ListView.Resources>
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="序号" DisplayMemberBinding="{Binding Index}" Width="44" />
+                            <GridViewColumn Header="功能" Width="96">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <ctrl:AppleIconTile Glyph="{Binding Icon}" TileSize="18" />
+                                            <TextBlock Text="{Binding Function}" Margin="6,0,0,0" Style="{StaticResource AppleLabel}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="名称" DisplayMemberBinding="{Binding Name}" Width="120" />
+                            <GridViewColumn Header="参数摘要" DisplayMemberBinding="{Binding ParamSummary}" Width="160" />
+                            <GridViewColumn Header="超时" DisplayMemberBinding="{Binding Timeout}" Width="56" />
+                            <GridViewColumn Header="耗时" DisplayMemberBinding="{Binding CostMs, StringFormat='{}{0:F1}'}" Width="60" />
+                            <GridViewColumn Header="实际值" DisplayMemberBinding="{Binding ActualValue}" Width="80" />
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </Border>
+        </Grid>
+
+        <!-- 右侧：步骤属性页（图像 / Lua / 参数设置） -->
+        <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+                <TextBlock Style="{StaticResource iOSTitle}" Text="步骤属性" />
+
+                <!-- 属性页签 -->
+                <Border Style="{StaticResource AppleGroupCard}" Padding="12">
+                    <ListBox ItemsSource="{Binding PropTabs}" SelectedItem="{Binding ActivePropTab}"
+                             Style="{StaticResource ApplePillList}" HorizontalAlignment="Center" />
+                </Border>
+
+                <!-- 图像 -->
+                <Border>
+                    <Border.Style>
+                        <Style BasedOn="{StaticResource AppleGroupCard}" TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ActivePropTab}" Value="图像">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
                     <StackPanel>
-                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="选中步骤" />
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="图像" />
                         <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="名称" />
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Right" Foreground="{StaticResource TextSecondaryBrush}" Text="{Binding Selected.Name}" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="图像源" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ImageSource, FallbackValue=''}" HorizontalAlignment="Right" Width="160" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="类型" />
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Right" Foreground="{StaticResource TextSecondaryBrush}" Text="{Binding Selected.Type}" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="模板文件" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ImageSource, FallbackValue=''}" HorizontalAlignment="Right" Width="160" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
+                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI" Margin="14,6,14,2" />
+                        <UniformGrid Columns="4" Margin="14,0,14,6">
+                            <TextBox Style="{StaticResource AppleTextField}" Text="X" Margin="0,0,4,0" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="Y" Margin="0,0,4,0" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="W" Margin="0,0,4,0" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="H" />
+                        </UniformGrid>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="序号" />
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Right" Foreground="{StaticResource TextSecondaryBrush}" Text="{Binding Selected.Index}" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="匹配阈值" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="0.85" HorizontalAlignment="Right" Width="80" />
                         </DockPanel>
                     </StackPanel>
                 </Border>
 
-                <!-- 工具箱 -->
-                <Border Style="{StaticResource AppleGroupCard}">
+                <!-- Lua -->
+                <Border>
+                    <Border.Style>
+                        <Style BasedOn="{StaticResource AppleGroupCard}" TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ActivePropTab}" Value="Lua">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
                     <StackPanel>
-                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="工具箱（选择后点击添加）" />
-                        <ListBox ItemsSource="{Binding Toolbox}" SelectedItem="{Binding NewStepType, Mode=OneWayToSource}"
-                                 Style="{StaticResource ApplePillList}" Margin="10,0,10,12" />
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="Lua 脚本" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.LuaScript, FallbackValue=''}"
+                                 AcceptsReturn="True" TextWrapping="Wrap" MinHeight="160"
+                                 VerticalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="12" />
                     </StackPanel>
                 </Border>
 
-                <!-- 操作 -->
-                <Border Style="{StaticResource AppleGroupCard}">
+                <!-- 参数设置 -->
+                <Border>
+                    <Border.Style>
+                        <Style BasedOn="{StaticResource AppleGroupCard}" TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ActivePropTab}" Value="参数设置">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
                     <StackPanel>
-                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="操作" />
-                        <DockPanel Style="{StaticResource AppleRow}" LastChildFill="True">
-                            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
-                                <Button Style="{StaticResource AppleBtn}" Content="添加步骤" Command="{Binding AddStepCmd}" />
-                                <Button Style="{StaticResource AppleBtnSecondary}" Content="运行流程" Command="{Binding RunCmd}" />
-                                <Button Style="{StaticResource AppleBtnSecondary}" Content="清空" Command="{Binding ClearCmd}" />
-                            </StackPanel>
-                            <Border Style="{StaticResource AppleStatusPill}" DockPanel.Dock="Right"
-                                    Background="{StaticResource AccentSoftBrush}">
-                                <TextBlock Text="{Binding Status}" FontSize="12" Foreground="{StaticResource AccentBrush}" />
-                            </Border>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="参数设置" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="超时(ms)" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Timeout, FallbackValue=3000}" HorizontalAlignment="Right" Width="100" />
                         </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="重试次数" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="3" HorizontalAlignment="Right" Width="80" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="扩展参数（key=value 每行一个）" Margin="14,6,14,2" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Parameters, FallbackValue=''}"
+                                 AcceptsReturn="True" TextWrapping="Wrap" MinHeight="120"
+                                 VerticalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="12" />
                     </StackPanel>
                 </Border>
 

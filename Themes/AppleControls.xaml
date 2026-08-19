@@ -5,28 +5,35 @@
         <ResourceDictionary Source="AppleBrushes.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
-    <!-- ===== 分组卡片 ===== -->
+    <!-- ===== iOS 大标题（每页顶部） ===== -->
+    <Style x:Key="iOSTitle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="28" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="Margin" Value="4,2,4,12" />
+    </Style>
+
+    <!-- ===== 分组卡片（iOS grouped：白底圆角，无描边无阴影） ===== -->
     <Style x:Key="AppleGroupCard" TargetType="Border">
         <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="Effect" Value="{StaticResource SoftShadow}" />
-        <Setter Property="Margin" Value="0,0,0,16" />
+        <Setter Property="Margin" Value="0,0,0,18" />
     </Style>
 
     <!-- ===== 卡片内分组小标题 ===== -->
     <Style x:Key="AppleSectionHeader" TargetType="TextBlock">
-        <Setter Property="Margin" Value="14,12,14,4" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Margin" Value="16,14,16,4" />
+        <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
     </Style>
 
-    <!-- ===== 一行：标签左 / 控件右 ===== -->
+    <!-- ===== 一行：标签左 / 控件右（iOS 行高约 44pt） ===== -->
     <Style x:Key="AppleRow" TargetType="DockPanel">
         <Setter Property="LastChildFill" Value="True" />
-        <Setter Property="Margin" Value="14,10" />
+        <Setter Property="MinHeight" Value="44" />
+        <Setter Property="Margin" Value="16,0" />
     </Style>
 
     <Style x:Key="AppleLabel" TargetType="TextBlock">
@@ -38,7 +45,7 @@
     <Style x:Key="AppleSubLabel" TargetType="TextBlock">
         <Setter Property="FontSize" Value="11" />
         <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
-        <Setter Property="Margin" Value="0,2,0,0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
     <Style x:Key="AppleUnit" TargetType="TextBlock">
@@ -48,7 +55,7 @@
         <Setter Property="Margin" Value="6,0,0,0" />
     </Style>
 
-    <!-- ===== 文本输入 ===== -->
+    <!-- ===== 文本输入（iOS 行内值样式） ===== -->
     <Style x:Key="AppleTextField" TargetType="TextBox">
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Background" Value="Transparent" />
@@ -72,7 +79,7 @@
         <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
 
-    <!-- ===== 药丸选择器（多选一） ===== -->
+    <!-- ===== 药丸选择器（多选一，iOS chip） ===== -->
     <Style x:Key="ApplePillList" TargetType="ListBox">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
@@ -121,7 +128,7 @@
         </Setter>
     </Style>
 
-    <!-- ===== 主按钮 ===== -->
+    <!-- ===== 主按钮（iOS 蓝色填充） ===== -->
     <Style x:Key="AppleBtn" TargetType="Button">
         <Setter Property="Height" Value="34" />
         <Setter Property="MinWidth" Value="96" />
@@ -152,7 +159,7 @@
         </Setter>
     </Style>
 
-    <!-- 次级按钮（白底描边） -->
+    <!-- 次级按钮（白底蓝字） -->
     <Style x:Key="AppleBtnSecondary" TargetType="Button" BasedOn="{StaticResource AppleBtn}">
         <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
         <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
@@ -185,10 +192,10 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="CheckBox">
-                    <Border x:Name="track" Width="46" Height="26" CornerRadius="13" Background="{StaticResource LineBrush}">
+                    <Border x:Name="track" Width="46" Height="26" CornerRadius="13" Background="{StaticResource SegTrackBrush}">
                         <Ellipse x:Name="knob" Width="22" Height="22" Fill="White" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="2,0,0,0">
                             <Ellipse.Effect>
-                                <DropShadowEffect BlurRadius="4" ShadowDepth="0" Opacity="0.25" Color="#000000" />
+                                <DropShadowEffect BlurRadius="3" ShadowDepth="0" Opacity="0.25" Color="#000000" />
                             </Ellipse.Effect>
                         </Ellipse>
                     </Border>
@@ -255,7 +262,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+                    <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
@@ -334,11 +341,11 @@
         <Setter Property="HorizontalAlignment" Value="Left" />
     </Style>
 
-    <!-- ===== 发丝分隔线 ===== -->
+    <!-- ===== 发丝分隔线（iOS：左缩进 16） ===== -->
     <Style x:Key="AppleDivider" TargetType="Rectangle">
         <Setter Property="Height" Value="1" />
         <Setter Property="Fill" Value="{StaticResource LineBrush}" />
-        <Setter Property="Margin" Value="14,0" />
+        <Setter Property="Margin" Value="16,0,0,0" />
     </Style>
 
 </ResourceDictionary>

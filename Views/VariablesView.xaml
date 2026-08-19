@@ -35,6 +35,8 @@
         <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel Margin="0,2,0,8">
 
+                <TextBlock Style="{StaticResource iOSTitle}" Text="变量" />
+
                 <!-- 新建变量 -->
                 <Border Style="{StaticResource AppleGroupCard}">
                     <StackPanel>
