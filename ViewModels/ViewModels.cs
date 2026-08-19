@@ -71,35 +71,80 @@ public class FlowStepItem
 
 #region 项目页
 
+public class ProjectItem
+{
+    public string ProjectName { get; set; } = "";
+    public string Author { get; set; } = "";
+    public string ProjectPath { get; set; } = "";
+    public string CreateTime { get; set; } = "";
+    public bool AutoSave { get; set; } = true;
+    public int SaveInterval { get; set; } = 300;
+    public string Language { get; set; } = "简体中文";
+    public string Status { get; set; } = "就绪";
+}
+
 public class ProjectViewModel : ViewModelBase
 {
-    public string ProjectName { get; set; } = "DemoVision-01";
-    public string Author { get; set; } = "admin";
-    public string ProjectPath { get; set; } = @"D:\Projects\DemoVision-01.ncv";
-    public string CreateTime { get; set; } = DateTime.Now.ToString("yyyy-MM-dd");
+    public ObservableCollection<ProjectItem> Projects { get; } = new()
+    {
+        new ProjectItem { ProjectName = "DemoVision-01", Author = "admin", ProjectPath = @"D:\Projects\DemoVision-01.ncv", CreateTime = DateTime.Now.ToString("yyyy-MM-dd"), AutoSave = true, SaveInterval = 300, Language = "简体中文" },
+        new ProjectItem { ProjectName = "MotorBracket-A", Author = "admin", ProjectPath = @"D:\Projects\MotorBracket-A.ncv", CreateTime = "2026-08-10", AutoSave = true, SaveInterval = 120, Language = "简体中文" },
+        new ProjectItem { ProjectName = "PCB-Inspection", Author = "admin", ProjectPath = @"D:\Projects\PCB-Inspection.ncv", CreateTime = "2026-07-22", AutoSave = false, SaveInterval = 600, Language = "English" },
+    };
 
-    private bool _autoSave = true;
-    public bool AutoSave { get => _autoSave; set => SetField(ref _autoSave, value); }
+    private ProjectItem? _selectedProject;
+    public ProjectItem? SelectedProject { get => _selectedProject; set => SetField(ref _selectedProject, value); }
 
-    private int _saveInterval = 300;
-    public int SaveInterval { get => _saveInterval; set => SetField(ref _saveInterval, value); }
-
-    public string[] Languages { get; } = { "简体中文", "English" };
-    private string _language = "简体中文";
-    public string Language { get => _language; set => SetField(ref _language, value); }
-
-    private string _status = "就绪";
-    public string Status { get => _status; set => SetField(ref _status, value); }
-
+    public ICommand AddCmd { get; }
+    public ICommand DeleteCmd { get; }
     public ICommand NewCmd { get; }
     public ICommand OpenCmd { get; }
     public ICommand SaveCmd { get; }
 
     public ProjectViewModel()
     {
-        NewCmd = new RelayCommand(_ => Status = $"已新建项目 · {DateTime.Now:HH:mm:ss}");
-        OpenCmd = new RelayCommand(_ => Status = $"已打开 {ProjectPath} · {DateTime.Now:HH:mm:ss}");
-        SaveCmd = new RelayCommand(_ => Status = $"已保存 · {DateTime.Now:HH:mm:ss}");
+        SelectedProject = Projects[0];
+
+        AddCmd = new RelayCommand(_ =>
+        {
+            var next = Projects.Count + 1;
+            Projects.Add(new ProjectItem
+            {
+                ProjectName = $"新建项目-{next}",
+                Author = "admin",
+                ProjectPath = $"D:\\Projects\\NewProject-{next}.ncv",
+                CreateTime = DateTime.Now.ToString("yyyy-MM-dd"),
+                AutoSave = true,
+                SaveInterval = 300,
+                Language = "简体中文"
+            });
+        });
+        DeleteCmd = new RelayCommand(_ =>
+        {
+            if (_selectedProject != null)
+            {
+                Projects.Remove(_selectedProject);
+                SelectedProject = Projects.Count > 0 ? Projects[0] : null;
+            }
+        }, _ => _selectedProject != null);
+        NewCmd = new RelayCommand(_ =>
+        {
+            if (_selectedProject != null)
+                _selectedProject.Status = $"已新建项目 · {DateTime.Now:HH:mm:ss}";
+            OnPropertyChanged(nameof(SelectedProject));
+        });
+        OpenCmd = new RelayCommand(_ =>
+        {
+            if (_selectedProject != null)
+                _selectedProject.Status = $"已打开 {_selectedProject.ProjectPath} · {DateTime.Now:HH:mm:ss}";
+            OnPropertyChanged(nameof(SelectedProject));
+        });
+        SaveCmd = new RelayCommand(_ =>
+        {
+            if (_selectedProject != null)
+                _selectedProject.Status = $"已保存 · {DateTime.Now:HH:mm:ss}";
+            OnPropertyChanged(nameof(SelectedProject));
+        });
     }
 }
 
@@ -115,6 +160,12 @@ public class CameraViewModel : ViewModelBase
         new CameraItem { Name = "Camera_1 (右视野)", Status = "离线", Resolution = "2448 × 2048" },
         new CameraItem { Name = "Camera_2 (顶视野)", Status = "离线", Resolution = "1920 × 1200" },
     };
+
+    private CameraItem? _selectedCamera;
+    public CameraItem? SelectedCamera { get => _selectedCamera; set => SetField(ref _selectedCamera, value); }
+
+    public ICommand AddCmd { get; }
+    public ICommand DeleteCmd { get; }
 
     private double _exposure = 8.0;
     public double Exposure { get => _exposure; set => SetField(ref _exposure, value); }
@@ -147,6 +198,22 @@ public class CameraViewModel : ViewModelBase
 
     public CameraViewModel()
     {
+        SelectedCamera = Cameras[0];
+
+        AddCmd = new RelayCommand(_ =>
+        {
+            var next = Cameras.Count;
+            Cameras.Add(new CameraItem { Name = $"Camera_{next} (新相机)", Status = "离线", Resolution = "1920 × 1080" });
+        });
+        DeleteCmd = new RelayCommand(_ =>
+        {
+            if (_selectedCamera != null)
+            {
+                Cameras.Remove(_selectedCamera);
+                SelectedCamera = Cameras.Count > 0 ? Cameras[0] : null;
+            }
+        }, _ => _selectedCamera != null);
+
         ConnectCmd = new RelayCommand(_ => IsConnected = true);
         StartCmd = new RelayCommand(_ => IsConnected = true);
         StopCmd = new RelayCommand(_ => IsConnected = false, _ => IsConnected);
@@ -157,44 +224,43 @@ public class CameraViewModel : ViewModelBase
 
 #region 通讯页
 
+public class CommConfigItem
+{
+    public string Name { get; set; } = "";
+    public string CommType { get; set; } = "串口";
+    public string Port { get; set; } = "COM3";
+    public string Baud { get; set; } = "115200";
+    public string DataBits { get; set; } = "8";
+    public string Parity { get; set; } = "无";
+    public string StopBits { get; set; } = "1";
+    public string Flow { get; set; } = "无";
+    public string NetIp { get; set; } = "192.168.1.100";
+    public string NetPort { get; set; } = "5000";
+    public bool AutoReconnect { get; set; } = true;
+}
+
 public class CommunicationViewModel : ViewModelBase
 {
     public string[] CommTypes { get; } = { "串口", "网口" };
-    private string _commType = "串口";
-    public string CommType { get => _commType; set => SetField(ref _commType, value); }
 
     public string[] PortOptions { get; } = { "COM1", "COM2", "COM3", "COM4" };
-    private string _port = "COM3";
-    public string Port { get => _port; set => SetField(ref _port, value); }
-
     public string[] BaudOptions { get; } = { "9600", "19200", "38400", "57600", "115200" };
-    private string _baud = "115200";
-    public string Baud { get => _baud; set => SetField(ref _baud, value); }
-
     public string[] DataBitsOptions { get; } = { "5", "6", "7", "8" };
-    private string _dataBits = "8";
-    public string DataBits { get => _dataBits; set => SetField(ref _dataBits, value); }
-
     public string[] ParityOptions { get; } = { "无", "奇校验", "偶校验" };
-    private string _parity = "无";
-    public string Parity { get => _parity; set => SetField(ref _parity, value); }
-
     public string[] StopBitsOptions { get; } = { "1", "1.5", "2" };
-    private string _stopBits = "1";
-    public string StopBits { get => _stopBits; set => SetField(ref _stopBits, value); }
-
     public string[] FlowOptions { get; } = { "无", "RTS/CTS", "XON/XOFF" };
-    private string _flow = "无";
-    public string Flow { get => _flow; set => SetField(ref _flow, value); }
 
-    private string _netIp = "192.168.1.100";
-    public string NetIp { get => _netIp; set => SetField(ref _netIp, value); }
+    public ObservableCollection<CommConfigItem> Configs { get; } = new()
+    {
+        new CommConfigItem { Name = "PLC-串口", CommType = "串口", Port = "COM3", Baud = "115200" },
+        new CommConfigItem { Name = "上位机-网口", CommType = "网口", NetIp = "192.168.1.100", NetPort = "5000" },
+    };
 
-    private string _netPort = "5000";
-    public string NetPort { get => _netPort; set => SetField(ref _netPort, value); }
+    private CommConfigItem? _selectedConfig;
+    public CommConfigItem? SelectedConfig { get => _selectedConfig; set => SetField(ref _selectedConfig, value); }
 
-    private bool _autoReconnect = true;
-    public bool AutoReconnect { get => _autoReconnect; set => SetField(ref _autoReconnect, value); }
+    public ICommand AddCmd { get; }
+    public ICommand DeleteCmd { get; }
 
     private bool _isConnected;
     public bool IsConnected { get => _isConnected; set { if (SetField(ref _isConnected, value)) OnPropertyChanged(nameof(ConnText)); } }
@@ -212,10 +278,27 @@ public class CommunicationViewModel : ViewModelBase
 
     public CommunicationViewModel()
     {
+        SelectedConfig = Configs[0];
+
+        AddCmd = new RelayCommand(_ =>
+        {
+            var next = Configs.Count + 1;
+            Configs.Add(new CommConfigItem { Name = $"新配置-{next}", CommType = "串口", Port = "COM1", Baud = "9600" });
+        });
+        DeleteCmd = new RelayCommand(_ =>
+        {
+            if (_selectedConfig != null)
+            {
+                Configs.Remove(_selectedConfig);
+                SelectedConfig = Configs.Count > 0 ? Configs[0] : null;
+            }
+        }, _ => _selectedConfig != null);
+
         ConnectCmd = new RelayCommand(_ =>
         {
             IsConnected = true;
-            PushLog($"[连接] {(_commType == "串口" ? $"{_port} @ {_baud}" : $"{_netIp}:{_netPort}")}");
+            if (_selectedConfig != null)
+                PushLog($"[连接] {(_selectedConfig.CommType == "串口" ? $"{_selectedConfig.Port} @ {_selectedConfig.Baud}" : $"{_selectedConfig.NetIp}:{_selectedConfig.NetPort}")}");
         });
         DisconnectCmd = new RelayCommand(_ =>
         {
@@ -277,10 +360,14 @@ public class VariablesViewModel : ViewModelBase
             _newName = ""; OnPropertyChanged(nameof(NewName));
             _newValue = "0"; OnPropertyChanged(nameof(NewValue));
         });
-        RemoveCmd = new RelayCommand(p =>
+        RemoveCmd = new RelayCommand(_ =>
         {
-            if (p is VarItem v) Variables.Remove(v);
-        }, p => p is VarItem);
+            if (_selected != null)
+            {
+                Variables.Remove(_selected);
+                Selected = Variables.Count > 0 ? Variables[0] : null;
+            }
+        }, _ => _selected != null);
     }
 }
 
@@ -312,6 +399,7 @@ public class FlowViewModel : ViewModelBase
     public string Status { get => _status; set => SetField(ref _status, value); }
 
     public ICommand AddStepCmd { get; }
+    public ICommand DeleteCmd { get; }
     public ICommand RunCmd { get; }
     public ICommand ClearCmd { get; }
 
@@ -327,6 +415,11 @@ public class FlowViewModel : ViewModelBase
             };
             Steps.Add(new FlowStepItem { Index = next, Name = $"{_newStepType} {next}", Type = _newStepType, Icon = icon });
         });
+        DeleteCmd = new RelayCommand(_ =>
+        {
+            if (_selected != null) Steps.Remove(_selected);
+            Selected = Steps.Count > 0 ? Steps[0] : null;
+        }, _ => _selected != null);
         RunCmd = new RelayCommand(_ => Status = $"流程运行中 · 共 {Steps.Count} 步 · {DateTime.Now:HH:mm:ss}");
         ClearCmd = new RelayCommand(_ => { Steps.Clear(); Status = "流程已清空"; });
     }
@@ -335,6 +428,12 @@ public class FlowViewModel : ViewModelBase
 #endregion
 
 #region 工程师页
+
+public class ModuleItem
+{
+    public string Name { get; set; } = "";
+    public string Status { get; set; } = "正常";
+}
 
 public class EngineerViewModel : ViewModelBase
 {
@@ -351,6 +450,19 @@ public class EngineerViewModel : ViewModelBase
     public string EngineInfo { get; } = "NCC 匹配内核 · SIMD+FFT 加速";
     public string License { get; } = "商用授权 · 有效期 2027-12-31";
 
+    public ObservableCollection<ModuleItem> Modules { get; } = new()
+    {
+        new ModuleItem { Name = "视觉引擎", Status = "运行中" },
+        new ModuleItem { Name = "相机模块", Status = "正常" },
+        new ModuleItem { Name = "通讯模块", Status = "正常" },
+        new ModuleItem { Name = "数据库", Status = "离线" },
+    };
+    private ModuleItem? _selectedModule;
+    public ModuleItem? SelectedModule { get => _selectedModule; set => SetField(ref _selectedModule, value); }
+
+    public ICommand AddCmd { get; }
+    public ICommand DeleteCmd { get; }
+
     public ObservableCollection<string> LogEntries { get; } = new()
     {
         "[信息] 视觉引擎初始化完成",
@@ -364,6 +476,22 @@ public class EngineerViewModel : ViewModelBase
 
     public EngineerViewModel()
     {
+        SelectedModule = Modules[0];
+
+        AddCmd = new RelayCommand(_ =>
+        {
+            var next = Modules.Count + 1;
+            Modules.Add(new ModuleItem { Name = $"扩展模块-{next}", Status = "正常" });
+        });
+        DeleteCmd = new RelayCommand(_ =>
+        {
+            if (_selectedModule != null)
+            {
+                Modules.Remove(_selectedModule);
+                SelectedModule = Modules.Count > 0 ? Modules[0] : null;
+            }
+        }, _ => _selectedModule != null);
+
         ExportCmd = new RelayCommand(_ => LogEntries.Insert(0, $"[信息] 已导出日志 {DateTime.Now:HH:mm:ss}"));
         ClearCmd = new RelayCommand(_ => LogEntries.Clear());
     }
@@ -373,8 +501,27 @@ public class EngineerViewModel : ViewModelBase
 
 #region 操作员页
 
+public class TaskItem
+{
+    public string Name { get; set; } = "";
+    public string Time { get; set; } = "";
+    public string Result { get; set; } = "待检";
+}
+
 public class OperatorViewModel : ViewModelBase
 {
+    public ObservableCollection<TaskItem> Tasks { get; } = new()
+    {
+        new TaskItem { Name = "批次-20260819-001", Time = "08:30", Result = "OK" },
+        new TaskItem { Name = "批次-20260819-002", Time = "09:15", Result = "NG" },
+        new TaskItem { Name = "批次-20260819-003", Time = "10:02", Result = "OK" },
+    };
+    private TaskItem? _selectedTask;
+    public TaskItem? SelectedTask { get => _selectedTask; set => SetField(ref _selectedTask, value); }
+
+    public ICommand AddCmd { get; }
+    public ICommand DeleteCmd { get; }
+
     private bool _isRunning;
     public bool IsRunning { get => _isRunning; set { if (SetField(ref _isRunning, value)) { OnPropertyChanged(nameof(RunButtonText)); UpdateStatus(); } } }
 
@@ -397,9 +544,31 @@ public class OperatorViewModel : ViewModelBase
 
     public OperatorViewModel()
     {
+        SelectedTask = Tasks[0];
+
+        AddCmd = new RelayCommand(_ =>
+        {
+            var next = Tasks.Count + 1;
+            Tasks.Add(new TaskItem { Name = $"批次-{DateTime.Now:yyyyMMdd}-{next:D3}", Time = DateTime.Now.ToString("HH:mm"), Result = "待检" });
+        });
+        DeleteCmd = new RelayCommand(_ =>
+        {
+            if (_selectedTask != null)
+            {
+                Tasks.Remove(_selectedTask);
+                SelectedTask = Tasks.Count > 0 ? Tasks[0] : null;
+            }
+        }, _ => _selectedTask != null);
+
         StartCmd = new RelayCommand(_ => IsRunning = true, _ => !_isRunning);
         StopCmd = new RelayCommand(_ => IsRunning = false, _ => _isRunning);
-        SampleCmd = new RelayCommand(_ => { if (!_isRunning) return; Total++; if (DateTime.Now.Millisecond % 10 != 0) Ok++; else Ng++; }, _ => _isRunning);
+        SampleCmd = new RelayCommand(_ =>
+        {
+            if (!_isRunning) return;
+            Total++;
+            if (DateTime.Now.Millisecond % 10 != 0) Ok++; else Ng++;
+            if (_selectedTask != null) _selectedTask.Result = Ng > 0 && DateTime.Now.Millisecond % 10 == 0 ? "NG" : "OK";
+        }, _ => _isRunning);
     }
 
     private void UpdateStatus() => Status = _isRunning ? "检测中…" : "已停止";

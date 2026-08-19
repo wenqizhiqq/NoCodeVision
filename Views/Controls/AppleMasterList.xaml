@@ -1,0 +1,47 @@
+<UserControl x:Class="NoCodeVision.Views.Controls.AppleMasterList"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:ctrl="clr-namespace:NoCodeVision.Views.Controls"
+             mc:Ignorable="d"
+             x:Name="Root">
+
+    <Border Style="{StaticResource AppleGroupCard}" Margin="0,0,12,0">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Orientation="Horizontal" Margin="14,12,14,4">
+                <ctrl:AppleIconTile Glyph="{Binding HeaderIcon, ElementName=Root}" TileSize="22" Margin="0,0,8,0" />
+                <TextBlock Style="{StaticResource AppleSectionHeader}" Text="{Binding Header, ElementName=Root}" Margin="0" VerticalAlignment="Center" />
+            </StackPanel>
+
+            <ListBox Grid.Row="1"
+                     ItemsSource="{Binding ItemsSource, ElementName=Root}"
+                     SelectedItem="{Binding SelectedItem, ElementName=Root, UpdateSourceTrigger=PropertyChanged}"
+                     ItemTemplate="{Binding ItemTemplate, ElementName=Root}"
+                     Style="{StaticResource AppleListBox}"
+                     ItemContainerStyle="{StaticResource AppleListBoxItem}"
+                     Margin="0,0,0,8" />
+
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="14,0,14,14">
+                <Button Style="{StaticResource AppleBtn}" Command="{Binding AddCommand, ElementName=Root}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="➕" FontSize="13" Margin="0,0,6,0" />
+                        <TextBlock Text="添加" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource AppleBtnSecondary}" Command="{Binding DeleteCommand, ElementName=Root}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="🗑" FontSize="13" Margin="0,0,6,0" />
+                        <TextBlock Text="删除" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

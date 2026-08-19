@@ -3,143 +3,151 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:ctrl="clr-namespace:NoCodeVision.Views.Controls"
              mc:Ignorable="d">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="0,2,0,8">
+    <UserControl.Resources>
+        <DataTemplate x:Key="CameraItemTemplate">
+            <DockPanel LastChildFill="True">
+                <ctrl:AppleIconTile Glyph="📷" TileSize="24" Margin="0,0,10,0" VerticalAlignment="Center" />
+                <Ellipse Width="8" Height="8" VerticalAlignment="Center" Margin="0,0,8,0">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="{StaticResource TextMutedBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Status}" Value="已连接">
+                                    <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+                <TextBlock Style="{StaticResource AppleSubLabel}" DockPanel.Dock="Right"
+                           Text="{Binding Resolution}" Foreground="{StaticResource TextSecondaryBrush}" />
+                <TextBlock Style="{StaticResource AppleLabel}" Text="{Binding Name}" />
+            </DockPanel>
+        </DataTemplate>
+    </UserControl.Resources>
 
-            <!-- 实时预览 -->
-            <Border Style="{StaticResource AppleGroupCard}">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="实时预览" />
-                    <Border Height="240" Margin="14,4,14,8" Background="{StaticResource PreviewBgBrush}" CornerRadius="10">
-                        <Grid>
-                            <Line X1="0" Y1="120" X2="1000" Y2="120" Stroke="#2A2A30" StrokeThickness="1" />
-                            <Line X1="500" Y1="0" X2="500" Y2="240" Stroke="#2A2A30" StrokeThickness="1" />
-                            <Border HorizontalAlignment="Center" VerticalAlignment="Center" Background="#1C1C22"
-                                    CornerRadius="8" Padding="12,6">
-                                <TextBlock Text="{Binding StatusText}" Foreground="#8E8E93" FontSize="13" />
-                            </Border>
-                        </Grid>
-                    </Border>
-                </StackPanel>
-            </Border>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-            <!-- 相机设备 -->
-            <Border Style="{StaticResource AppleGroupCard}">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="相机设备" />
-                    <ListBox ItemsSource="{Binding Cameras}" Style="{StaticResource AppleListBox}"
-                             ItemContainerStyle="{StaticResource AppleListBoxItem}" BorderThickness="0">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <DockPanel LastChildFill="True">
-                                    <Ellipse Width="8" Height="8" VerticalAlignment="Center" Margin="0,0,8,0">
-                                        <Ellipse.Style>
-                                            <Style TargetType="Ellipse">
-                                                <Setter Property="Fill" Value="{StaticResource TextMutedBrush}" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Status}" Value="已连接">
-                                                        <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Ellipse.Style>
-                                    </Ellipse>
-                                    <TextBlock Style="{StaticResource AppleLabel}" Text="{Binding Name}" />
-                                    <TextBlock Style="{StaticResource AppleSubLabel}" DockPanel.Dock="Right" Text="{Binding Resolution}" />
-                                </DockPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </StackPanel>
-            </Border>
+        <ctrl:AppleMasterList Grid.Column="0" Header="相机列表" HeaderIcon="📷"
+                              ItemsSource="{Binding Cameras}"
+                              SelectedItem="{Binding SelectedCamera}"
+                              AddCommand="{Binding AddCmd}"
+                              DeleteCommand="{Binding DeleteCmd}"
+                              ItemTemplate="{StaticResource CameraItemTemplate}" />
 
-            <!-- 图像参数 -->
-            <Border Style="{StaticResource AppleGroupCard}">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="图像参数" />
-                    <DockPanel Style="{StaticResource AppleRow}">
-                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="曝光时间" />
-                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="260">
-                            <Slider Minimum="0.1" Maximum="50" Value="{Binding Exposure}" Width="170" VerticalAlignment="Center" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding Exposure, StringFormat={}{0:F1}}" Width="50" />
-                            <TextBlock Style="{StaticResource AppleUnit}" Text="ms" />
-                        </StackPanel>
-                    </DockPanel>
-                    <Rectangle Style="{StaticResource AppleDivider}" />
-                    <DockPanel Style="{StaticResource AppleRow}">
-                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="增益" />
-                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="260">
-                            <Slider Minimum="0" Maximum="24" Value="{Binding Gain}" Width="170" VerticalAlignment="Center" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding Gain, StringFormat={}{0:F1}}" Width="50" />
-                            <TextBlock Style="{StaticResource AppleUnit}" Text="dB" />
-                        </StackPanel>
-                    </DockPanel>
-                    <Rectangle Style="{StaticResource AppleDivider}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="14,10,14,6" Text="触发模式" />
-                    <ListBox ItemsSource="{Binding TriggerModes}" SelectedItem="{Binding TriggerMode}"
-                             Style="{StaticResource ApplePillList}" Margin="10,0,10,12" />
-                </StackPanel>
-            </Border>
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="0,2,0,8">
 
-            <!-- 分辨率与像素格式 -->
-            <Border Style="{StaticResource AppleGroupCard}">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="分辨率与像素格式" />
-                    <DockPanel Style="{StaticResource AppleRow}">
-                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="分辨率" />
-                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding Width, UpdateSourceTrigger=PropertyChanged}" Width="70" />
-                            <TextBlock Style="{StaticResource AppleUnit}" Text="×" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding Height, UpdateSourceTrigger=PropertyChanged}" Width="70" />
-                        </StackPanel>
-                    </DockPanel>
-                    <Rectangle Style="{StaticResource AppleDivider}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="14,10,14,6" Text="像素格式" />
-                    <ListBox ItemsSource="{Binding PixelFormats}" SelectedItem="{Binding PixelFormat}"
-                             Style="{StaticResource ApplePillList}" Margin="10,0,10,12" />
-                </StackPanel>
-            </Border>
+                <!-- 实时预览 -->
+                <Border Style="{StaticResource AppleGroupCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="实时预览" />
+                        <Border Height="240" Margin="14,4,14,8" Background="{StaticResource PreviewBgBrush}" CornerRadius="10">
+                            <Grid>
+                                <Line X1="0" Y1="120" X2="1000" Y2="120" Stroke="#2A2A30" StrokeThickness="1" />
+                                <Line X1="500" Y1="0" X2="500" Y2="240" Stroke="#2A2A30" StrokeThickness="1" />
+                                <Border HorizontalAlignment="Center" VerticalAlignment="Center" Background="#1C1C22"
+                                        CornerRadius="8" Padding="12,6">
+                                    <TextBlock Text="{Binding StatusText}" Foreground="#8E8E93" FontSize="13" />
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Border>
 
-            <!-- 操作 -->
-            <Border Style="{StaticResource AppleGroupCard}">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="操作" />
-                    <DockPanel Style="{StaticResource AppleRow}" LastChildFill="True">
-                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
-                            <Button Style="{StaticResource AppleBtn}" Content="连接相机" Command="{Binding ConnectCmd}" />
-                            <Button Style="{StaticResource AppleBtnSecondary}" Content="开始采集" Command="{Binding StartCmd}" />
-                            <Button Style="{StaticResource AppleBtnSecondary}" Content="停止" Command="{Binding StopCmd}" />
-                        </StackPanel>
-                        <Border DockPanel.Dock="Right">
-                            <Border.Style>
-                                <Style TargetType="Border" BasedOn="{StaticResource AppleStatusPill}">
-                                    <Setter Property="Background" Value="{StaticResource AccentSoftBrush}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsConnected}" Value="True">
-                                            <Setter Property="Background" Value="{StaticResource SuccessBrush}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Border.Style>
-                            <TextBlock Text="{Binding StatusText}" FontSize="12">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                <!-- 图像参数 -->
+                <Border Style="{StaticResource AppleGroupCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="图像参数" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="曝光时间" />
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="260">
+                                <Slider Minimum="0.1" Maximum="50" Value="{Binding Exposure}" Width="170" VerticalAlignment="Center" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding Exposure, StringFormat={}{0:F1}}" Width="50" />
+                                <TextBlock Style="{StaticResource AppleUnit}" Text="ms" />
+                            </StackPanel>
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="增益" />
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="260">
+                                <Slider Minimum="0" Maximum="24" Value="{Binding Gain}" Width="170" VerticalAlignment="Center" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding Gain, StringFormat={}{0:F1}}" Width="50" />
+                                <TextBlock Style="{StaticResource AppleUnit}" Text="dB" />
+                            </StackPanel>
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="14,10,14,6" Text="触发模式" />
+                        <ListBox ItemsSource="{Binding TriggerModes}" SelectedItem="{Binding TriggerMode}"
+                                 Style="{StaticResource ApplePillList}" Margin="10,0,10,12" />
+                    </StackPanel>
+                </Border>
+
+                <!-- 分辨率与像素格式 -->
+                <Border Style="{StaticResource AppleGroupCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="分辨率与像素格式" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="分辨率" />
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding Width, UpdateSourceTrigger=PropertyChanged}" Width="70" />
+                                <TextBlock Style="{StaticResource AppleUnit}" Text="×" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding Height, UpdateSourceTrigger=PropertyChanged}" Width="70" />
+                            </StackPanel>
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="14,10,14,6" Text="像素格式" />
+                        <ListBox ItemsSource="{Binding PixelFormats}" SelectedItem="{Binding PixelFormat}"
+                                 Style="{StaticResource ApplePillList}" Margin="10,0,10,12" />
+                    </StackPanel>
+                </Border>
+
+                <!-- 操作 -->
+                <Border Style="{StaticResource AppleGroupCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="操作" />
+                        <DockPanel Style="{StaticResource AppleRow}" LastChildFill="True">
+                            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                                <Button Style="{StaticResource AppleBtn}" Content="连接相机" Command="{Binding ConnectCmd}" />
+                                <Button Style="{StaticResource AppleBtnSecondary}" Content="开始采集" Command="{Binding StartCmd}" />
+                                <Button Style="{StaticResource AppleBtnSecondary}" Content="停止" Command="{Binding StopCmd}" />
+                            </StackPanel>
+                            <Border DockPanel.Dock="Right">
+                                <Border.Style>
+                                    <Style TargetType="Border" BasedOn="{StaticResource AppleStatusPill}">
+                                        <Setter Property="Background" Value="{StaticResource AccentSoftBrush}" />
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsConnected}" Value="True">
-                                                <Setter Property="Foreground" Value="White" />
+                                                <Setter Property="Background" Value="{StaticResource SuccessBrush}" />
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </Border>
-                    </DockPanel>
-                </StackPanel>
-            </Border>
+                                </Border.Style>
+                                <TextBlock Text="{Binding StatusText}" FontSize="12">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                                    <Setter Property="Foreground" Value="White" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
 
-        </StackPanel>
-    </ScrollViewer>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </UserControl>

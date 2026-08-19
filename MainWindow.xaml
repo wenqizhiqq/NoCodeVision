@@ -1,6 +1,7 @@
 <Window x:Class="NoCodeVision.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ctrl="clr-namespace:NoCodeVision.Views.Controls"
         Title="NoCodeVision · 无代码视觉软件"
         Width="1200" Height="780"
         MinWidth="980" MinHeight="620"
@@ -29,13 +30,48 @@
                 <Border HorizontalAlignment="Center" VerticalAlignment="Center"
                         Background="{StaticResource SegTrackBrush}" CornerRadius="9" Padding="3">
                     <StackPanel Orientation="Horizontal" x:Name="SegPanel">
-                        <Button x:Name="Nav0" Tag="0" Content="项目"   Style="{StaticResource SegButton}" Click="Nav_Click" />
-                        <Button x:Name="Nav1" Tag="1" Content="相机"   Style="{StaticResource SegButton}" Click="Nav_Click" />
-                        <Button x:Name="Nav2" Tag="2" Content="通讯"   Style="{StaticResource SegButton}" Click="Nav_Click" />
-                        <Button x:Name="Nav3" Tag="3" Content="变量"   Style="{StaticResource SegButton}" Click="Nav_Click" />
-                        <Button x:Name="Nav4" Tag="4" Content="流程"   Style="{StaticResource SegButton}" Click="Nav_Click" />
-                        <Button x:Name="Nav5" Tag="5" Content="工程师" Style="{StaticResource SegButton}" Click="Nav_Click" />
-                        <Button x:Name="Nav6" Tag="6" Content="操作员" Style="{StaticResource SegButton}" Click="Nav_Click" />
+                        <Button x:Name="Nav0" Tag="0" Style="{StaticResource SegButton}" Click="Nav_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <ctrl:AppleIconTile Glyph="📁" TileSize="20" Margin="0,0,6,0" />
+                                <TextBlock Text="项目" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="Nav1" Tag="1" Style="{StaticResource SegButton}" Click="Nav_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <ctrl:AppleIconTile Glyph="📷" TileSize="20" Margin="0,0,6,0" />
+                                <TextBlock Text="相机" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="Nav2" Tag="2" Style="{StaticResource SegButton}" Click="Nav_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <ctrl:AppleIconTile Glyph="📡" TileSize="20" Margin="0,0,6,0" />
+                                <TextBlock Text="通讯" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="Nav3" Tag="3" Style="{StaticResource SegButton}" Click="Nav_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <ctrl:AppleIconTile Glyph="🧮" TileSize="20" Margin="0,0,6,0" />
+                                <TextBlock Text="变量" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="Nav4" Tag="4" Style="{StaticResource SegButton}" Click="Nav_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <ctrl:AppleIconTile Glyph="🔀" TileSize="20" Margin="0,0,6,0" />
+                                <TextBlock Text="流程" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="Nav5" Tag="5" Style="{StaticResource SegButton}" Click="Nav_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <ctrl:AppleIconTile Glyph="🛠" TileSize="20" Margin="0,0,6,0" />
+                                <TextBlock Text="工程师" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="Nav6" Tag="6" Style="{StaticResource SegButton}" Click="Nav_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <ctrl:AppleIconTile Glyph="👤" TileSize="20" Margin="0,0,6,0" />
+                                <TextBlock Text="操作员" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </Border>
 

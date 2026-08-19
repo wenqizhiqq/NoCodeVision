@@ -3,63 +3,85 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:ctrl="clr-namespace:NoCodeVision.Views.Controls"
              mc:Ignorable="d">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="0,2,0,8">
+    <UserControl.Resources>
+        <DataTemplate x:Key="FlowItemTemplate">
+            <DockPanel LastChildFill="True" Margin="0,4,0,4">
+                <ctrl:AppleIconTile Glyph="{Binding Icon}" TileSize="26" Margin="0,0,10,0" VerticalAlignment="Center" />
+                <TextBlock Style="{StaticResource AppleSubLabel}" DockPanel.Dock="Right"
+                           Text="{Binding Type}" Foreground="{StaticResource TextSecondaryBrush}" />
+                <TextBlock Style="{StaticResource AppleLabel}" Text="{Binding Name}" Margin="0,0,12,0" />
+            </DockPanel>
+        </DataTemplate>
+    </UserControl.Resources>
 
-            <!-- 流程步骤 -->
-            <Border Style="{StaticResource AppleGroupCard}">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="流程步骤" />
-                    <ListBox ItemsSource="{Binding Steps}" SelectedItem="{Binding Selected}"
-                             Style="{StaticResource AppleListBox}" ItemContainerStyle="{StaticResource AppleListBoxItem}">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <DockPanel LastChildFill="True" Margin="0,4,0,4">
-                                    <Border Width="26" Height="26" CornerRadius="13" Background="{StaticResource AccentSoftBrush}"
-                                            VerticalAlignment="Center" Margin="0,0,10,0">
-                                        <TextBlock Text="{Binding Index}" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <TextBlock FontSize="16" VerticalAlignment="Center" Margin="0,0,8,0" Text="{Binding Icon}" />
-                                    <TextBlock Style="{StaticResource AppleSubLabel}" DockPanel.Dock="Right"
-                                               Text="{Binding Type}" Foreground="{StaticResource TextSecondaryBrush}" />
-                                    <TextBlock Style="{StaticResource AppleLabel}" Text="{Binding Name}" Margin="0,0,12,0" />
-                                </DockPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </StackPanel>
-            </Border>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-            <!-- 工具箱 -->
-            <Border Style="{StaticResource AppleGroupCard}">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="工具箱（拖入或点击添加）" />
-                    <ListBox ItemsSource="{Binding Toolbox}" SelectedItem="{Binding NewStepType, Mode=OneWayToSource}"
-                             Style="{StaticResource ApplePillList}" Margin="10,0,10,12" />
-                </StackPanel>
-            </Border>
+        <ctrl:AppleMasterList Grid.Column="0" Header="流程步骤" HeaderIcon="🔀"
+                              ItemsSource="{Binding Steps}"
+                              SelectedItem="{Binding Selected}"
+                              AddCommand="{Binding AddStepCmd}"
+                              DeleteCommand="{Binding DeleteCmd}"
+                              ItemTemplate="{StaticResource FlowItemTemplate}" />
 
-            <!-- 操作 -->
-            <Border Style="{StaticResource AppleGroupCard}">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="操作" />
-                    <DockPanel Style="{StaticResource AppleRow}" LastChildFill="True">
-                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
-                            <Button Style="{StaticResource AppleBtn}" Content="添加步骤" Command="{Binding AddStepCmd}" />
-                            <Button Style="{StaticResource AppleBtnSecondary}" Content="运行流程" Command="{Binding RunCmd}" />
-                            <Button Style="{StaticResource AppleBtnSecondary}" Content="清空" Command="{Binding ClearCmd}" />
-                        </StackPanel>
-                        <Border Style="{StaticResource AppleStatusPill}" DockPanel.Dock="Right"
-                                Background="{StaticResource AccentSoftBrush}">
-                            <TextBlock Text="{Binding Status}" FontSize="12" Foreground="{StaticResource AccentBrush}" />
-                        </Border>
-                    </DockPanel>
-                </StackPanel>
-            </Border>
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="0,2,0,8">
 
-        </StackPanel>
-    </ScrollViewer>
+                <!-- 选中步骤 -->
+                <Border Style="{StaticResource AppleGroupCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="选中步骤" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="名称" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Right" Foreground="{StaticResource TextSecondaryBrush}" Text="{Binding Selected.Name}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="类型" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Right" Foreground="{StaticResource TextSecondaryBrush}" Text="{Binding Selected.Type}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="序号" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Right" Foreground="{StaticResource TextSecondaryBrush}" Text="{Binding Selected.Index}" />
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- 工具箱 -->
+                <Border Style="{StaticResource AppleGroupCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="工具箱（选择后点击添加）" />
+                        <ListBox ItemsSource="{Binding Toolbox}" SelectedItem="{Binding NewStepType, Mode=OneWayToSource}"
+                                 Style="{StaticResource ApplePillList}" Margin="10,0,10,12" />
+                    </StackPanel>
+                </Border>
+
+                <!-- 操作 -->
+                <Border Style="{StaticResource AppleGroupCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="操作" />
+                        <DockPanel Style="{StaticResource AppleRow}" LastChildFill="True">
+                            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                                <Button Style="{StaticResource AppleBtn}" Content="添加步骤" Command="{Binding AddStepCmd}" />
+                                <Button Style="{StaticResource AppleBtnSecondary}" Content="运行流程" Command="{Binding RunCmd}" />
+                                <Button Style="{StaticResource AppleBtnSecondary}" Content="清空" Command="{Binding ClearCmd}" />
+                            </StackPanel>
+                            <Border Style="{StaticResource AppleStatusPill}" DockPanel.Dock="Right"
+                                    Background="{StaticResource AccentSoftBrush}">
+                                <TextBlock Text="{Binding Status}" FontSize="12" Foreground="{StaticResource AccentBrush}" />
+                            </Border>
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </UserControl>

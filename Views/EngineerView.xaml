@@ -3,68 +3,112 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:ctrl="clr-namespace:NoCodeVision.Views.Controls"
              mc:Ignorable="d">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="0,2,0,8">
+    <UserControl.Resources>
+        <DataTemplate x:Key="ModuleItemTemplate">
+            <DockPanel LastChildFill="True">
+                <ctrl:AppleIconTile Glyph="🧩" TileSize="24" Margin="0,0,10,0" VerticalAlignment="Center" />
+                <Ellipse Width="8" Height="8" VerticalAlignment="Center" Margin="0,0,8,0">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="{StaticResource TextMutedBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Status}" Value="运行中">
+                                    <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Status}" Value="正常">
+                                    <Setter Property="Fill" Value="{StaticResource AccentBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Status}" Value="警告">
+                                    <Setter Property="Fill" Value="{StaticResource WarningBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+                <TextBlock Style="{StaticResource AppleSubLabel}" DockPanel.Dock="Right"
+                           Text="{Binding Status}" Foreground="{StaticResource TextSecondaryBrush}" />
+                <TextBlock Style="{StaticResource AppleLabel}" Text="{Binding Name}" />
+            </DockPanel>
+        </DataTemplate>
+    </UserControl.Resources>
 
-            <!-- 系统信息 -->
-            <Border Style="{StaticResource AppleGroupCard}">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="系统信息" />
-                    <DockPanel Style="{StaticResource AppleRow}">
-                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="版本" />
-                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Right" Foreground="{StaticResource TextSecondaryBrush}" Text="{Binding Version}" />
-                    </DockPanel>
-                    <Rectangle Style="{StaticResource AppleDivider}" />
-                    <DockPanel Style="{StaticResource AppleRow}">
-                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="运行环境" />
-                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Right" Foreground="{StaticResource TextSecondaryBrush}" Text="{Binding Runtime}" />
-                    </DockPanel>
-                    <Rectangle Style="{StaticResource AppleDivider}" />
-                    <DockPanel Style="{StaticResource AppleRow}">
-                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="视觉引擎" />
-                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Right" Foreground="{StaticResource TextSecondaryBrush}" Text="{Binding EngineInfo}" />
-                    </DockPanel>
-                    <Rectangle Style="{StaticResource AppleDivider}" />
-                    <DockPanel Style="{StaticResource AppleRow}">
-                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="授权" />
-                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Right" Foreground="{StaticResource TextSecondaryBrush}" Text="{Binding License}" />
-                    </DockPanel>
-                </StackPanel>
-            </Border>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-            <!-- 运行模式 -->
-            <Border Style="{StaticResource AppleGroupCard}">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="运行模式" />
-                    <ListBox ItemsSource="{Binding RunningModes}" SelectedItem="{Binding RunningMode}"
-                             Style="{StaticResource ApplePillList}" Margin="10,0,10,12" />
-                </StackPanel>
-            </Border>
+        <ctrl:AppleMasterList Grid.Column="0" Header="系统模块" HeaderIcon="🧩"
+                              ItemsSource="{Binding Modules}"
+                              SelectedItem="{Binding SelectedModule}"
+                              AddCommand="{Binding AddCmd}"
+                              DeleteCommand="{Binding DeleteCmd}"
+                              ItemTemplate="{StaticResource ModuleItemTemplate}" />
 
-            <!-- 日志级别 -->
-            <Border Style="{StaticResource AppleGroupCard}">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="日志级别" />
-                    <ListBox ItemsSource="{Binding LogLevels}" SelectedItem="{Binding LogLevel}"
-                             Style="{StaticResource ApplePillList}" Margin="10,0,10,12" />
-                </StackPanel>
-            </Border>
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="0,2,0,8">
 
-            <!-- 调试日志 -->
-            <Border Style="{StaticResource AppleGroupCard}">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="调试日志" />
-                    <ListBox ItemsSource="{Binding LogEntries}" Height="170" Margin="14,4,14,10"
-                             Style="{StaticResource AppleTerminal}" />
-                    <DockPanel Style="{StaticResource AppleRow}" LastChildFill="False">
-                        <Button Style="{StaticResource AppleBtn}" Content="导出日志" Command="{Binding ExportCmd}" DockPanel.Dock="Left" />
-                        <Button Style="{StaticResource AppleBtnSecondary}" Content="清空" Command="{Binding ClearCmd}" DockPanel.Dock="Left" />
-                    </DockPanel>
-                </StackPanel>
-            </Border>
+                <!-- 系统信息 -->
+                <Border Style="{StaticResource AppleGroupCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="系统信息" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="版本" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Right" Foreground="{StaticResource TextSecondaryBrush}" Text="{Binding Version}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="运行环境" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Right" Foreground="{StaticResource TextSecondaryBrush}" Text="{Binding Runtime}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="视觉引擎" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Right" Foreground="{StaticResource TextSecondaryBrush}" Text="{Binding EngineInfo}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="授权" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Right" Foreground="{StaticResource TextSecondaryBrush}" Text="{Binding License}" />
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
 
-        </StackPanel>
-    </ScrollViewer>
+                <!-- 运行模式 -->
+                <Border Style="{StaticResource AppleGroupCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="运行模式" />
+                        <ListBox ItemsSource="{Binding RunningModes}" SelectedItem="{Binding RunningMode}"
+                                 Style="{StaticResource ApplePillList}" Margin="10,0,10,12" />
+                    </StackPanel>
+                </Border>
+
+                <!-- 日志级别 -->
+                <Border Style="{StaticResource AppleGroupCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="日志级别" />
+                        <ListBox ItemsSource="{Binding LogLevels}" SelectedItem="{Binding LogLevel}"
+                                 Style="{StaticResource ApplePillList}" Margin="10,0,10,12" />
+                    </StackPanel>
+                </Border>
+
+                <!-- 调试日志 -->
+                <Border Style="{StaticResource AppleGroupCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="调试日志" />
+                        <ListBox ItemsSource="{Binding LogEntries}" Height="170" Margin="14,4,14,10"
+                                 Style="{StaticResource AppleTerminal}" />
+                        <DockPanel Style="{StaticResource AppleRow}" LastChildFill="False">
+                            <Button Style="{StaticResource AppleBtn}" Content="导出日志" Command="{Binding ExportCmd}" DockPanel.Dock="Left" />
+                            <Button Style="{StaticResource AppleBtnSecondary}" Content="清空" Command="{Binding ClearCmd}" DockPanel.Dock="Left" />
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </UserControl>

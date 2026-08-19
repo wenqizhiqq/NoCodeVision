@@ -3,147 +3,173 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:ctrl="clr-namespace:NoCodeVision.Views.Controls"
              mc:Ignorable="d">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="0,2,0,8">
+    <UserControl.Resources>
+        <DataTemplate x:Key="CommItemTemplate">
+            <DockPanel LastChildFill="True">
+                <ctrl:AppleIconTile Glyph="📡" TileSize="24" Margin="0,0,10,0" VerticalAlignment="Center" />
+                <TextBlock Style="{StaticResource AppleSubLabel}" DockPanel.Dock="Right"
+                           Text="{Binding CommType}" Foreground="{StaticResource TextSecondaryBrush}" />
+                <TextBlock Style="{StaticResource AppleLabel}" Text="{Binding Name}" />
+            </DockPanel>
+        </DataTemplate>
+    </UserControl.Resources>
 
-            <!-- 通讯类型 -->
-            <Border Style="{StaticResource AppleGroupCard}">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="通讯类型" />
-                    <ListBox ItemsSource="{Binding CommTypes}" SelectedItem="{Binding CommType}"
-                             Style="{StaticResource ApplePillList}" Margin="10,0,10,12" />
-                </StackPanel>
-            </Border>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-            <!-- 串口参数 -->
-            <Border>
-                <Border.Style>
-                    <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
-                        <Setter Property="Visibility" Value="Collapsed" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding CommType}" Value="串口">
-                                <Setter Property="Visibility" Value="Visible" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="串口参数" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="14,8,14,6" Text="端口" />
-                    <ListBox ItemsSource="{Binding PortOptions}" SelectedItem="{Binding Port}"
-                             Style="{StaticResource ApplePillList}" Margin="10,0,10,10" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="14,4,14,6" Text="波特率" />
-                    <ListBox ItemsSource="{Binding BaudOptions}" SelectedItem="{Binding Baud}"
-                             Style="{StaticResource ApplePillList}" Margin="10,0,10,10" />
-                    <DockPanel Style="{StaticResource AppleRow}">
-                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="数据位" />
-                        <ComboBox Style="{StaticResource AppleComboBox}" DockPanel.Dock="Right"
-                                  ItemsSource="{Binding DataBitsOptions}" SelectedItem="{Binding DataBits}" />
-                    </DockPanel>
-                    <Rectangle Style="{StaticResource AppleDivider}" />
-                    <DockPanel Style="{StaticResource AppleRow}">
-                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="校验位" />
-                        <ComboBox Style="{StaticResource AppleComboBox}" DockPanel.Dock="Right"
-                                  ItemsSource="{Binding ParityOptions}" SelectedItem="{Binding Parity}" />
-                    </DockPanel>
-                    <Rectangle Style="{StaticResource AppleDivider}" />
-                    <DockPanel Style="{StaticResource AppleRow}">
-                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="停止位" />
-                        <ComboBox Style="{StaticResource AppleComboBox}" DockPanel.Dock="Right"
-                                  ItemsSource="{Binding StopBitsOptions}" SelectedItem="{Binding StopBits}" />
-                    </DockPanel>
-                    <Rectangle Style="{StaticResource AppleDivider}" />
-                    <DockPanel Style="{StaticResource AppleRow}">
-                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="流控" />
-                        <ComboBox Style="{StaticResource AppleComboBox}" DockPanel.Dock="Right"
-                                  ItemsSource="{Binding FlowOptions}" SelectedItem="{Binding Flow}" />
-                    </DockPanel>
-                </StackPanel>
-            </Border>
+        <ctrl:AppleMasterList Grid.Column="0" Header="通讯配置" HeaderIcon="📡"
+                              ItemsSource="{Binding Configs}"
+                              SelectedItem="{Binding SelectedConfig}"
+                              AddCommand="{Binding AddCmd}"
+                              DeleteCommand="{Binding DeleteCmd}"
+                              ItemTemplate="{StaticResource CommItemTemplate}" />
 
-            <!-- 网口参数 -->
-            <Border>
-                <Border.Style>
-                    <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
-                        <Setter Property="Visibility" Value="Collapsed" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding CommType}" Value="网口">
-                                <Setter Property="Visibility" Value="Visible" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="网口参数" />
-                    <DockPanel Style="{StaticResource AppleRow}">
-                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="IP 地址" />
-                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding NetIp, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
-                    </DockPanel>
-                    <Rectangle Style="{StaticResource AppleDivider}" />
-                    <DockPanel Style="{StaticResource AppleRow}">
-                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="端口" />
-                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding NetPort, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
-                    </DockPanel>
-                    <Rectangle Style="{StaticResource AppleDivider}" />
-                    <DockPanel Style="{StaticResource AppleRow}">
-                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="自动重连" />
-                        <CheckBox Style="{StaticResource AppleToggle}" DockPanel.Dock="Right" IsChecked="{Binding AutoReconnect}" />
-                    </DockPanel>
-                </StackPanel>
-            </Border>
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="0,2,0,8">
 
-            <!-- 调试终端 -->
-            <Border Style="{StaticResource AppleGroupCard}">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="调试终端" />
-                    <DockPanel Style="{StaticResource AppleRow}" LastChildFill="True">
-                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="连接状态" />
-                        <Border DockPanel.Dock="Right">
-                            <Border.Style>
-                                <Style TargetType="Border" BasedOn="{StaticResource AppleStatusPill}">
-                                    <Setter Property="Background" Value="{StaticResource WarningSoftBrush}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsConnected}" Value="True">
-                                            <Setter Property="Background" Value="{StaticResource SuccessBrush}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Border.Style>
-                            <TextBlock FontSize="12" Text="{Binding ConnText}">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                <!-- 通讯类型 -->
+                <Border Style="{StaticResource AppleGroupCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="通讯类型" />
+                        <ListBox ItemsSource="{Binding CommTypes}" SelectedItem="{Binding SelectedConfig.CommType}"
+                                 Style="{StaticResource ApplePillList}" Margin="10,0,10,12" />
+                    </StackPanel>
+                </Border>
+
+                <!-- 串口参数 -->
+                <Border>
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedConfig.CommType}" Value="串口">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="串口参数" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="14,8,14,6" Text="端口" />
+                        <ListBox ItemsSource="{Binding PortOptions}" SelectedItem="{Binding SelectedConfig.Port}"
+                                 Style="{StaticResource ApplePillList}" Margin="10,0,10,10" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="14,4,14,6" Text="波特率" />
+                        <ListBox ItemsSource="{Binding BaudOptions}" SelectedItem="{Binding SelectedConfig.Baud}"
+                                 Style="{StaticResource ApplePillList}" Margin="10,0,10,10" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="数据位" />
+                            <ComboBox Style="{StaticResource AppleComboBox}" DockPanel.Dock="Right"
+                                      ItemsSource="{Binding DataBitsOptions}" SelectedItem="{Binding SelectedConfig.DataBits}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="校验位" />
+                            <ComboBox Style="{StaticResource AppleComboBox}" DockPanel.Dock="Right"
+                                      ItemsSource="{Binding ParityOptions}" SelectedItem="{Binding SelectedConfig.Parity}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="停止位" />
+                            <ComboBox Style="{StaticResource AppleComboBox}" DockPanel.Dock="Right"
+                                      ItemsSource="{Binding StopBitsOptions}" SelectedItem="{Binding SelectedConfig.StopBits}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="流控" />
+                            <ComboBox Style="{StaticResource AppleComboBox}" DockPanel.Dock="Right"
+                                      ItemsSource="{Binding FlowOptions}" SelectedItem="{Binding SelectedConfig.Flow}" />
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- 网口参数 -->
+                <Border>
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedConfig.CommType}" Value="网口">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="网口参数" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="IP 地址" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedConfig.NetIp, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="端口" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedConfig.NetPort, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="自动重连" />
+                            <CheckBox Style="{StaticResource AppleToggle}" DockPanel.Dock="Right" IsChecked="{Binding SelectedConfig.AutoReconnect}" />
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- 调试终端 -->
+                <Border Style="{StaticResource AppleGroupCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="调试终端" />
+                        <DockPanel Style="{StaticResource AppleRow}" LastChildFill="True">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="连接状态" />
+                            <Border DockPanel.Dock="Right">
+                                <Border.Style>
+                                    <Style TargetType="Border" BasedOn="{StaticResource AppleStatusPill}">
+                                        <Setter Property="Background" Value="{StaticResource WarningSoftBrush}" />
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsConnected}" Value="True">
-                                                <Setter Property="Foreground" Value="White" />
+                                                <Setter Property="Background" Value="{StaticResource SuccessBrush}" />
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </Border>
-                    </DockPanel>
-                    <Rectangle Style="{StaticResource AppleDivider}" />
-                    <ListBox ItemsSource="{Binding DebugLog}" Height="150" Margin="14,4,14,8"
-                             Style="{StaticResource AppleTerminal}" />
-                    <DockPanel Margin="14,0,14,12" LastChildFill="True">
-                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" Margin="8,0,0,0">
-                            <Button Style="{StaticResource AppleBtn}" Content="连接" Command="{Binding ConnectCmd}" />
-                            <Button Style="{StaticResource AppleBtnSecondary}" Content="断开" Command="{Binding DisconnectCmd}" />
-                            <Button Style="{StaticResource AppleBtnSecondary}" Content="发送" Command="{Binding SendCmd}" />
-                            <Button Style="{StaticResource AppleBtnSecondary}" Content="扫描" Command="{Binding AutoScanCmd}" />
-                            <Button Style="{StaticResource AppleBtnSecondary}" Content="清屏" Command="{Binding ClearLogCmd}" />
-                        </StackPanel>
-                        <TextBox Style="{StaticResource AppleTextField}" HorizontalAlignment="Stretch" TextAlignment="Left"
-                                 MinWidth="120" Text="{Binding SendText, UpdateSourceTrigger=PropertyChanged}"
-                                 BorderThickness="1" BorderBrush="{StaticResource LineBrush}" Padding="8"
-                                 Background="{StaticResource SurfaceBrush}" />
-                    </DockPanel>
-                </StackPanel>
-            </Border>
+                                </Border.Style>
+                                <TextBlock FontSize="12" Text="{Binding ConnText}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                                    <Setter Property="Foreground" Value="White" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <ListBox ItemsSource="{Binding DebugLog}" Height="150" Margin="14,4,14,8"
+                                 Style="{StaticResource AppleTerminal}" />
+                        <DockPanel Margin="14,0,14,12" LastChildFill="True">
+                            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" Margin="8,0,0,0">
+                                <Button Style="{StaticResource AppleBtn}" Content="连接" Command="{Binding ConnectCmd}" />
+                                <Button Style="{StaticResource AppleBtnSecondary}" Content="断开" Command="{Binding DisconnectCmd}" />
+                                <Button Style="{StaticResource AppleBtnSecondary}" Content="发送" Command="{Binding SendCmd}" />
+                                <Button Style="{StaticResource AppleBtnSecondary}" Content="扫描" Command="{Binding AutoScanCmd}" />
+                                <Button Style="{StaticResource AppleBtnSecondary}" Content="清屏" Command="{Binding ClearLogCmd}" />
+                            </StackPanel>
+                            <TextBox Style="{StaticResource AppleTextField}" HorizontalAlignment="Stretch" TextAlignment="Left"
+                                     MinWidth="120" Text="{Binding SendText, UpdateSourceTrigger=PropertyChanged}"
+                                     BorderThickness="1" BorderBrush="{StaticResource LineBrush}" Padding="8"
+                                     Background="{StaticResource SurfaceBrush}" />
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
 
-        </StackPanel>
-    </ScrollViewer>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </UserControl>

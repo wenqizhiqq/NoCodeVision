@@ -3,102 +3,143 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:ctrl="clr-namespace:NoCodeVision.Views.Controls"
              mc:Ignorable="d">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="0,2,0,8">
+    <UserControl.Resources>
+        <DataTemplate x:Key="TaskItemTemplate">
+            <DockPanel LastChildFill="True">
+                <ctrl:AppleIconTile Glyph="📦" TileSize="24" Margin="0,0,10,0" VerticalAlignment="Center" />
+                <Ellipse Width="8" Height="8" VerticalAlignment="Center" Margin="0,0,8,0">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="{StaticResource TextMutedBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Result}" Value="OK">
+                                    <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Result}" Value="NG">
+                                    <Setter Property="Fill" Value="{StaticResource WarningBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+                <TextBlock Style="{StaticResource AppleSubLabel}" DockPanel.Dock="Right"
+                           Text="{Binding Result}" Foreground="{StaticResource TextSecondaryBrush}" Margin="8,0,0,0" />
+                <TextBlock Style="{StaticResource AppleSubLabel}" DockPanel.Dock="Right"
+                           Text="{Binding Time}" Foreground="{StaticResource TextSecondaryBrush}" />
+                <TextBlock Style="{StaticResource AppleLabel}" Text="{Binding Name}" />
+            </DockPanel>
+        </DataTemplate>
+    </UserControl.Resources>
 
-            <!-- 检测状态 -->
-            <Border Style="{StaticResource AppleGroupCard}">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="检测状态" />
-                    <StackPanel Orientation="Horizontal" Margin="14,4,14,12">
-                        <!-- 状态指示灯 -->
-                        <Ellipse Width="64" Height="64" VerticalAlignment="Center" Margin="0,0,18,0">
-                            <Ellipse.Style>
-                                <Style TargetType="Ellipse">
-                                    <Setter Property="Fill" Value="{StaticResource DisabledBrush}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                                            <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Ellipse.Style>
-                        </Ellipse>
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="{Binding Status}" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
-                            <TextBlock Text="无代码视觉检测 · 一键启停" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0" />
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <ctrl:AppleMasterList Grid.Column="0" Header="检测批次" HeaderIcon="📦"
+                              ItemsSource="{Binding Tasks}"
+                              SelectedItem="{Binding SelectedTask}"
+                              AddCommand="{Binding AddCmd}"
+                              DeleteCommand="{Binding DeleteCmd}"
+                              ItemTemplate="{StaticResource TaskItemTemplate}" />
+
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="0,2,0,8">
+
+                <!-- 检测状态 -->
+                <Border Style="{StaticResource AppleGroupCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="检测状态" />
+                        <StackPanel Orientation="Horizontal" Margin="14,4,14,12">
+                            <Ellipse Width="64" Height="64" VerticalAlignment="Center" Margin="0,0,18,0">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="{StaticResource DisabledBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                                <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Status}" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                <TextBlock Text="无代码视觉检测 · 一键启停" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0" />
+                            </StackPanel>
                         </StackPanel>
+
+                        <Grid Margin="14,0,14,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Background="{StaticResource HoverBrush}" CornerRadius="10" Padding="12,10" Margin="0,0,6,0">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <TextBlock Text="{Binding Total}" FontSize="26" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+                                    <TextBlock Text="总数" FontSize="12" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,2,0,0" />
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="1" Background="{StaticResource HoverBrush}" CornerRadius="10" Padding="12,10" Margin="6,0,6,0">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <TextBlock Text="{Binding Ok}" FontSize="26" FontWeight="SemiBold" Foreground="{StaticResource SuccessBrush}" HorizontalAlignment="Center" />
+                                    <TextBlock Text="合格" FontSize="12" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,2,0,0" />
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="2" Background="{StaticResource HoverBrush}" CornerRadius="10" Padding="12,10" Margin="6,0,0,0">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <TextBlock Text="{Binding Ng}" FontSize="26" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}" HorizontalAlignment="Center" />
+                                    <TextBlock Text="不合格" FontSize="12" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,2,0,0" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="良率" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Right" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" Text="{Binding YieldText}" />
+                        </DockPanel>
                     </StackPanel>
+                </Border>
 
-                    <!-- 指标 -->
-                    <Grid Margin="14,0,14,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Border Grid.Column="0" Background="{StaticResource HoverBrush}" CornerRadius="10" Padding="12,10" Margin="0,0,6,0">
-                            <StackPanel HorizontalAlignment="Center">
-                                <TextBlock Text="{Binding Total}" FontSize="26" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
-                                <TextBlock Text="总数" FontSize="12" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,2,0,0" />
-                            </StackPanel>
-                        </Border>
-                        <Border Grid.Column="1" Background="{StaticResource HoverBrush}" CornerRadius="10" Padding="12,10" Margin="6,0,6,0">
-                            <StackPanel HorizontalAlignment="Center">
-                                <TextBlock Text="{Binding Ok}" FontSize="26" FontWeight="SemiBold" Foreground="{StaticResource SuccessBrush}" HorizontalAlignment="Center" />
-                                <TextBlock Text="合格" FontSize="12" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,2,0,0" />
-                            </StackPanel>
-                        </Border>
-                        <Border Grid.Column="2" Background="{StaticResource HoverBrush}" CornerRadius="10" Padding="12,10" Margin="6,0,0,0">
-                            <StackPanel HorizontalAlignment="Center">
-                                <TextBlock Text="{Binding Ng}" FontSize="26" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}" HorizontalAlignment="Center" />
-                                <TextBlock Text="不合格" FontSize="12" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,2,0,0" />
-                            </StackPanel>
-                        </Border>
-                    </Grid>
-                    <DockPanel Style="{StaticResource AppleRow}">
-                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="良率" />
-                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Right" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" Text="{Binding YieldText}" />
-                    </DockPanel>
-                </StackPanel>
-            </Border>
+                <!-- 操作 -->
+                <Border Style="{StaticResource AppleGroupCard}">
+                    <StackPanel Margin="14,12">
+                        <Grid>
+                            <Button Content="开始检测" Command="{Binding StartCmd}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource AppleBigButton}">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Button Content="停止检测" Command="{Binding StopCmd}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource AppleBigButtonDanger}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </Grid>
+                        <Button Style="{StaticResource AppleBtnSecondary}" Content="模拟一次检测" Margin="0,12,0,0" Height="40"
+                                Command="{Binding SampleCmd}" />
+                    </StackPanel>
+                </Border>
 
-            <!-- 操作 -->
-            <Border Style="{StaticResource AppleGroupCard}">
-                <StackPanel Margin="14,12">
-                    <Grid>
-                        <Button Content="开始检测" Command="{Binding StartCmd}">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource AppleBigButton}">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                        <Button Content="停止检测" Command="{Binding StopCmd}">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource AppleBigButtonDanger}">
-                                    <Setter Property="Visibility" Value="Collapsed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                                            <Setter Property="Visibility" Value="Visible" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                    </Grid>
-                    <Button Style="{StaticResource AppleBtnSecondary}" Content="模拟一次检测" Margin="0,12,0,0" Height="40"
-                            Command="{Binding SampleCmd}" />
-                </StackPanel>
-            </Border>
-
-        </StackPanel>
-    </ScrollViewer>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </UserControl>
