@@ -19,14 +19,14 @@
         <DataTemplate x:Key="StepItemTemplate">
             <Grid Height="44">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="74" />
-                    <ColumnDefinition Width="110" />
-                    <ColumnDefinition Width="120" />
-                    <ColumnDefinition Width="120" />
-                    <ColumnDefinition Width="78" />
-                    <ColumnDefinition Width="78" />
-                    <ColumnDefinition Width="56" />
-                    <ColumnDefinition Width="70" />
+                    <ColumnDefinition Width="83" />
+                    <ColumnDefinition Width="101" />
+                    <ColumnDefinition Width="91" />
+                    <ColumnDefinition Width="95" />
+                    <ColumnDefinition Width="87" />
+                    <ColumnDefinition Width="76" />
+                    <ColumnDefinition Width="66" />
+                    <ColumnDefinition Width="107" />
                 </Grid.ColumnDefinitions>
                 <ComboBox Grid.Column="0" Style="{StaticResource AppleComboBoxInline}" HorizontalAlignment="Stretch"
                           ItemsSource="{Binding DataContext.LogicRelations, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -46,7 +46,7 @@
                 <TextBox Grid.Column="5" Text="{Binding InputValue, FallbackValue=''}" Style="{StaticResource AppleTextFieldInline}"
                          TextAlignment="Left" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="14,0,0,0" />
                 <TextBlock Grid.Column="6" Text="{Binding CostMs, StringFormat='{}{0:F1}'}" Style="{StaticResource AppleSubLabel}" VerticalAlignment="Center" Margin="14,0,0,0" />
-                <TextBlock Grid.Column="7" Text="{Binding ActualValue}" Style="{StaticResource AppleLabel}" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,14,0" />
+                <TextBlock Grid.Column="7" Text="{Binding ActualValue}" Style="{StaticResource AppleLabel}" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="34,0,0,0" />
             </Grid>
         </DataTemplate>
     </UserControl.Resources>
@@ -69,36 +69,31 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0" Style="{StaticResource iOSTitle}" Text="{Binding SelectedFlow.Name, FallbackValue='流程'}" />
 
-            <!-- 新建步骤 -->
-            <Border Grid.Row="1" Style="{StaticResource AppleGroupCard}" Padding="14">
-                <DockPanel LastChildFill="False" VerticalAlignment="Center">
-                    <TextBlock Style="{StaticResource AppleSubLabel}" DockPanel.Dock="Left" Text="新建步骤类型" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                    <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="150"
+            <!-- 工具栏（新建步骤 + 操作按钮，紧凑单行） -->
+            <Border Grid.Row="1" Style="{StaticResource AppleGroupCard}" Padding="14" Margin="0,0,0,12">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <ComboBox Style="{StaticResource AppleComboBox}" Width="150" VerticalAlignment="Center"
                               ItemsSource="{Binding StepFunctions}" SelectedItem="{Binding NewStepFunction}" />
-                    <Button DockPanel.Dock="Left" Style="{StaticResource AppleBtn}" Content="➕ 添加" Command="{Binding AddStepCmd}" Margin="12,0,0,0" />
-                </DockPanel>
+                    <Button Style="{StaticResource AppleBtn}" Content="➕ 添加" Command="{Binding AddStepCmd}" VerticalAlignment="Center" />
+                    <Rectangle Width="1" Height="24" Fill="{StaticResource LineBrush}" Margin="12,0,12,0" VerticalAlignment="Center" />
+                    <Button Style="{StaticResource AppleIconBtn}" Content="🗑 删除" Command="{Binding DeleteStepCmd}" VerticalAlignment="Center" />
+                    <Button Style="{StaticResource AppleIconBtn}" Content="⬆️ 上移" Command="{Binding MoveUpCmd}" VerticalAlignment="Center" />
+                    <Button Style="{StaticResource AppleIconBtn}" Content="⬇️ 下移" Command="{Binding MoveDownCmd}" VerticalAlignment="Center" />
+                    <Button Style="{StaticResource AppleIconBtn}" Content="🧹 清空" Command="{Binding ClearCmd}" VerticalAlignment="Center" />
+                    <Button Style="{StaticResource AppleBtn}" Content="▶ 运行流程" Command="{Binding RunCmd}" VerticalAlignment="Center" />
+                    <Border Style="{StaticResource AppleStatusPill}" Background="{StaticResource AccentSoftBrush}" Margin="12,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Status}" FontSize="12" Foreground="{StaticResource AccentBrush}" />
+                    </Border>
+                </StackPanel>
             </Border>
 
-            <!-- 工具栏 -->
-            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,12">
-                <Button Style="{StaticResource AppleIconBtn}" Content="🗑 删除" Command="{Binding DeleteStepCmd}" />
-                <Button Style="{StaticResource AppleIconBtn}" Content="⬆️ 上移" Command="{Binding MoveUpCmd}" />
-                <Button Style="{StaticResource AppleIconBtn}" Content="⬇️ 下移" Command="{Binding MoveDownCmd}" />
-                <Button Style="{StaticResource AppleIconBtn}" Content="🧹 清空" Command="{Binding ClearCmd}" />
-                <Button Style="{StaticResource AppleBtn}" Content="▶ 运行流程" Command="{Binding RunCmd}" />
-                <Border Style="{StaticResource AppleStatusPill}" Background="{StaticResource AccentSoftBrush}" Margin="12,0,0,0">
-                    <TextBlock Text="{Binding Status}" FontSize="12" Foreground="{StaticResource AccentBrush}" />
-                </Border>
-            </StackPanel>
-
             <!-- 步骤列表 -->
-            <Border Grid.Row="3" Style="{StaticResource AppleGroupCard}" Padding="0">
+            <Border Grid.Row="2" Style="{StaticResource AppleGroupCard}" Padding="0">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -107,28 +102,30 @@
                     <!-- 表头 -->
                     <Grid Grid.Row="0" Height="36" Background="{StaticResource HoverBrush}" Margin="0">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="74" />
-                            <ColumnDefinition Width="110" />
-                            <ColumnDefinition Width="120" />
-                            <ColumnDefinition Width="120" />
-                            <ColumnDefinition Width="78" />
-                            <ColumnDefinition Width="78" />
-                            <ColumnDefinition Width="56" />
-                            <ColumnDefinition Width="70" />
+                            <ColumnDefinition Width="83" />
+                            <ColumnDefinition Width="101" />
+                            <ColumnDefinition Width="91" />
+                            <ColumnDefinition Width="95" />
+                            <ColumnDefinition Width="87" />
+                            <ColumnDefinition Width="76" />
+                            <ColumnDefinition Width="66" />
+                            <ColumnDefinition Width="107" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="逻辑" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" />
-                        <TextBlock Grid.Column="1" Text="功能" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" />
-                        <TextBlock Grid.Column="2" Text="名称" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" />
-                        <TextBlock Grid.Column="3" Text="状态" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" />
-                        <TextBlock Grid.Column="4" Text="运算" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" />
-                        <TextBlock Grid.Column="5" Text="输入值" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" />
-                        <TextBlock Grid.Column="6" Text="耗时" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" />
-                        <TextBlock Grid.Column="7" Text="结果" Style="{StaticResource AppleSubLabel}" Margin="0,0,14,0" VerticalAlignment="Center" HorizontalAlignment="Right" FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="0" Text="逻辑" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" FontWeight="SemiBold" Height="14" />
+                        <TextBlock Grid.Column="1" Text="功能" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" FontWeight="SemiBold" Height="14" />
+                        <TextBlock Grid.Column="2" Text="名称" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" FontWeight="SemiBold" Height="14" />
+                        <TextBlock Grid.Column="3" Text="状态" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" FontWeight="SemiBold" Height="14" />
+                        <TextBlock Grid.Column="4" Text="运算" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" FontWeight="SemiBold" Height="14" />
+                        <TextBlock Grid.Column="5" Text="输入值" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" FontWeight="SemiBold" Height="14" />
+                        <TextBlock Grid.Column="6" Text="耗时" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" FontWeight="SemiBold" Height="14" />
+                        <TextBlock Grid.Column="7" Text="结果" Style="{StaticResource AppleSubLabel}" Margin="34,0,0,0" HorizontalAlignment="Left" FontWeight="SemiBold" Height="14" Width="22" />
                     </Grid>
                     <ListBox Grid.Row="1" ItemsSource="{Binding SelectedFlow.Steps}" SelectedItem="{Binding SelectedStep}"
                              Style="{StaticResource AppleListBox}" ItemTemplate="{StaticResource StepItemTemplate}">
                         <ListBox.Resources>
-                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource AppleListBoxItem}" />
+                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource AppleListBoxItem}">
+                                <Setter Property="Padding" Value="0,11,0,11" />
+                            </Style>
                         </ListBox.Resources>
                     </ListBox>
                 </Grid>
