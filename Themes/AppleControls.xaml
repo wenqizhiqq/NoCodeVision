@@ -67,6 +67,12 @@
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
     </Style>
 
+    <!-- ===== 紧凑内联文本框（表格/列表格内使用） ===== -->
+    <Style x:Key="AppleTextFieldInline" TargetType="TextBox" BasedOn="{StaticResource AppleTextField}">
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="Padding" Value="0,6,6,6" />
+    </Style>
+
     <!-- ===== iOS 风格下拉框 ===== -->
     <Style x:Key="AppleComboBoxItem" TargetType="ComboBoxItem">
         <Setter Property="Background" Value="Transparent" />
@@ -154,6 +160,12 @@
             </Setter.Value>
         </Setter>
         <Setter Property="ItemContainerStyle" Value="{StaticResource AppleComboBoxItem}" />
+    </Style>
+
+    <!-- ===== 紧凑内联下拉框（表格/列表格内使用） ===== -->
+    <Style x:Key="AppleComboBoxInline" TargetType="ComboBox" BasedOn="{StaticResource AppleComboBox}">
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="Padding" Value="0,6,6,6" />
     </Style>
 
     <!-- ===== 药丸选择器（多选一，iOS chip） ===== -->
