@@ -115,6 +115,27 @@ public class VisionFlowStep : ViewModelBase
     public string Parameters { get => _parameters; set => SetField(ref _parameters, value); }
     private string _parameters = "";
 
+    public string PreprocessType { get => _preprocessType; set => SetField(ref _preprocessType, value); }
+    private string _preprocessType = "灰度化";
+
+    public string MeasureType { get => _measureType; set => SetField(ref _measureType, value); }
+    private string _measureType = "圆径";
+
+    public double Tolerance { get => _tolerance; set => SetField(ref _tolerance, value); }
+    private double _tolerance = 0.05;
+
+    public string LogicExpression { get => _logicExpression; set => SetField(ref _logicExpression, value); }
+    private string _logicExpression = "score >= 0.85";
+
+    public string LogicRelation { get => _logicRelation; set => SetField(ref _logicRelation, value); }
+    private string _logicRelation = "如果";
+
+    public string OutputAddress { get => _outputAddress; set => SetField(ref _outputAddress, value); }
+    private string _outputAddress = "PLC_D200";
+
+    public double OutputValue { get => _outputValue; set => SetField(ref _outputValue, value); }
+    private double _outputValue = 1;
+
     public string AiHint
     {
         get => _aiHint;
@@ -481,6 +502,9 @@ public class FlowViewModel : ViewModelBase
     };
 
     public string[] StepFunctions { get; } = { "图像采集", "图像预处理", "模板匹配", "几何测量", "逻辑判断", "Lua脚本", "结果输出" };
+    public string[] PreprocessTypes { get; } = { "灰度化", "二值化", "高斯模糊", "中值滤波", "边缘检测" };
+    public string[] MeasureTypes { get; } = { "圆径", "边距", "角度", "面积", "中心距" };
+    public string[] LogicRelations { get; } = { "如果", "并且" };
     public string[] PropTabs { get; } = { "图像", "Lua", "参数设置" };
 
     private VisionFlow? _selectedFlow;
