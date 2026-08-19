@@ -1,0 +1,31 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ===== Apple 调色板 ===== -->
+    <SolidColorBrush x:Key="AccentBrush" Color="#007AFF" />
+    <SolidColorBrush x:Key="AccentDarkBrush" Color="#0063CC" />
+    <SolidColorBrush x:Key="AccentSoftBrush" Color="#E5F1FF" />
+    <SolidColorBrush x:Key="CanvasBrush" Color="#F5F5F7" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="LineBrush" Color="#E5E5EA" />
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#1D1D1F" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#6E6E73" />
+    <SolidColorBrush x:Key="TextMutedBrush" Color="#8E8E93" />
+    <SolidColorBrush x:Key="SuccessBrush" Color="#34C759" />
+    <SolidColorBrush x:Key="SuccessDarkBrush" Color="#2CB24C" />
+    <SolidColorBrush x:Key="WarningBrush" Color="#FF3B30" />
+    <SolidColorBrush x:Key="WarningSoftBrush" Color="#FFE5E3" />
+    <SolidColorBrush x:Key="HoverBrush" Color="#F2F2F7" />
+    <SolidColorBrush x:Key="DisabledBrush" Color="#C7C7CC" />
+    <SolidColorBrush x:Key="SegTrackBrush" Color="#EBEBEE" />
+    <SolidColorBrush x:Key="PreviewBgBrush" Color="#0B0B0F" />
+
+    <!-- ===== 柔和阴影 ===== -->
+    <DropShadowEffect x:Key="SoftShadow" BlurRadius="14" ShadowDepth="2" Opacity="0.10" Color="#000000" />
+    <DropShadowEffect x:Key="SoftShadowSm" BlurRadius="6" ShadowDepth="1" Opacity="0.07" Color="#000000" />
+    <DropShadowEffect x:Key="PillShadow" BlurRadius="3" ShadowDepth="0" Opacity="0.18" Color="#000000" />
+
+    <!-- ===== 全局字体 ===== -->
+    <FontFamily x:Key="AppleFont">Segoe UI, -apple-system, BlinkMacSystemFont, Helvetica Neue, Arial</FontFamily>
+
+</ResourceDictionary>

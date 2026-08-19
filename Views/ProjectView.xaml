@@ -1,0 +1,78 @@
+<UserControl x:Class="NoCodeVision.Views.ProjectView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="0,2,0,8">
+
+            <!-- 项目信息 -->
+            <Border Style="{StaticResource AppleGroupCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="项目信息" />
+                    <DockPanel Style="{StaticResource AppleRow}">
+                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="项目名称" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding ProjectName, UpdateSourceTrigger=PropertyChanged}" />
+                    </DockPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <DockPanel Style="{StaticResource AppleRow}">
+                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="负责人" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding Author, UpdateSourceTrigger=PropertyChanged}" />
+                    </DockPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <DockPanel Style="{StaticResource AppleRow}">
+                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="创建时间" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding CreateTime}" IsReadOnly="True" />
+                    </DockPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <DockPanel Style="{StaticResource AppleRow}">
+                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="项目路径" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding ProjectPath}" IsReadOnly="True" />
+                    </DockPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 工程设置 -->
+            <Border Style="{StaticResource AppleGroupCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="工程设置" />
+                    <DockPanel Style="{StaticResource AppleRow}">
+                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="自动保存" />
+                        <CheckBox Style="{StaticResource AppleToggle}" DockPanel.Dock="Right" IsChecked="{Binding AutoSave}" />
+                    </DockPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <DockPanel Style="{StaticResource AppleRow}">
+                        <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="保存间隔" />
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SaveInterval, UpdateSourceTrigger=PropertyChanged}" Width="70" />
+                            <TextBlock Style="{StaticResource AppleUnit}" Text="秒" />
+                        </StackPanel>
+                    </DockPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="14,10,14,6" Text="界面语言" />
+                    <ListBox ItemsSource="{Binding Languages}" SelectedItem="{Binding Language}"
+                             Style="{StaticResource ApplePillList}" Margin="10,0,10,12" />
+                </StackPanel>
+            </Border>
+
+            <!-- 操作 -->
+            <Border Style="{StaticResource AppleGroupCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="操作" />
+                    <DockPanel Style="{StaticResource AppleRow}" LastChildFill="True">
+                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                            <Button Style="{StaticResource AppleBtnSecondary}" Content="新建" Command="{Binding NewCmd}" />
+                            <Button Style="{StaticResource AppleBtnSecondary}" Content="打开" Command="{Binding OpenCmd}" />
+                            <Button Style="{StaticResource AppleBtn}" Content="保存" Command="{Binding SaveCmd}" />
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource AppleSubLabel}" DockPanel.Dock="Right" VerticalAlignment="Center"
+                                   Text="{Binding Status}" Foreground="{StaticResource AccentBrush}" />
+                    </DockPanel>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
