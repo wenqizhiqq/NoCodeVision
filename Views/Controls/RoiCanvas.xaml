@@ -1,0 +1,57 @@
+<UserControl x:Class="NoCodeVision.Views.Controls.RoiCanvas"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             Background="Transparent">
+    <Grid>
+        <!-- 占位图像/视频底图 -->
+        <Border x:Name="ImageBackground"
+                Background="#E5E5EA"
+                CornerRadius="12"
+                ClipToBounds="True">
+            <Grid>
+                <TextBlock x:Name="PlaceholderText"
+                           Text="📷 图像预览\n拖拽绘制 ROI"
+                           TextAlignment="Center"
+                           Foreground="#8E8E93"
+                           FontSize="14"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+                <Image x:Name="PreviewImage"
+                       Stretch="Uniform"
+                       Visibility="Collapsed"/>
+            </Grid>
+        </Border>
+
+        <!-- ROI 绘制层 -->
+        <Canvas x:Name="RoiLayer"
+                Background="Transparent"
+                Cursor="Cross"
+                MouseLeftButtonDown="OnMouseDown"
+                MouseMove="OnMouseMove"
+                MouseLeftButtonUp="OnMouseUp">
+            <Rectangle x:Name="RoiRect"
+                       Fill="#34C759"
+                       Opacity="0.18"
+                       Stroke="#34C759"
+                       StrokeThickness="2"
+                       RadiusX="4"
+                       RadiusY="4"
+                       Visibility="Collapsed"/>
+            <!-- 四个角点 -->
+            <Rectangle x:Name="HandleTL" Width="8" Height="8" Fill="White" Stroke="#34C759" StrokeThickness="2" RadiusX="2" RadiusY="2" Visibility="Collapsed"/>
+            <Rectangle x:Name="HandleTR" Width="8" Height="8" Fill="White" Stroke="#34C759" StrokeThickness="2" RadiusX="2" RadiusY="2" Visibility="Collapsed"/>
+            <Rectangle x:Name="HandleBL" Width="8" Height="8" Fill="White" Stroke="#34C759" StrokeThickness="2" RadiusX="2" RadiusY="2" Visibility="Collapsed"/>
+            <Rectangle x:Name="HandleBR" Width="8" Height="8" Fill="White" Stroke="#34C759" StrokeThickness="2" RadiusX="2" RadiusY="2" Visibility="Collapsed"/>
+        </Canvas>
+
+        <!-- 坐标浮层 -->
+        <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8"
+                Background="#000000" Opacity="0.72" CornerRadius="8" Padding="8,4"
+                Visibility="Collapsed" x:Name="CoordTip">
+            <TextBlock x:Name="CoordText" Foreground="White" FontSize="11" FontFamily="Consolas"/>
+        </Border>
+    </Grid>
+</UserControl>

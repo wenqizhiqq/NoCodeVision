@@ -91,11 +91,42 @@ public class VisionFlowStep : ViewModelBase
     public string ImageSource { get => _imageSource; set => SetField(ref _imageSource, value); }
     private string _imageSource = "";
 
+    public string TemplateFile { get => _templateFile; set => SetField(ref _templateFile, value); }
+    private string _templateFile = "";
+
+    public double RoiX { get => _roiX; set => SetField(ref _roiX, value); }
+    private double _roiX = 10;
+
+    public double RoiY { get => _roiY; set => SetField(ref _roiY, value); }
+    private double _roiY = 10;
+
+    public double RoiW { get => _roiW; set => SetField(ref _roiW, value); }
+    private double _roiW = 120;
+
+    public double RoiH { get => _roiH; set => SetField(ref _roiH, value); }
+    private double _roiH = 80;
+
+    public double ScoreThreshold { get => _scoreThreshold; set => SetField(ref _scoreThreshold, value); }
+    private double _scoreThreshold = 0.85;
+
     public string LuaScript { get => _luaScript; set => SetField(ref _luaScript, value); }
     private string _luaScript = "";
 
     public string Parameters { get => _parameters; set => SetField(ref _parameters, value); }
     private string _parameters = "";
+
+    public string AiHint
+    {
+        get => _aiHint;
+        set
+        {
+            if (SetField(ref _aiHint, value))
+                OnPropertyChanged(nameof(HasAiHint));
+        }
+    }
+    private string _aiHint = "";
+
+    public bool HasAiHint => !string.IsNullOrWhiteSpace(_aiHint);
 }
 
 public class VisionFlow
@@ -423,7 +454,7 @@ public class FlowViewModel : ViewModelBase
             Steps = new ObservableCollection<VisionFlowStep>
             {
                 new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集左视野", ParamSummary = "Camera_0 / Mono8", Timeout = 5000, CostMs = 12.3, ActualValue = "OK", Icon = "📷", StepType = "ImageCapture", ImageSource = "Camera_0" },
-                new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "定位基准", ParamSummary = "tpl_A / score≥0.85", Timeout = 3000, CostMs = 8.7, ActualValue = "(120,88)", Icon = "🎯", StepType = "TemplateMatch", ImageSource = "tpl_A.png" },
+                new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "定位基准", ParamSummary = "tpl_A / score≥0.85", Timeout = 3000, CostMs = 8.7, ActualValue = "(120,88)", Icon = "🎯", StepType = "TemplateMatch", ImageSource = "tpl_A.png", TemplateFile = "tpl_A.png", RoiX=80, RoiY=60, RoiW=160, RoiH=120, ScoreThreshold=0.85 },
                 new VisionFlowStep { Index = 3, Function = "几何测量", Name = "测量孔径", ParamSummary = "圆径 / 12.00±0.05", Timeout = 2000, CostMs = 5.4, ActualValue = "12.03", Icon = "📐", StepType = "Measure" },
                 new VisionFlowStep { Index = 4, Function = "逻辑判断", Name = "判定合格", ParamSummary = "孔径 OK", Timeout = 1000, CostMs = 0.2, ActualValue = "Pass", Icon = "✅", StepType = "Logic" },
                 new VisionFlowStep { Index = 5, Function = "结果输出", Name = "输出结果", ParamSummary = "PLC_D200=1", Timeout = 1000, CostMs = 0.5, ActualValue = "Done", Icon = "📤", StepType = "Output" },
@@ -435,7 +466,7 @@ public class FlowViewModel : ViewModelBase
             Steps = new ObservableCollection<VisionFlowStep>
             {
                 new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集顶视野", ParamSummary = "Camera_2 / RGB8", Timeout = 5000, CostMs = 15.1, ActualValue = "OK", Icon = "📷", StepType = "ImageCapture", ImageSource = "Camera_2" },
-                new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "找中心点", ParamSummary = "tpl_center / score≥0.80", Timeout = 3000, CostMs = 9.2, ActualValue = "(512,384)", Icon = "🎯", StepType = "TemplateMatch", ImageSource = "tpl_center.png" },
+                new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "找中心点", ParamSummary = "tpl_center / score≥0.80", Timeout = 3000, CostMs = 9.2, ActualValue = "(512,384)", Icon = "🎯", StepType = "TemplateMatch", ImageSource = "tpl_center.png", TemplateFile = "tpl_center.png", RoiX=200, RoiY=150, RoiW=180, RoiH=140, ScoreThreshold=0.80 },
             }
         },
         new VisionFlow
@@ -476,6 +507,9 @@ public class FlowViewModel : ViewModelBase
     public ICommand SetPropTabCmd { get; }
     public ICommand RunCmd { get; }
     public ICommand ClearCmd { get; }
+    public ICommand AskAiCmd { get; }
+    public ICommand RunLuaCmd { get; }
+    public ICommand DebugLuaCmd { get; }
 
     public FlowViewModel()
     {
@@ -522,7 +556,8 @@ public class FlowViewModel : ViewModelBase
                 CostMs = 0,
                 ActualValue = "-",
                 Icon = icon,
-                StepType = type
+                StepType = type,
+                LuaScript = type == "Lua" ? "-- 在下方编写 Lua 脚本\nlocal score = vision.match(\"tpl_A.png\")\nif score >= 0.85 then\n    plc.write(200, 1)\nend" : ""
             };
             _selectedFlow.Steps.Add(step);
             Reindex(_selectedFlow);
@@ -566,6 +601,25 @@ public class FlowViewModel : ViewModelBase
                 Status = "已清空";
             }
         }, _ => _selectedFlow != null && _selectedFlow.Steps.Count > 0);
+
+        AskAiCmd = new RelayCommand(_ =>
+        {
+            if (_selectedStep == null) return;
+            _selectedStep.AiHint = $"💡 AI 提示：当前是「{_selectedStep.Function}」步骤。可尝试：\n1. 使用 vision.match(...) 获取匹配分数\n2. 用 if score >= threshold then 做分支判断\n3. 调用 plc.write(addr, value) 输出结果";
+            _selectedStep.LuaScript += string.IsNullOrWhiteSpace(_selectedStep.LuaScript) ? "-- 已插入 AI 建议\n" : "\n-- 已插入 AI 建议\n";
+        }, _ => _selectedStep != null && _selectedStep.StepType == "Lua");
+
+        RunLuaCmd = new RelayCommand(_ =>
+        {
+            if (_selectedStep == null) return;
+            Status = $"Lua 运行 · {_selectedStep.Name} · {DateTime.Now:HH:mm:ss}";
+        }, _ => _selectedStep != null && _selectedStep.StepType == "Lua");
+
+        DebugLuaCmd = new RelayCommand(_ =>
+        {
+            if (_selectedStep == null) return;
+            Status = $"Lua 调试 · {_selectedStep.Name} · 断点待命中 · {DateTime.Now:HH:mm:ss}";
+        }, _ => _selectedStep != null && _selectedStep.StepType == "Lua");
     }
 
     private static void Reindex(VisionFlow flow)
