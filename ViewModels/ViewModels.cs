@@ -137,6 +137,22 @@ public class VisionFlowStep : ViewModelBase
 
     public double ContourBlur { get => _contourBlur; set => SetField(ref _contourBlur, value); }
     private double _contourBlur = 1.0;
+    public int PyramidLevel { get => _pyramidLevel; set => SetField(ref _pyramidLevel, value); }
+    private int _pyramidLevel = 3;
+    public double AngleStart { get => _angleStart; set => SetField(ref _angleStart, value); }
+    private double _angleStart = -180.0;
+    public double AngleStop { get => _angleStop; set => SetField(ref _angleStop, value); }
+    private double _angleStop = 180.0;
+    public double AngleStep { get => _angleStep; set => SetField(ref _angleStep, value); }
+    private double _angleStep = 1.0;
+    public double Overlap { get => _overlap; set => SetField(ref _overlap, value); }
+    private double _overlap = 0.3;
+    public int TopN { get => _topN; set => SetField(ref _topN, value); }
+    private int _topN = 200;
+    public int DenseMode { get => _denseMode; set => SetField(ref _denseMode, value); }
+    private int _denseMode = 0;
+    public double ScaleRange { get => _scaleRange; set => SetField(ref _scaleRange, value); }
+    private double _scaleRange = 0.0;
 
     public string LuaScript { get => _luaScript; set => SetField(ref _luaScript, value); }
     private string _luaScript = "";
@@ -575,9 +591,116 @@ public class FlowViewModel : ViewModelBase
             if (SetField(ref _selectedStep, value))
             {
                 _matchOverlays.Clear();
-                LoadTemplatePreview(value);
+                if (_subscribedStep != null)
+                {
+                    _subscribedStep.PropertyChanged -= SelectedStep_PropertyChanged;
+                    _subscribedStep = null;
+                }
+                if (_selectedStep != null)
+                {
+                    _selectedStep.PropertyChanged += SelectedStep_PropertyChanged;
+                    _subscribedStep = _selectedStep;
+                    LoadTemplatePreview(value);
+                    if (_selectedStep.MatchMode == MatchModes[1]) ScheduleTemplateContourRefresh();
+                    else TemplateContourOverlay = null;
+                }
+                else
+                {
+                    TemplateContourOverlay = null;
+                }
             }
         }
+    }
+
+    private VisionFlowStep? _subscribedStep;
+    private DispatcherTimer? _contourTimer;
+
+    private void SelectedStep_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(VisionFlowStep.MatchMode)
+            or nameof(VisionFlowStep.ContourThreshold)
+            or nameof(VisionFlowStep.ContourBlur)
+            or nameof(VisionFlowStep.ScaleRange))
+        {
+            if (_selectedStep?.MatchMode == MatchModes[1]) ScheduleTemplateContourRefresh();
+            else TemplateContourOverlay = null;
+        }
+    }
+
+    private void ScheduleTemplateContourRefresh()
+    {
+        if (_contourTimer == null)
+        {
+            _contourTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(900) };
+            _contourTimer.Tick += (_, _) => { _contourTimer.Stop(); RefreshTemplateContour(); };
+        }
+        _contourTimer.Stop();
+        _contourTimer.Start();
+    }
+
+    private void RefreshTemplateContour()
+    {
+        var step = _selectedStep;
+        if (step == null || step.MatchMode != MatchModes[1])
+        {
+            TemplateContourOverlay = null;
+            return;
+        }
+        try
+        {
+            using var m = new RotatedTemplateMatcher();
+            m.UseContour = true;
+            m.ContourThreshold = step.ContourThreshold;
+            m.ContourBlur = step.ContourBlur;
+            m.ScaleRange = step.ScaleRange;
+            bool ok = false;
+            if (!string.IsNullOrWhiteSpace(step.TemplateFile) && File.Exists(step.TemplateFile))
+            {
+                using var tpl = Cv2.ImRead(step.TemplateFile, ImreadModes.Grayscale);
+                if (tpl != null && !tpl.Empty()) { m.SetTemplate(tpl); ok = true; }
+            }
+            if (!ok) ok = LoadContourFromSourceRoi(m, step);
+            if (!ok) { TemplateContourOverlay = null; return; }
+            m.RecomputeContours();
+            var mask = m.TemplateContourMask;
+            int w = m.TemplateContourW, h = m.TemplateContourH;
+            if (mask == null || w <= 0 || h <= 0) { TemplateContourOverlay = null; return; }
+            var bmp = new WriteableBitmap(w, h, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null);
+            int stride = w * 4;
+            var pixels = new byte[h * stride];
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                    if (mask[y * w + x] != 0)
+                    {
+                        int i = y * stride + x * 4;
+                        pixels[i] = 89;
+                        pixels[i + 1] = 199;
+                        pixels[i + 2] = 52;
+                        pixels[i + 3] = 255;
+                    }
+            bmp.WritePixels(new System.Windows.Int32Rect(0, 0, w, h), pixels, stride, 0);
+            bmp.Freeze();
+            TemplateContourOverlay = bmp;
+        }
+        catch
+        {
+            TemplateContourOverlay = null;
+        }
+    }
+
+    private bool LoadContourFromSourceRoi(RotatedTemplateMatcher m, VisionFlowStep step)
+    {
+        string? src = (!string.IsNullOrWhiteSpace(_currentImagePath) && File.Exists(_currentImagePath)) ? _currentImagePath
+            : (!string.IsNullOrWhiteSpace(step.ImageSource) && File.Exists(step.ImageSource) ? step.ImageSource : null);
+        if (src == null) return false;
+        try
+        {
+            m.LoadSource(src);
+            var roi = new Rect((int)step.RoiX, (int)step.RoiY, Math.Max(4, (int)step.RoiW), Math.Max(4, (int)step.RoiH));
+            m.SetTemplateFromRoi(roi);
+            return true;
+        }
+        catch { return false; }
     }
 
     private string _newStepFunction = "模板匹配";
@@ -610,6 +733,9 @@ public class FlowViewModel : ViewModelBase
 
     private BitmapImage? _templatePreviewSource;
     public BitmapImage? TemplatePreviewSource { get => _templatePreviewSource; set => SetField(ref _templatePreviewSource, value); }
+
+    private BitmapSource? _templateContourOverlay;
+    public BitmapSource? TemplateContourOverlay { get => _templateContourOverlay; set => SetField(ref _templateContourOverlay, value); }
 
     private string _templatePreviewInfo = "尚未确定模板";
     public string TemplatePreviewInfo { get => _templatePreviewInfo; set => SetField(ref _templatePreviewInfo, value); }
@@ -839,7 +965,9 @@ public class FlowViewModel : ViewModelBase
                 matcher.SetTemplateFromRoi(roi);
                 var sw = Stopwatch.StartNew();
                 // 与 GrayMatch.Wpf 一致：全角度范围 -180..180，步长 1，金字塔 3 层，topN 提高以画出所有匹配
-                var results = matcher.Match(3, -180.0, 180.0, 1.0, _selectedStep.ScoreThreshold, 0.3, 50, 0);
+                matcher.ScaleRange = _selectedStep.ScaleRange;
+                var results = matcher.Match(_selectedStep.PyramidLevel, _selectedStep.AngleStart, _selectedStep.AngleStop,
+                    _selectedStep.AngleStep, _selectedStep.ScoreThreshold, _selectedStep.Overlap, _selectedStep.TopN, _selectedStep.DenseMode);
                 sw.Stop();
                 _selectedStep.CostMs = sw.Elapsed.TotalMilliseconds;
                 if (results.Count > 0)
@@ -1192,7 +1320,9 @@ public class FlowViewModel : ViewModelBase
                         }
                         var roi = new Rect((int)step.RoiX, (int)step.RoiY, Math.Max(4, (int)step.RoiW), Math.Max(4, (int)step.RoiH));
                         matcher.SetTemplateFromRoi(roi);
-                        var results = matcher.Match(3, 0.0, 360.0, 1.0, step.ScoreThreshold, 0.3, 10, 0);
+                        matcher.ScaleRange = step.ScaleRange;
+                        var results = matcher.Match(step.PyramidLevel, step.AngleStart, step.AngleStop, step.AngleStep,
+                            step.ScoreThreshold, step.Overlap, step.TopN, step.DenseMode);
                         if (results.Count > 0)
                         {
                             var r = results[0];

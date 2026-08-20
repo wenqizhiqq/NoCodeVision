@@ -257,18 +257,32 @@
                         <Border Style="{StaticResource AppleGroupCard}" Padding="12" Margin="16,0,16,8">
                             <StackPanel Orientation="Horizontal">
                                 <Border Width="140" Height="150" Background="{StaticResource PreviewBgBrush}" CornerRadius="10">
-                                    <Image Source="{Binding TemplatePreviewSource}" Width="140" Height="150" Stretch="Uniform">
-                                        <Image.Style>
-                                            <Style TargetType="Image">
-                                                <Setter Property="Visibility" Value="Visible" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding TemplatePreviewSource}" Value="{x:Null}">
-                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Image.Style>
-                                    </Image>
+                                    <Grid>
+                                        <Image Source="{Binding TemplatePreviewSource}" Width="140" Height="150" Stretch="Uniform">
+                                            <Image.Style>
+                                                <Style TargetType="Image">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding TemplatePreviewSource}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Image.Style>
+                                        </Image>
+                                        <Image Source="{Binding TemplateContourOverlay}" Width="140" Height="150" Stretch="Uniform" IsHitTestVisible="False">
+                                            <Image.Style>
+                                                <Style TargetType="Image">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding TemplateContourOverlay}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Image.Style>
+                                        </Image>
+                                    </Grid>
                                 </Border>
                                 <StackPanel Margin="14,0,0,0" VerticalAlignment="Center" MinWidth="120">
                                     <TextBlock Style="{StaticResource AppleLabel}" Text="{Binding TemplatePreviewInfo, FallbackValue='尚未确定模板'}" TextWrapping="Wrap" />
@@ -307,6 +321,51 @@
                             </StackPanel>
                         </Border>
                         <Rectangle Style="{StaticResource AppleDivider}" />
+                        <Grid Margin="16,6,16,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <DockPanel Grid.Row="0" Grid.Column="0" Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="金字塔层数" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.PyramidLevel, FallbackValue=3}" Width="64" HorizontalAlignment="Right" />
+                            </DockPanel>
+                            <DockPanel Grid.Row="0" Grid.Column="2" Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="角度起始" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.AngleStart, FallbackValue=-180}" Width="64" HorizontalAlignment="Right" />
+                            </DockPanel>
+                            <DockPanel Grid.Row="1" Grid.Column="0" Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="角度结束" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.AngleStop, FallbackValue=180}" Width="64" HorizontalAlignment="Right" />
+                            </DockPanel>
+                            <DockPanel Grid.Row="1" Grid.Column="2" Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="角度步长" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.AngleStep, FallbackValue=1}" Width="64" HorizontalAlignment="Right" />
+                            </DockPanel>
+                            <DockPanel Grid.Row="2" Grid.Column="0" Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="重叠率" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Overlap, FallbackValue=0.3}" Width="64" HorizontalAlignment="Right" />
+                            </DockPanel>
+                            <DockPanel Grid.Row="2" Grid.Column="2" Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="最大匹配数" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.TopN, FallbackValue=200}" Width="64" HorizontalAlignment="Right" />
+                            </DockPanel>
+                            <DockPanel Grid.Row="3" Grid.Column="0" Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="密集模式" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.DenseMode, FallbackValue=0}" Width="64" HorizontalAlignment="Right" />
+                            </DockPanel>
+                            <DockPanel Grid.Row="3" Grid.Column="2" Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="尺度范围" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ScaleRange, FallbackValue=0}" Width="64" HorizontalAlignment="Right" />
+                            </DockPanel>
+                        </Grid>
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="匹配阈值" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ScoreThreshold, FallbackValue=0.85}" Width="80" />
