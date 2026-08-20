@@ -7,20 +7,24 @@
 
     <Border Background="{StaticResource PreviewBgBrush}" CornerRadius="12" ClipToBounds="True">
         <Grid x:Name="Root">
-            <Image x:Name="Img" Stretch="Uniform" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
-
-            <!-- 叠加层：匹配框 / 缺陷框 / ROI -->
-            <Canvas x:Name="Layer">
-                <Rectangle x:Name="RoiRect" Stroke="#007AFF" StrokeThickness="2" Fill="#007AFF22"
-                           Visibility="Collapsed" RadiusX="2" RadiusY="2" />
-                <Rectangle x:Name="Htl" Width="9" Height="9" Fill="White" Stroke="#007AFF" StrokeThickness="2" Visibility="Collapsed" RadiusX="2" RadiusY="2" />
-                <Rectangle x:Name="Htr" Width="9" Height="9" Fill="White" Stroke="#007AFF" StrokeThickness="2" Visibility="Collapsed" RadiusX="2" RadiusY="2" />
-                <Rectangle x:Name="Hbl" Width="9" Height="9" Fill="White" Stroke="#007AFF" StrokeThickness="2" Visibility="Collapsed" RadiusX="2" RadiusY="2" />
-                <Rectangle x:Name="Hbr" Width="9" Height="9" Fill="White" Stroke="#007AFF" StrokeThickness="2" Visibility="Collapsed" RadiusX="2" RadiusY="2" />
+            <!-- 像素画布：尺寸 = 图像像素尺寸；整体用 LayoutTransform 缩放以适配显示区。
+                 图像、ROI、叠加框都在此坐标系（图像像素）绘制，缩放由 LayoutTransform 统一处理，彻底消除 letterbox 偏移。 -->
+            <Canvas x:Name="PixelCanvas" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Background="Transparent"
+                    MouseDown="OnMouseDown" MouseMove="OnMouseMove" MouseLeftButtonUp="OnMouseUp">
+                <Canvas.LayoutTransform>
+                    <ScaleTransform x:Name="PixelScale" ScaleX="1" ScaleY="1" />
+                </Canvas.LayoutTransform>
+                <Image x:Name="Img" Stretch="None" />
+                <Canvas x:Name="Layer" IsHitTestVisible="False">
+                    <Rectangle x:Name="RoiRect" Stroke="#007AFF" StrokeThickness="2" Fill="#007AFF22"
+                               Visibility="Collapsed" RadiusX="2" RadiusY="2" />
+                    <Rectangle x:Name="Htl" Width="9" Height="9" Fill="White" Stroke="#007AFF" StrokeThickness="2" Visibility="Collapsed" RadiusX="2" RadiusY="2" />
+                    <Rectangle x:Name="Htr" Width="9" Height="9" Fill="White" Stroke="#007AFF" StrokeThickness="2" Visibility="Collapsed" RadiusX="2" RadiusY="2" />
+                    <Rectangle x:Name="Hbl" Width="9" Height="9" Fill="White" Stroke="#007AFF" StrokeThickness="2" Visibility="Collapsed" RadiusX="2" RadiusY="2" />
+                    <Rectangle x:Name="Hbr" Width="9" Height="9" Fill="White" Stroke="#007AFF" StrokeThickness="2" Visibility="Collapsed" RadiusX="2" RadiusY="2" />
+                </Canvas>
             </Canvas>
-
-            <!-- 交互层（透明，捕获鼠标绘制 ROI） -->
-            <Canvas x:Name="Overlay" Background="Transparent" MouseDown="OnMouseDown" MouseMove="OnMouseMove" MouseUp="OnMouseUp" />
 
             <!-- ROI 坐标提示 -->
             <Border x:Name="RoiTip" Background="#1C1C22" CornerRadius="6" Padding="8,4" Visibility="Collapsed" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8">

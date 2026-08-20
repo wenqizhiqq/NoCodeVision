@@ -838,26 +838,30 @@ public class FlowViewModel : ViewModelBase
                 var roi = new Rect((int)_selectedStep.RoiX, (int)_selectedStep.RoiY, Math.Max(4, (int)_selectedStep.RoiW), Math.Max(4, (int)_selectedStep.RoiH));
                 matcher.SetTemplateFromRoi(roi);
                 var sw = Stopwatch.StartNew();
-                // 模板较小（111×138 量级），金字塔 3 层会把模板压到约 13×17，容易丢特征；先用 1 层保证召回
-                var results = matcher.Match(1, 0.0, 360.0, 1.0, _selectedStep.ScoreThreshold, 0.3, 10, 0);
+                // 与 GrayMatch.Wpf 一致：全角度范围 -180..180，步长 1，金字塔 3 层，topN 提高以画出所有匹配
+                var results = matcher.Match(3, -180.0, 180.0, 1.0, _selectedStep.ScoreThreshold, 0.3, 50, 0);
                 sw.Stop();
                 _selectedStep.CostMs = sw.Elapsed.TotalMilliseconds;
                 if (results.Count > 0)
                 {
-                    var r = results[0];
-                    _matchOverlays.Add(new OverlayItem
+                    // 画出全部匹配结果（模板可能在图中出现多次）
+                    foreach (var r in results)
                     {
-                        X = r.CenterX,
-                        Y = r.CenterY,
-                        // TemplateWidth/Height 已由原生端乘以 mapFactor（=Scale），此处不可再乘，否则框被放大 mapFactor² 倍
-                        W = r.TemplateWidth,
-                        H = r.TemplateHeight,
-                        // 与 VisionMotion 已验证路径一致：原生角度取负
-                        AngleDeg = -r.Angle,
-                        Color = "#007AFF",
-                        Label = $"score {r.Score:F2}  {_selectedStep.CostMs:F0}ms"
-                    });
-                    _selectedStep.ActualValue = $"({r.CenterX:F1},{r.CenterY:F1}) θ{r.Angle:F1} score{r.Score:F2} 耗时{_selectedStep.CostMs:F1}ms";
+                        _matchOverlays.Add(new OverlayItem
+                        {
+                            X = r.CenterX,
+                            Y = r.CenterY,
+                            // TemplateWidth/Height 已由原生端乘以 mapFactor（=Scale），此处不可再乘，否则框被放大 mapFactor² 倍
+                            W = r.TemplateWidth,
+                            H = r.TemplateHeight,
+                            // 与 VisionMotion/GrayMatch 已验证路径一致：原生角度取负
+                            AngleDeg = -r.Angle,
+                            Color = "#007AFF",
+                            Label = $"score {r.Score:F2}  {_selectedStep.CostMs:F0}ms"
+                        });
+                    }
+                    var r0 = results[0];
+                    _selectedStep.ActualValue = $"结果 {results.Count} 个 · 首结果({r0.CenterX:F1},{r0.CenterY:F1}) θ{r0.Angle:F1} score{r0.Score:F2} 耗时{_selectedStep.CostMs:F1}ms";
                     _selectedStep.StatusText = $"匹配成功 · 结果数 {results.Count} · 耗时{_selectedStep.CostMs:F1}ms";
                 }
                 else
