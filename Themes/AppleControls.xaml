@@ -299,6 +299,17 @@
         </Setter>
     </Style>
 
+    <!-- ===== 复选框（带文字标签，Apple 风格） ===== -->
+    <Style x:Key="AppleCheckBox" TargetType="CheckBox">
+        <Setter Property="FontFamily" Value="{StaticResource AppleFont}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Margin" Value="0,2,0,2" />
+    </Style>
+
     <!-- ===== 调试终端 ===== -->
     <Style x:Key="AppleTerminal" TargetType="ListBox">
         <Setter Property="Background" Value="#FAFAFC" />

@@ -4,9 +4,12 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:ctrl="clr-namespace:NoCodeVision.Views.Controls"
+             xmlns:local="clr-namespace:NoCodeVision"
              mc:Ignorable="d">
 
     <UserControl.Resources>
+        <local:IntToBoolConverter x:Key="IntToBoolConverter" />
+
         <DataTemplate x:Key="FlowItemTemplate">
             <DockPanel LastChildFill="True" Margin="0,2,0,2">
                 <ctrl:AppleIconTile Glyph="{Binding Icon}" TileSize="28" Margin="0,0,10,0" VerticalAlignment="Center" />
@@ -295,7 +298,7 @@
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="130"
                                       ItemsSource="{Binding MatchModes}" SelectedItem="{Binding SelectedStep.MatchMode, FallbackValue='灰度匹配'}" />
                         </DockPanel>
-                        <!-- 轮廓匹配参数：仅轮廓匹配时显示 -->
+                        <!-- 轮廓匹配参数：仅轮廓匹配时显示（滑块 + 输入框） -->
                         <Border>
                             <Border.Style>
                                 <Style TargetType="Border">
@@ -309,67 +312,143 @@
                             </Border.Style>
                             <StackPanel>
                                 <Rectangle Style="{StaticResource AppleDivider}" />
-                                <DockPanel Style="{StaticResource AppleRow}">
-                                    <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="轮廓阈值(1-254)" />
-                                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ContourThreshold, FallbackValue=30}" Width="80" />
-                                </DockPanel>
+                                <Grid Margin="16,4,16,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="60" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="轮廓阈值(1-254)" VerticalAlignment="Center" />
+                                    <Slider Grid.Column="1" Minimum="1" Maximum="254" TickFrequency="1" IsSnapToTickEnabled="True"
+                                            Value="{Binding SelectedStep.ContourThreshold}" VerticalAlignment="Center" Margin="8,0" />
+                                    <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ContourThreshold, FallbackValue=30}" />
+                                </Grid>
                                 <Rectangle Style="{StaticResource AppleDivider}" />
-                                <DockPanel Style="{StaticResource AppleRow}">
-                                    <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="轮廓模糊(0-12)" />
-                                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ContourBlur, FallbackValue=1.0}" Width="80" />
-                                </DockPanel>
+                                <Grid Margin="16,4,16,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="60" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="轮廓模糊(0-12)" VerticalAlignment="Center" />
+                                    <Slider Grid.Column="1" Minimum="0" Maximum="12" TickFrequency="0.5" IsSnapToTickEnabled="True"
+                                            Value="{Binding SelectedStep.ContourBlur}" VerticalAlignment="Center" Margin="8,0" />
+                                    <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ContourBlur, FallbackValue=1.0, StringFormat={}{0:0.##}}" />
+                                </Grid>
                             </StackPanel>
                         </Border>
                         <Rectangle Style="{StaticResource AppleDivider}" />
-                        <Grid Margin="16,6,16,4">
+                        <Grid Margin="16,4,16,4">
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100" />
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="12" />
-                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="60" />
                             </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <DockPanel Grid.Row="0" Grid.Column="0" Style="{StaticResource AppleRow}">
-                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="金字塔层数" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.PyramidLevel, FallbackValue=3}" Width="64" HorizontalAlignment="Right" />
-                            </DockPanel>
-                            <DockPanel Grid.Row="0" Grid.Column="2" Style="{StaticResource AppleRow}">
-                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="角度起始" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.AngleStart, FallbackValue=-180}" Width="64" HorizontalAlignment="Right" />
-                            </DockPanel>
-                            <DockPanel Grid.Row="1" Grid.Column="0" Style="{StaticResource AppleRow}">
-                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="角度结束" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.AngleStop, FallbackValue=180}" Width="64" HorizontalAlignment="Right" />
-                            </DockPanel>
-                            <DockPanel Grid.Row="1" Grid.Column="2" Style="{StaticResource AppleRow}">
-                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="角度步长" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.AngleStep, FallbackValue=1}" Width="64" HorizontalAlignment="Right" />
-                            </DockPanel>
-                            <DockPanel Grid.Row="2" Grid.Column="0" Style="{StaticResource AppleRow}">
-                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="重叠率" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Overlap, FallbackValue=0.3}" Width="64" HorizontalAlignment="Right" />
-                            </DockPanel>
-                            <DockPanel Grid.Row="2" Grid.Column="2" Style="{StaticResource AppleRow}">
-                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="最大匹配数" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.TopN, FallbackValue=200}" Width="64" HorizontalAlignment="Right" />
-                            </DockPanel>
-                            <DockPanel Grid.Row="3" Grid.Column="0" Style="{StaticResource AppleRow}">
-                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="密集模式" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.DenseMode, FallbackValue=0}" Width="64" HorizontalAlignment="Right" />
-                            </DockPanel>
-                            <DockPanel Grid.Row="3" Grid.Column="2" Style="{StaticResource AppleRow}">
-                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="尺度范围" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ScaleRange, FallbackValue=0}" Width="64" HorizontalAlignment="Right" />
-                            </DockPanel>
+                            <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="金字塔层数" VerticalAlignment="Center" />
+                            <Slider Grid.Column="1" Minimum="0" Maximum="6" TickFrequency="1" IsSnapToTickEnabled="True"
+                                    Value="{Binding SelectedStep.PyramidLevel}" VerticalAlignment="Center" Margin="8,0" />
+                            <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.PyramidLevel, FallbackValue=3}" />
                         </Grid>
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="匹配阈值" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ScoreThreshold, FallbackValue=0.85}" Width="80" />
-                        </DockPanel>
+                        <Grid Margin="16,4,16,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="60" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="角度起始" VerticalAlignment="Center" />
+                            <Slider Grid.Column="1" Minimum="-180" Maximum="180" TickFrequency="1" IsSnapToTickEnabled="True"
+                                    Value="{Binding SelectedStep.AngleStart}" VerticalAlignment="Center" Margin="8,0" />
+                            <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.AngleStart, FallbackValue=-180}" />
+                        </Grid>
+                        <Grid Margin="16,4,16,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="60" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="角度结束" VerticalAlignment="Center" />
+                            <Slider Grid.Column="1" Minimum="-180" Maximum="180" TickFrequency="1" IsSnapToTickEnabled="True"
+                                    Value="{Binding SelectedStep.AngleStop}" VerticalAlignment="Center" Margin="8,0" />
+                            <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.AngleStop, FallbackValue=180}" />
+                        </Grid>
+                        <Grid Margin="16,4,16,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="60" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="角度步长" VerticalAlignment="Center" />
+                            <Slider Grid.Column="1" Minimum="0.5" Maximum="10" TickFrequency="0.5" IsSnapToTickEnabled="True"
+                                    Value="{Binding SelectedStep.AngleStep}" VerticalAlignment="Center" Margin="8,0" />
+                            <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.AngleStep, FallbackValue=1, StringFormat={}{0:0.##}}" />
+                        </Grid>
+                        <Grid Margin="16,4,16,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="60" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="重叠率" VerticalAlignment="Center" />
+                            <Slider Grid.Column="1" Minimum="0" Maximum="1" TickFrequency="0.05" IsSnapToTickEnabled="True"
+                                    Value="{Binding SelectedStep.Overlap}" VerticalAlignment="Center" Margin="8,0" />
+                            <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Overlap, FallbackValue=0.3, StringFormat={}{0:0.##}}" />
+                        </Grid>
+                        <Grid Margin="16,4,16,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="60" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="最大匹配数" VerticalAlignment="Center" />
+                            <Slider Grid.Column="1" Minimum="1" Maximum="500" TickFrequency="1" IsSnapToTickEnabled="True"
+                                    Value="{Binding SelectedStep.TopN}" VerticalAlignment="Center" Margin="8,0" />
+                            <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.TopN, FallbackValue=200}" />
+                        </Grid>
+                        <Grid Margin="16,4,16,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="60" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Grid.ColumnSpan="3" Orientation="Vertical" Margin="8,0">
+                                <CheckBox Content="密集阵列（密集模式）"
+                                          IsChecked="{Binding SelectedStep.DenseMode, Converter={StaticResource IntToBoolConverter}}"
+                                          Style="{StaticResource AppleCheckBox}">
+                                    <CheckBox.ToolTip>
+                                        <TextBlock LineHeight="18">
+                                            勾选=密集阵列（全检出，较慢，适合规则阵列/密集图）<LineBreak />
+                                            不勾选=稀疏阵列（快速，默认）
+                                        </TextBlock>
+                                    </CheckBox.ToolTip>
+                                </CheckBox>
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Margin="22,2,0,0" FontSize="11"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           Text="默认不勾选=稀疏阵列(快速)；规则阵列/密集图才勾选=密集阵列(全检出,较慢)" />
+                            </StackPanel>
+                        </Grid>
+                        <Grid Margin="16,4,16,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="60" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="尺度范围" VerticalAlignment="Center" />
+                            <Slider Grid.Column="1" Minimum="0" Maximum="0.6" TickFrequency="0.05" IsSnapToTickEnabled="True"
+                                    Value="{Binding SelectedStep.ScaleRange}" VerticalAlignment="Center" Margin="8,0" />
+                            <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ScaleRange, FallbackValue=0, StringFormat={}{0:0.##}}" />
+                        </Grid>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <Grid Margin="16,4,16,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="60" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="相似度阈值" VerticalAlignment="Center" />
+                            <Slider Grid.Column="1" Minimum="0.3" Maximum="1" TickFrequency="0.01" IsSnapToTickEnabled="True"
+                                    Value="{Binding SelectedStep.ScoreThreshold}" VerticalAlignment="Center" Margin="8,0" />
+                            <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ScoreThreshold, FallbackValue=0.85, StringFormat={}{0:0.##}}" />
+                        </Grid>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="模板文件" />

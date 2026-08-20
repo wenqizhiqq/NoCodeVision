@@ -985,11 +985,11 @@ public class FlowViewModel : ViewModelBase
                             // 与 VisionMotion/GrayMatch 已验证路径一致：原生角度取负
                             AngleDeg = -r.Angle,
                             Color = "#007AFF",
-                            Label = $"score {r.Score:F2}  {_selectedStep.CostMs:F0}ms"
+                            Label = $"相似度 {r.Score:F2}"
                         });
                     }
                     var r0 = results[0];
-                    _selectedStep.ActualValue = $"结果 {results.Count} 个 · 首结果({r0.CenterX:F1},{r0.CenterY:F1}) θ{r0.Angle:F1} score{r0.Score:F2} 耗时{_selectedStep.CostMs:F1}ms";
+                    _selectedStep.ActualValue = $"结果 {results.Count} 个 · 首结果({r0.CenterX:F1},{r0.CenterY:F1}) θ{r0.Angle:F1} 相似度{r0.Score:F2} 耗时{_selectedStep.CostMs:F1}ms";
                     _selectedStep.StatusText = $"匹配成功 · 结果数 {results.Count} · 耗时{_selectedStep.CostMs:F1}ms";
                 }
                 else
