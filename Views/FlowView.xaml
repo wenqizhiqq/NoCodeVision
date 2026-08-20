@@ -21,12 +21,10 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="83" />
                     <ColumnDefinition Width="101" />
-                    <ColumnDefinition Width="91" />
                     <ColumnDefinition Width="95" />
                     <ColumnDefinition Width="87" />
-                    <ColumnDefinition Width="76" />
+                    <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="66" />
-                    <ColumnDefinition Width="107" />
                 </Grid.ColumnDefinitions>
                 <ComboBox Grid.Column="0" Style="{StaticResource AppleComboBoxInline}" HorizontalAlignment="Stretch"
                           ItemsSource="{Binding DataContext.LogicRelations, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -35,18 +33,15 @@
                     <ctrl:AppleIconTile Glyph="{Binding Icon}" TileSize="22" />
                     <TextBlock Text="{Binding Function}" Style="{StaticResource AppleLabel}" Margin="8,0,0,0" />
                 </StackPanel>
-                <TextBox Grid.Column="2" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppleTextFieldInline}"
-                         TextAlignment="Left" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="14,0,0,0" />
-                <ComboBox Grid.Column="3" Style="{StaticResource AppleComboBoxInline}" HorizontalAlignment="Stretch"
+                <ComboBox Grid.Column="2" Style="{StaticResource AppleComboBoxInline}" HorizontalAlignment="Stretch"
                           ItemsSource="{Binding DataContext.StatusOptions, RelativeSource={RelativeSource AncestorType=UserControl}}"
                           SelectedItem="{Binding StatusText, FallbackValue='未开始'}" VerticalAlignment="Center" Margin="14,0,0,0" />
-                <ComboBox Grid.Column="4" Style="{StaticResource AppleComboBoxInline}" HorizontalAlignment="Stretch"
+                <ComboBox Grid.Column="3" Style="{StaticResource AppleComboBoxInline}" HorizontalAlignment="Stretch"
                           ItemsSource="{Binding DataContext.Operators, RelativeSource={RelativeSource AncestorType=UserControl}}"
                           SelectedItem="{Binding Operator, FallbackValue='大于'}" VerticalAlignment="Center" Margin="14,0,0,0" />
-                <TextBox Grid.Column="5" Text="{Binding InputValue, FallbackValue=''}" Style="{StaticResource AppleTextFieldInline}"
+                <TextBox Grid.Column="4" Text="{Binding InputValue, FallbackValue=''}" Style="{StaticResource AppleTextFieldInline}"
                          TextAlignment="Left" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="14,0,0,0" />
-                <TextBlock Grid.Column="6" Text="{Binding CostMs, StringFormat='{}{0:F1}'}" Style="{StaticResource AppleSubLabel}" VerticalAlignment="Center" Margin="14,0,0,0" />
-                <TextBlock Grid.Column="7" Text="{Binding ActualValue}" Style="{StaticResource AppleLabel}" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="34,0,0,0" />
+                <TextBlock Grid.Column="5" Text="{Binding CostMs, StringFormat='{}{0:F1}'}" Style="{StaticResource AppleSubLabel}" VerticalAlignment="Center" Margin="14,0,0,0" />
             </Grid>
         </DataTemplate>
     </UserControl.Resources>
@@ -101,24 +96,20 @@
                     </Grid.RowDefinitions>
                     <!-- 表头 -->
                     <Grid Grid.Row="0" Height="36" Background="{StaticResource HoverBrush}" Margin="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="83" />
-                            <ColumnDefinition Width="101" />
-                            <ColumnDefinition Width="91" />
-                            <ColumnDefinition Width="95" />
-                            <ColumnDefinition Width="87" />
-                            <ColumnDefinition Width="76" />
-                            <ColumnDefinition Width="66" />
-                            <ColumnDefinition Width="107" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="逻辑" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" FontWeight="SemiBold" Height="14" />
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="83" />
+                        <ColumnDefinition Width="101" />
+                        <ColumnDefinition Width="95" />
+                        <ColumnDefinition Width="87" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="66" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="逻辑" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" FontWeight="SemiBold" Height="14" />
                         <TextBlock Grid.Column="1" Text="功能" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" FontWeight="SemiBold" Height="14" />
-                        <TextBlock Grid.Column="2" Text="名称" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" FontWeight="SemiBold" Height="14" />
-                        <TextBlock Grid.Column="3" Text="状态" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" FontWeight="SemiBold" Height="14" />
-                        <TextBlock Grid.Column="4" Text="运算" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" FontWeight="SemiBold" Height="14" />
-                        <TextBlock Grid.Column="5" Text="输入值" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" FontWeight="SemiBold" Height="14" />
-                        <TextBlock Grid.Column="6" Text="耗时" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" FontWeight="SemiBold" Height="14" />
-                        <TextBlock Grid.Column="7" Text="结果" Style="{StaticResource AppleSubLabel}" Margin="34,0,0,0" HorizontalAlignment="Left" FontWeight="SemiBold" Height="14" Width="22" />
+                        <TextBlock Grid.Column="2" Text="状态" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" FontWeight="SemiBold" Height="14" />
+                        <TextBlock Grid.Column="3" Text="运算" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" FontWeight="SemiBold" Height="14" />
+                        <TextBlock Grid.Column="4" Text="输入值" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" FontWeight="SemiBold" Height="14" />
+                        <TextBlock Grid.Column="5" Text="耗时" Style="{StaticResource AppleSubLabel}" Margin="14,0,0,0" FontWeight="SemiBold" Height="14" />
                     </Grid>
                     <ListBox Grid.Row="1" ItemsSource="{Binding SelectedFlow.Steps}" SelectedItem="{Binding SelectedStep}"
                              Style="{StaticResource AppleListBox}" ItemTemplate="{StaticResource StepItemTemplate}">
