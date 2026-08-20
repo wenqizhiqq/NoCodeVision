@@ -80,16 +80,32 @@ namespace NoCodeVision.Views.Controls
 
         #endregion
 
-        #region 缩放（LayoutTransform 统一处理）
+        #region 缩放 / 平移（LayoutTransform 统一处理）
+
+        private double _fitScale = 1.0;   // 适配控件所需的缩放
+        private double _zoomFactor = 1.0; // 用户在适配基础上的额外滚轮缩放
 
         private void UpdateScale()
         {
             double sw = ImagePixelWidth, sh = ImagePixelHeight;
             double availW = Root.ActualWidth, availH = Root.ActualHeight;
             if (sw <= 0 || sh <= 0 || availW <= 0 || availH <= 0) return;
-            double s = Math.Min(availW / sw, availH / sh);
+            _fitScale = Math.Min(availW / sw, availH / sh);
+            double s = _fitScale * _zoomFactor;
             PixelScale.ScaleX = s;
             PixelScale.ScaleY = s;
+        }
+
+        private void OnMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (ImagePixelWidth <= 0) return;
+            const double factor = 1.15;
+            if (e.Delta > 0) _zoomFactor *= factor;
+            else if (e.Delta < 0) _zoomFactor /= factor;
+            // 限制在 0.5x ~ 10x 之间
+            _zoomFactor = Math.Max(0.5, Math.Min(10.0, _zoomFactor));
+            UpdateScale();
+            e.Handled = true;
         }
 
         #endregion
@@ -243,32 +259,69 @@ namespace NoCodeVision.Views.Controls
 
         #endregion
 
-        #region 鼠标绘制 ROI（坐标即图像像素）
+        #region 鼠标交互：左键画 ROI，右键/中键平移，滚轮缩放
 
-        private bool _dragging;
-        private Point _start;
+        private bool _roiDragging;
+        private Point _roiStart;
+
+        private bool _panDragging;
+        private Point _panStart;
+        private double _panStartX, _panStartY;
 
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (ImagePixelWidth <= 0) return;
-            _dragging = true;
-            _start = e.GetPosition(PixelCanvas); // PixelCanvas 局部坐标 = 图像像素坐标
-            PixelCanvas.CaptureMouse();
-            RoiTip.Visibility = Visibility.Visible;
-            UpdateRoiFromPoint(_start, _start);
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                _roiDragging = true;
+                _roiStart = e.GetPosition(PixelCanvas); // PixelCanvas 局部坐标 = 图像像素坐标
+                PixelCanvas.CaptureMouse();
+                RoiTip.Visibility = Visibility.Visible;
+                UpdateRoiFromPoint(_roiStart, _roiStart);
+                e.Handled = true;
+            }
+            else if (e.ChangedButton == MouseButton.Right || e.ChangedButton == MouseButton.Middle)
+            {
+                _panDragging = true;
+                _panStart = e.GetPosition(Root); // 用控件坐标算平移，直观
+                _panStartX = PixelPan.X;
+                _panStartY = PixelPan.Y;
+                PixelCanvas.CaptureMouse();
+                e.Handled = true;
+            }
         }
 
         private void OnMouseMove(object sender, MouseEventArgs e)
         {
-            if (!_dragging) return;
-            UpdateRoiFromPoint(_start, e.GetPosition(PixelCanvas));
+            if (_roiDragging)
+            {
+                UpdateRoiFromPoint(_roiStart, e.GetPosition(PixelCanvas));
+            }
+            else if (_panDragging)
+            {
+                var cur = e.GetPosition(Root);
+                double s = PixelScale.ScaleX;
+                if (s > 0)
+                {
+                    PixelPan.X = _panStartX + (cur.X - _panStart.X) / s;
+                    PixelPan.Y = _panStartY + (cur.Y - _panStart.Y) / s;
+                }
+            }
         }
 
         private void OnMouseUp(object sender, MouseButtonEventArgs e)
         {
-            _dragging = false;
-            RoiTip.Visibility = Visibility.Collapsed;
-            PixelCanvas.ReleaseMouseCapture();
+            if (e.ChangedButton == MouseButton.Left && _roiDragging)
+            {
+                _roiDragging = false;
+                RoiTip.Visibility = Visibility.Collapsed;
+                PixelCanvas.ReleaseMouseCapture();
+            }
+            else if (_panDragging && (e.ChangedButton == MouseButton.Right || e.ChangedButton == MouseButton.Middle))
+            {
+                _panDragging = false;
+                PixelCanvas.ReleaseMouseCapture();
+            }
         }
 
         private void UpdateRoiFromPoint(Point a, Point b)

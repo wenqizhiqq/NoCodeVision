@@ -233,7 +233,7 @@
                     <StackPanel>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="模板匹配" />
                         <TextBlock Style="{StaticResource AppleSubLabel}" Text="源图（从图像采集传入，ROI 拖拽绘制模板区域）" Margin="16,8,16,4" />
-                        <ctrl:RoiImageView Height="260" Margin="14,0,14,10"
+                        <ctrl:RoiImageView Height="280" Margin="14,0,14,10"
                                            SourceImage="{Binding CurrentImageSource}"
                                            RoiX="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=10}"
                                            RoiY="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=10}"
