@@ -26,6 +26,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>opencv_world480.dll</TargetPath>
     </Content>
+    <Content Include="Libs\OpenCvSharpExtern.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>OpenCvSharpExtern.dll</TargetPath>
+    </Content>
   </ItemGroup>
 
 </Project>

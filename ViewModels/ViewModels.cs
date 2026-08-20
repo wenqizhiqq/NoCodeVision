@@ -100,6 +100,12 @@ public class VisionFlowStep : ViewModelBase
     public string TemplateFile { get => _templateFile; set => SetField(ref _templateFile, value); }
     private string _templateFile = "";
 
+    public string CaptureMode { get => _captureMode; set => SetField(ref _captureMode, value); }
+    private string _captureMode = "打开文件";
+
+    public string FolderPath { get => _folderPath; set => SetField(ref _folderPath, value); }
+    private string _folderPath = "";
+
     public double RoiX { get => _roiX; set => SetField(ref _roiX, value); }
     private double _roiX = 10;
 
@@ -115,6 +121,15 @@ public class VisionFlowStep : ViewModelBase
     public double ScoreThreshold { get => _scoreThreshold; set => SetField(ref _scoreThreshold, value); }
     private double _scoreThreshold = 0.85;
 
+    public string MatchMode { get => _matchMode; set => SetField(ref _matchMode, value); }
+    private string _matchMode = "灰度匹配";
+
+    public int ContourThreshold { get => _contourThreshold; set => SetField(ref _contourThreshold, value); }
+    private int _contourThreshold = 30;
+
+    public double ContourBlur { get => _contourBlur; set => SetField(ref _contourBlur, value); }
+    private double _contourBlur = 1.0;
+
     public string LuaScript { get => _luaScript; set => SetField(ref _luaScript, value); }
     private string _luaScript = "";
 
@@ -126,6 +141,9 @@ public class VisionFlowStep : ViewModelBase
 
     public string MeasureType { get => _measureType; set => SetField(ref _measureType, value); }
     private string _measureType = "圆径";
+
+    public double NominalValue { get => _nominalValue; set => SetField(ref _nominalValue, value); }
+    private double _nominalValue = 12.0;
 
     public double Tolerance { get => _tolerance; set => SetField(ref _tolerance, value); }
     private double _tolerance = 0.05;
@@ -489,7 +507,7 @@ public class FlowViewModel : ViewModelBase
             Name = "主流程", Icon = "🔀",
             Steps = new ObservableCollection<VisionFlowStep>
             {
-                new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集左视野", ParamSummary = "Camera_0 / Mono8", Timeout = 5000, CostMs = 12.3, ActualValue = "OK", Icon = "📷", StepType = "ImageCapture", ImageSource = "Camera_0", StatusText = "采集成功" },
+                new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集左视野", ParamSummary = "打开文件", Timeout = 5000, CostMs = 12.3, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始" },
                 new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "定位基准", ParamSummary = "tpl_A / score≥0.85", Timeout = 3000, CostMs = 8.7, ActualValue = "(120,88)", Icon = "🎯", StepType = "TemplateMatch", ImageSource = "tpl_A.png", TemplateFile = "tpl_A.png", RoiX=80, RoiY=60, RoiW=160, RoiH=120, ScoreThreshold=0.85, StatusText = "匹配成功" },
                 new VisionFlowStep { Index = 3, Function = "几何测量", Name = "测量孔径", ParamSummary = "圆径 / 12.00±0.05", Timeout = 2000, CostMs = 5.4, ActualValue = "12.03", Icon = "📐", StepType = "Measure", StatusText = "尺寸合格" },
                 new VisionFlowStep { Index = 4, Function = "逻辑判断", Name = "判定合格", ParamSummary = "孔径 OK", Timeout = 1000, CostMs = 0.2, ActualValue = "Pass", Icon = "✅", StepType = "Logic", StatusText = "通过" },
@@ -501,7 +519,7 @@ public class FlowViewModel : ViewModelBase
             Name = "定位流程", Icon = "🧭",
             Steps = new ObservableCollection<VisionFlowStep>
             {
-                new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集顶视野", ParamSummary = "Camera_2 / RGB8", Timeout = 5000, CostMs = 15.1, ActualValue = "OK", Icon = "📷", StepType = "ImageCapture", ImageSource = "Camera_2", StatusText = "采集成功" },
+                new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集顶视野", ParamSummary = "打开文件", Timeout = 5000, CostMs = 15.1, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始" },
                 new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "找中心点", ParamSummary = "tpl_center / score≥0.80", Timeout = 3000, CostMs = 9.2, ActualValue = "(512,384)", Icon = "🎯", StepType = "TemplateMatch", ImageSource = "tpl_center.png", TemplateFile = "tpl_center.png", RoiX=200, RoiY=150, RoiW=180, RoiH=140, ScoreThreshold=0.80, StatusText = "匹配成功" },
             }
         },
@@ -510,18 +528,20 @@ public class FlowViewModel : ViewModelBase
             Name = "检测流程", Icon = "🔍",
             Steps = new ObservableCollection<VisionFlowStep>
             {
-                new VisionFlowStep { Index = 1, Function = "图像预处理", Name = "灰度化", ParamSummary = "RGB→Gray", Timeout = 2000, CostMs = 3.1, ActualValue = "Done", Icon = "🎨", StepType = "Preprocess", StatusText = "已完成" },
-                new VisionFlowStep { Index = 2, Function = "几何测量", Name = "测量边距", ParamSummary = "距离 / 45.0±0.1", Timeout = 2000, CostMs = 6.8, ActualValue = "45.02", Icon = "📐", StepType = "Measure", StatusText = "尺寸合格" },
+                new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集检测图", ParamSummary = "打开文件", Timeout = 5000, CostMs = 12.3, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始" },
+                new VisionFlowStep { Index = 2, Function = "几何测量", Name = "测量边距", ParamSummary = "距离 / 45.0±0.1", Timeout = 2000, CostMs = 6.8, ActualValue = "45.02", Icon = "📐", StepType = "Measure", MeasureType="边距", RoiX=50, RoiY=50, RoiW=200, RoiH=100, StatusText = "尺寸合格" },
             }
         },
     };
 
-    public string[] StepFunctions { get; } = { "图像采集", "图像预处理", "模板匹配", "几何测量", "逻辑判断", "Lua脚本", "结果输出" };
+    public string[] StepFunctions { get; } = { "图像采集", "模板匹配", "几何测量", "逻辑判断", "结果输出" };
     public string[] PreprocessTypes { get; } = { "灰度化", "二值化", "高斯模糊", "中值滤波", "边缘检测" };
     public string[] MeasureTypes { get; } = { "圆径", "边距", "角度", "面积", "中心距" };
     public string[] LogicRelations { get; } = { "如果", "并且", "或者", "否则", "循环", "跳出", "并行", "等待" };
     public string[] Operators { get; } = { "大于", "小于", "等于", "大于等于", "小于等于", "不等于", "包含", "不包含", "开头为", "结尾为" };
     public string[] StatusOptions { get; } = { "未开始", "运行中", "已完成", "已跳过", "等待中", "错误", "超时", "已暂停", "通过", "不通过", "告警", "采集成功", "采集失败", "匹配成功", "匹配失败", "ROI 内", "ROI 外", "尺寸合格", "尺寸超差", "亮度正常", "亮度异常", "通讯正常", "通讯中断" };
+    public string[] CaptureModes { get; } = { "采集相机", "打开文件夹", "打开文件" };
+    public string[] MatchModes { get; } = { "灰度匹配", "轮廓匹配" };
     public string[] PropTabs { get; } = { "图像", "Lua", "参数设置" };
 
     private VisionFlow? _selectedFlow;
@@ -539,6 +559,11 @@ public class FlowViewModel : ViewModelBase
     private string _status = "就绪";
     public string Status { get => _status; set => SetField(ref _status, value); }
 
+    // 流程级共享图像：图像采集得到的 Mat，直接传给后续的模板匹配/几何测量步骤
+    private Mat? _sharedImage;
+    private string _currentImagePath = "";
+    public string CurrentImagePath { get => _currentImagePath; set => SetField(ref _currentImagePath, value); }
+
     public ICommand AddFlowCmd { get; }
     public ICommand DeleteFlowCmd { get; }
     public ICommand AddStepCmd { get; }
@@ -547,7 +572,9 @@ public class FlowViewModel : ViewModelBase
     public ICommand MoveDownCmd { get; }
     public ICommand SetPropTabCmd { get; }
     public ICommand RunCmd { get; }
+    public ICommand StepRunCmd { get; }
     public ICommand ClearCmd { get; }
+    public ICommand PickImageCmd { get; }
     public ICommand AskAiCmd { get; }
     public ICommand RunLuaCmd { get; }
     public ICommand DebugLuaCmd { get; }
@@ -579,11 +606,9 @@ public class FlowViewModel : ViewModelBase
             var (icon, type) = _newStepFunction switch
             {
                 "图像采集" => ("📷", "ImageCapture"),
-                "图像预处理" => ("🎨", "Preprocess"),
                 "模板匹配" => ("🎯", "TemplateMatch"),
                 "几何测量" => ("📐", "Measure"),
                 "逻辑判断" => ("✅", "Logic"),
-                "Lua脚本" => ("📝", "Lua"),
                 "结果输出" => ("📤", "Output"),
                 _ => ("➕", "Other")
             };
@@ -631,58 +656,84 @@ public class FlowViewModel : ViewModelBase
 
         SetPropTabCmd = new RelayCommand(p => { if (p is string s) ActivePropTab = s; });
 
+        PickImageCmd = new RelayCommand(_ =>
+        {
+            if (_selectedStep == null || _selectedStep.StepType != "ImageCapture") return;
+            string? path = null;
+            if (_selectedStep.CaptureMode == "打开文件")
+            {
+                var dlg = new OpenFileDialog { Filter = "图片|*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.tiff" };
+                if (dlg.ShowDialog() == true) path = dlg.FileName;
+            }
+            else if (_selectedStep.CaptureMode == "打开文件夹")
+            {
+                // WPF-only folder picker：ValidateNames=false 让对话框可“选中文件夹”
+                var dlg = new OpenFileDialog { ValidateNames = false, CheckFileExists = false, CheckPathExists = true, FileName = "选择此文件夹" };
+                if (dlg.ShowDialog() == true)
+                {
+                    var dir = Path.GetDirectoryName(dlg.FileName);
+                    if (!string.IsNullOrWhiteSpace(dir) && Directory.Exists(dir))
+                    {
+                        _selectedStep.FolderPath = dir;
+                        var imgExt = new[] { ".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff" };
+                        path = Directory.EnumerateFiles(dir).FirstOrDefault(f => imgExt.Contains(Path.GetExtension(f).ToLowerInvariant()));
+                    }
+                }
+            }
+            else // 采集相机
+            {
+                try
+                {
+                    using var cap = new VideoCapture(0);
+                    if (!cap.IsOpened()) { _selectedStep.StatusText = "无相机"; _selectedStep.ActualValue = "无相机"; return; }
+                    using var frame = new Mat();
+                    cap.Read(frame);
+                    if (frame.Empty()) { _selectedStep.StatusText = "采集失败"; _selectedStep.ActualValue = "采集失败"; return; }
+                    var tmp = Path.Combine(Path.GetTempPath(), $"ncv_cam_{DateTime.Now:yyyyMMddHHmmssfff}.png");
+                    Cv2.ImWrite(tmp, frame);
+                    path = tmp;
+                }
+                catch (Exception ex) { _selectedStep.StatusText = "采集失败"; _selectedStep.ActualValue = $"错误:{ex.Message}"; return; }
+            }
+            if (string.IsNullOrWhiteSpace(path)) return;
+            _sharedImage?.Dispose();
+            _sharedImage = Cv2.ImRead(path, ImreadModes.Color);
+            if (_sharedImage == null || _sharedImage.Empty())
+            {
+                _sharedImage?.Dispose(); _sharedImage = null;
+                _selectedStep.StatusText = "读取失败"; _selectedStep.ActualValue = "读取失败";
+            }
+            else
+            {
+                _selectedStep.ImageSource = path;
+                CurrentImagePath = path;
+                _selectedStep.ActualValue = $"{_sharedImage.Width}x{_sharedImage.Height}";
+                _selectedStep.StatusText = "采集成功";
+            }
+        }, _ => _selectedStep != null && _selectedStep.StepType == "ImageCapture");
+
         RunCmd = new RelayCommand(_ =>
         {
             if (_selectedFlow == null || _selectedFlow.Steps.Count == 0) return;
             Status = $"运行中 · {_selectedFlow.Name} · 共 {_selectedFlow.Steps.Count} 步 · {DateTime.Now:HH:mm:ss}";
+            _sharedImage?.Dispose();
+            _sharedImage = null;
+            CurrentImagePath = "";
             var matcher = new RotatedTemplateMatcher();
-            foreach (var step in _selectedFlow.Steps)
-            {
-                var sw = Stopwatch.StartNew();
-                try
-                {
-                    switch (step.StepType)
-                    {
-                        case "TemplateMatch":
-                            if (!string.IsNullOrWhiteSpace(step.ImageSource) && File.Exists(step.ImageSource))
-                            {
-                                matcher.LoadSource(step.ImageSource);
-                                var roi = new Rect((int)step.RoiX, (int)step.RoiY, Math.Max(4, (int)step.RoiW), Math.Max(4, (int)step.RoiH));
-                                matcher.SetTemplateFromRoi(roi);
-                                var results = matcher.Match(3, 0.0, 360.0, 1.0, step.ScoreThreshold, 0.3, 10, 0);
-                                if (results.Count > 0)
-                                {
-                                    var r = results[0];
-                                    step.ActualValue = $"({r.CenterX:F1},{r.CenterY:F1}) θ{r.Angle:F1} score{r.Score:F2}";
-                                    step.StatusText = "匹配成功";
-                                }
-                                else
-                                {
-                                    step.ActualValue = "未匹配";
-                                    step.StatusText = "匹配失败";
-                                }
-                            }
-                            else
-                            {
-                                step.ActualValue = "无图像源";
-                                step.StatusText = "匹配失败";
-                            }
-                            break;
-                        default:
-                            step.ActualValue = "OK";
-                            break;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    step.ActualValue = $"错误:{ex.Message}";
-                    step.StatusText = "错误";
-                }
-                sw.Stop();
-                step.CostMs = sw.Elapsed.TotalMilliseconds;
-            }
+            foreach (var step in _selectedFlow.Steps) RunStep(step, matcher);
+            _sharedImage?.Dispose();
+            _sharedImage = null;
             Status = $"完成 · {_selectedFlow.Name} · {DateTime.Now:HH:mm:ss}";
         }, _ => _selectedFlow != null && _selectedFlow.Steps.Count > 0);
+
+        StepRunCmd = new RelayCommand(_ =>
+        {
+            if (_selectedStep == null) return;
+            Status = $"单步运行 · {_selectedStep.Name} · {DateTime.Now:HH:mm:ss}";
+            var matcher = new RotatedTemplateMatcher();
+            RunStep(_selectedStep, matcher);
+            Status = $"单步完成 · {_selectedStep.Name} · {DateTime.Now:HH:mm:ss}";
+        }, _ => _selectedStep != null);
         ClearCmd = new RelayCommand(_ =>
         {
             if (_selectedFlow != null)
@@ -712,6 +763,178 @@ public class FlowViewModel : ViewModelBase
             if (_selectedStep == null) return;
             Status = $"Lua 调试 · {_selectedStep.Name} · 断点待命中 · {DateTime.Now:HH:mm:ss}";
         }, _ => _selectedStep != null && _selectedStep.StepType == "Lua");
+    }
+
+    private static string MeasureRoi(Mat src, VisionFlowStep step)
+    {
+        try
+        {
+            if (src.Empty()) return "读取失败";
+            using var gray = new Mat();
+            if (src.Channels() == 1) src.CopyTo(gray); else Cv2.CvtColor(src, gray, ColorConversionCodes.BGR2GRAY);
+            var roi = new Rect((int)step.RoiX, (int)step.RoiY, Math.Max(4, (int)step.RoiW), Math.Max(4, (int)step.RoiH));
+            roi.X = Math.Max(0, Math.Min(roi.X, gray.Width - 1));
+            roi.Y = Math.Max(0, Math.Min(roi.Y, gray.Height - 1));
+            roi.Width = Math.Min(roi.Width, gray.Width - roi.X);
+            roi.Height = Math.Min(roi.Height, gray.Height - roi.Y);
+            if (roi.Width <= 0 || roi.Height <= 0) return "ROI无效";
+            using var roiMat = new Mat(gray, roi);
+            roiMat.FindContours(out var contours, out _, RetrievalModes.External, ContourApproximationModes.ApproxSimple);
+            if (contours.Length == 0) return "未找到轮廓";
+            var largest = contours.OrderByDescending((Point[] c) => Cv2.ContourArea(c)).First();
+            var rect = Cv2.BoundingRect(largest);
+            Cv2.MinEnclosingCircle(largest, out _, out float radius);
+            return step.MeasureType switch
+            {
+                "面积" => $"面积={Cv2.ContourArea(largest):F1}px²",
+                "圆径" => $"直径={radius * 2:F2}px",
+                "边距" => $"边距={rect.Width:F2}px",
+                "角度" => $"角度=0.0°",
+                "中心距" => $"中心=({rect.X + rect.Width / 2.0:F1},{rect.Y + rect.Height / 2.0:F1})",
+                _ => "未知类型"
+            };
+        }
+        catch (Exception ex)
+        {
+            return $"错误:{ex.Message}";
+        }
+    }
+
+    private Mat? LoadCaptureImage(VisionFlowStep step)
+    {
+        try
+        {
+            switch (step.CaptureMode)
+            {
+                case "采集相机":
+                {
+                    using var cap = new VideoCapture(0);
+                    if (!cap.IsOpened()) return null;
+                    using var frame = new Mat();
+                    cap.Read(frame);
+                    if (frame.Empty()) return null;
+                    var tmp = Path.Combine(Path.GetTempPath(), $"ncv_cam_{DateTime.Now:yyyyMMddHHmmssfff}.png");
+                    Cv2.ImWrite(tmp, frame);
+                    step.ImageSource = tmp;
+                    return frame.Clone();
+                }
+                case "打开文件夹":
+                {
+                    if (string.IsNullOrWhiteSpace(step.FolderPath) || !Directory.Exists(step.FolderPath)) return null;
+                    var imgExt = new[] { ".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff" };
+                    var first = Directory.EnumerateFiles(step.FolderPath).FirstOrDefault(f => imgExt.Contains(Path.GetExtension(f).ToLowerInvariant()));
+                    return first == null ? null : Cv2.ImRead(first, ImreadModes.Color);
+                }
+                default: // 打开文件
+                    return string.IsNullOrWhiteSpace(step.ImageSource) || !File.Exists(step.ImageSource) ? null : Cv2.ImRead(step.ImageSource, ImreadModes.Color);
+            }
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private void RunStep(VisionFlowStep step, RotatedTemplateMatcher matcher)
+    {
+        var sw = Stopwatch.StartNew();
+        try
+        {
+            switch (step.StepType)
+            {
+                case "ImageCapture":
+                {
+                    _sharedImage = LoadCaptureImage(step);
+                    if (_sharedImage == null || _sharedImage.Empty())
+                    {
+                        _sharedImage = null;
+                        step.ActualValue = "采集失败";
+                        step.StatusText = "采集失败";
+                    }
+                    else
+                    {
+                        step.ActualValue = $"{_sharedImage.Width}x{_sharedImage.Height}";
+                        step.StatusText = "采集成功";
+                        if (!string.IsNullOrWhiteSpace(step.ImageSource))
+                            CurrentImagePath = step.ImageSource;
+                    }
+                    break;
+                }
+                case "TemplateMatch":
+                {
+                    Mat? srcMat = _sharedImage;
+                    bool ownMat = false;
+                    if (srcMat == null && !string.IsNullOrWhiteSpace(step.ImageSource) && File.Exists(step.ImageSource))
+                    {
+                        srcMat = Cv2.ImRead(step.ImageSource, ImreadModes.Color);
+                        ownMat = true;
+                    }
+                    if (srcMat == null || srcMat.Empty())
+                    {
+                        step.ActualValue = "无图像源";
+                        step.StatusText = "匹配失败";
+                    }
+                    else
+                    {
+                        matcher.SetSource(srcMat);
+                        matcher.UseContour = step.MatchMode == "轮廓匹配";
+                        if (step.MatchMode == "轮廓匹配")
+                        {
+                            matcher.ContourThreshold = step.ContourThreshold;
+                            matcher.ContourBlur = step.ContourBlur;
+                        }
+                        var roi = new Rect((int)step.RoiX, (int)step.RoiY, Math.Max(4, (int)step.RoiW), Math.Max(4, (int)step.RoiH));
+                        matcher.SetTemplateFromRoi(roi);
+                        var results = matcher.Match(3, 0.0, 360.0, 1.0, step.ScoreThreshold, 0.3, 10, 0);
+                        if (results.Count > 0)
+                        {
+                            var r = results[0];
+                            step.ActualValue = $"({r.CenterX:F1},{r.CenterY:F1}) θ{r.Angle:F1} score{r.Score:F2}";
+                            step.StatusText = "匹配成功";
+                        }
+                        else
+                        {
+                            step.ActualValue = "未匹配";
+                            step.StatusText = "匹配失败";
+                        }
+                    }
+                    if (ownMat && srcMat != null) srcMat.Dispose();
+                    break;
+                }
+                case "Measure":
+                {
+                    Mat? msrc = _sharedImage;
+                    bool ownMat = false;
+                    if (msrc == null && !string.IsNullOrWhiteSpace(step.ImageSource) && File.Exists(step.ImageSource))
+                    {
+                        msrc = Cv2.ImRead(step.ImageSource, ImreadModes.Color);
+                        ownMat = true;
+                    }
+                    if (msrc == null || msrc.Empty())
+                    {
+                        step.ActualValue = "无图像源";
+                        step.StatusText = "测量失败";
+                    }
+                    else
+                    {
+                        step.ActualValue = MeasureRoi(msrc, step);
+                        step.StatusText = "测量完成";
+                    }
+                    if (ownMat && msrc != null) msrc.Dispose();
+                    break;
+                }
+                default:
+                    step.ActualValue = "OK";
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            step.ActualValue = $"错误:{ex.Message}";
+            step.StatusText = "错误";
+        }
+        sw.Stop();
+        step.CostMs = sw.Elapsed.TotalMilliseconds;
     }
 
     private static void Reindex(VisionFlow flow)
