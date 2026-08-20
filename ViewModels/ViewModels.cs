@@ -580,7 +580,8 @@ public class FlowViewModel : ViewModelBase
     public string[] PropTabs { get; } = { "图像", "Lua", "参数设置" };
 
     private VisionFlow? _selectedFlow;
-    public VisionFlow? SelectedFlow { get => _selectedFlow; set => SetField(ref _selectedFlow, value); }
+    private int _stepCursor = 0;
+    public VisionFlow? SelectedFlow { get => _selectedFlow; set { if (SetField(ref _selectedFlow, value)) _stepCursor = 0; } }
 
     private VisionFlowStep? _selectedStep;
     public VisionFlowStep? SelectedStep
@@ -1014,20 +1015,32 @@ public class FlowViewModel : ViewModelBase
             _sharedImage = null;
             CurrentImagePath = "";
             var matcher = new RotatedTemplateMatcher();
-            foreach (var step in _selectedFlow.Steps) RunStep(step, matcher);
+            _stepCursor = 0;
+            int guard = 0;
+            int maxIter = _selectedFlow.Steps.Count * 20 + 50;
+            while (_stepCursor >= 0 && _stepCursor < _selectedFlow.Steps.Count && guard++ < maxIter)
+            {
+                var step = _selectedFlow.Steps[_stepCursor];
+                SelectedStep = step;
+                RunStep(step, matcher);
+                _stepCursor = NextStepIndex(_stepCursor);
+            }
             _sharedImage?.Dispose();
             _sharedImage = null;
-            Status = $"完成 · {_selectedFlow.Name} · {DateTime.Now:HH:mm:ss}";
+            Status = "完成 · " + _selectedFlow.Name;
         }, _ => _selectedFlow != null && _selectedFlow.Steps.Count > 0);
 
         StepRunCmd = new RelayCommand(_ =>
         {
-            if (_selectedStep == null) return;
-            Status = $"单步运行 · {_selectedStep.Name} · {DateTime.Now:HH:mm:ss}";
+            if (_selectedFlow == null || _selectedFlow.Steps.Count == 0) return;
+            if (_stepCursor >= _selectedFlow.Steps.Count) { _stepCursor = 0; _sharedImage?.Dispose(); _sharedImage = null; }
+            var step = _selectedFlow.Steps[_stepCursor];
+            SelectedStep = step;
             var matcher = new RotatedTemplateMatcher();
-            RunStep(_selectedStep, matcher);
-            Status = $"单步完成 · {_selectedStep.Name} · {DateTime.Now:HH:mm:ss}";
-        }, _ => _selectedStep != null);
+            RunStep(step, matcher);
+            _stepCursor = NextStepIndex(_stepCursor);
+            Status = "单步完成 · 第" + step.Index + "步 " + step.Name;
+        }, _ => _selectedFlow != null && _selectedFlow.Steps.Count > 0);
         ClearCmd = new RelayCommand(_ =>
         {
             if (_selectedFlow != null)
@@ -1354,8 +1367,17 @@ public class FlowViewModel : ViewModelBase
                     }
                     else
                     {
-                        step.ActualValue = MeasureRoi(msrc, step);
-                        step.StatusText = "测量完成";
+                        var measured = MeasureRoi(msrc, step);
+                        step.ActualValue = measured;
+                        var numMatch = System.Text.RegularExpressions.Regex.Match(measured, @"[-+]?[0-9]*\.?[0-9]+");
+                        if (numMatch.Success && double.TryParse(numMatch.Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double val))
+                        {
+                            bool ok = System.Math.Abs(val - step.NominalValue) <= step.Tolerance;
+                            step.StatusText = ok ? "尺寸合格" : "尺寸超差";
+                            step.ActualValue = measured + (ok ? "  合格" : "  超差");
+                        }
+                        else
+                            step.StatusText = "测量完成";
                     }
                     if (ownMat && msrc != null) msrc.Dispose();
                     break;
@@ -1377,6 +1399,56 @@ public class FlowViewModel : ViewModelBase
     private static void Reindex(VisionFlow flow)
     {
         for (int i = 0; i < flow.Steps.Count; i++) flow.Steps[i].Index = i + 1;
+    }
+
+    private int NextStepIndex(int i)
+    {
+        var steps = _selectedFlow?.Steps;
+        if (steps == null || i < 0 || i >= steps.Count) return i + 1;
+        var step = steps[i];
+        switch (step.LogicRelation)
+        {
+            case "如果":
+                if (EvalLogic(step)) return i + 1;
+                for (int j = i + 1; j < steps.Count; j++)
+                    if (steps[j].LogicRelation == "否则") return j;
+                return i + 1;
+            case "否则":
+                return i + 1;
+            case "循环":
+                for (int k = i - 1; k >= 0; k--)
+                    if (steps[k].LogicRelation == "如果" || steps[k].LogicRelation == "循环") return k;
+                return 0;
+            case "跳出":
+                for (int j = i + 1; j < steps.Count; j++)
+                    if (steps[j].LogicRelation == "如果" || steps[j].LogicRelation == "否则" || steps[j].LogicRelation == "循环") return j + 1;
+                return steps.Count;
+            default:
+                return i + 1;
+        }
+    }
+
+    private bool EvalLogic(VisionFlowStep step)
+    {
+        try
+        {
+            double score = 0;
+            var av = step.ActualValue ?? "";
+            var m = System.Text.RegularExpressions.Regex.Match(av, "score\\s*([0-9.]+)");
+            if (m.Success) double.TryParse(m.Groups[1].Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out score);
+            else
+            {
+                var nums = System.Text.RegularExpressions.Regex.Matches(av, "[0-9]+(?:\\.[0-9]+)?");
+                if (nums.Count > 0) double.TryParse(nums[nums.Count - 1].Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out score);
+            }
+            var expr = (step.LogicExpression ?? "true").Replace("score", score.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            var res = new System.Data.DataTable().Compute(expr, null);
+            if (res is bool b) return b;
+            if (res is int ii) return ii != 0;
+            if (res is double dd) return dd != 0;
+            return false;
+        }
+        catch { return false; }
     }
 }
 
