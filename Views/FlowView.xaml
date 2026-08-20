@@ -226,39 +226,23 @@
                     </Border.Style>
                     <StackPanel>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="模板匹配" />
-                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="源图（从图像采集传入，ROI 拖拽绘制模板区域）" Margin="16,8,16,4" />
-                        <ctrl:RoiImageView Height="280" Margin="14,0,14,10"
-                                           SourceImage="{Binding CurrentImageSource}"
-                                           RoiX="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=10}"
-                                           RoiY="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=10}"
-                                           RoiW="{Binding SelectedStep.RoiW, Mode=TwoWay, FallbackValue=120}"
-                                           RoiH="{Binding SelectedStep.RoiH, Mode=TwoWay, FallbackValue=80}"
-                                           Overlays="{Binding MatchOverlays}" />
-                        <UniformGrid Columns="4" Margin="16,0,16,8">
-                            <StackPanel Margin="0,0,4,0">
-                                <TextBlock Text="X" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                        <Grid Margin="14,0,14,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="源图（从图像采集传入，ROI 拖拽绘制模板区域）" Margin="0,8,0,4" />
+                                <ctrl:RoiImageView Height="220"
+                                                   SourceImage="{Binding CurrentImageSource}"
+                                                   RoiX="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=10}"
+                                                   RoiY="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=10}"
+                                                   RoiW="{Binding SelectedStep.RoiW, Mode=TwoWay, FallbackValue=120}"
+                                                   RoiH="{Binding SelectedStep.RoiH, Mode=TwoWay, FallbackValue=80}"
+                                                   Overlays="{Binding MatchOverlays}" />
                             </StackPanel>
-                            <StackPanel Margin="0,0,4,0">
-                                <TextBlock Text="Y" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
-                            </StackPanel>
-                            <StackPanel Margin="0,0,4,0">
-                                <TextBlock Text="W" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiW, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
-                            </StackPanel>
-                            <StackPanel>
-                                <TextBlock Text="H" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiH, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
-                            </StackPanel>
-                        </UniformGrid>
-                        <StackPanel Orientation="Horizontal" Margin="16,0,16,8">
-                            <Button Style="{StaticResource AppleBtn}" Content="确定模板" Command="{Binding ConfirmTemplateCmd}" />
-                            <Button Style="{StaticResource AppleBtn}" Content="开始匹配" Command="{Binding StartMatchCmd}" Margin="12,0,0,0" />
-                        </StackPanel>
-                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="模板预览" Margin="16,2,16,4" />
-                        <Border Style="{StaticResource AppleGroupCard}" Padding="12" Margin="16,0,16,8">
-                            <StackPanel Orientation="Horizontal">
+                            <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Top" MinWidth="140">
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="模板预览" Margin="0,8,0,4" />
                                 <Border Width="140" Height="150" Background="{StaticResource PreviewBgBrush}" CornerRadius="10">
                                     <Grid>
                                         <Image Source="{Binding TemplatePreviewSource}" Width="140" Height="150" Stretch="Uniform">
@@ -287,11 +271,16 @@
                                         </Image>
                                     </Grid>
                                 </Border>
-                                <StackPanel Margin="14,0,0,0" VerticalAlignment="Center" MinWidth="120">
-                                    <TextBlock Style="{StaticResource AppleLabel}" Text="{Binding TemplatePreviewInfo, FallbackValue='尚未确定模板'}" TextWrapping="Wrap" />
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <Button Style="{StaticResource AppleBtn}" Content="确定模板" Command="{Binding ConfirmTemplateCmd}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <Button Style="{StaticResource AppleBtn}" Content="开始匹配" Command="{Binding StartMatchCmd}" />
+                                    <TextBlock Style="{StaticResource AppleSubLabel}" VerticalAlignment="Center" Margin="12,0,0,0"
+                                               Text="{Binding SelectedStep.CostMs, StringFormat='匹配耗时：{0:F1}ms', FallbackValue='匹配耗时：0.0ms'}" />
                                 </StackPanel>
                             </StackPanel>
-                        </Border>
+                        </Grid>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="匹配模式" />
