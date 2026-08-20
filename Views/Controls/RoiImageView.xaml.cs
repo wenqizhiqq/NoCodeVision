@@ -1,11 +1,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace NoCodeVision.Views.Controls
 {
@@ -20,6 +22,9 @@ namespace NoCodeVision.Views.Controls
             InitializeComponent();
             SizeChanged += (_, _) => RenderAll();
             Loaded += (_, _) => RenderAll();
+            // 图像元素布局完成后（ActualWidth/Height 才有真实值）重绘，避免叠加框在首帧错位
+            Img.SizeChanged += (_, _) => RenderAll();
+            Img.LayoutUpdated += (_, _) => RenderAll();
         }
 
         #region DependencyProperties
@@ -91,7 +96,8 @@ namespace NoCodeVision.Views.Controls
                     v.ImagePixelHeight = 0;
                     v.Placeholder.Visibility = Visibility.Visible;
                 }
-                v.RenderAll();
+                // 等布局完成后再绘制，确保 Img.ActualWidth/Height 已是真实显示尺寸
+                v.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(v.RenderAll));
             }
         }
 
@@ -102,7 +108,24 @@ namespace NoCodeVision.Views.Controls
 
         private static void OnOverlaysChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is RoiImageView v) v.RenderOverlays();
+            if (d is RoiImageView v) v.AttachOverlaysCollection();
+        }
+
+        private INotifyCollectionChanged? _overlaysCollection;
+
+        private void AttachOverlaysCollection()
+        {
+            if (_overlaysCollection != null)
+                _overlaysCollection.CollectionChanged -= OnOverlaysCollectionChanged;
+            _overlaysCollection = Overlays as INotifyCollectionChanged;
+            if (_overlaysCollection != null)
+                _overlaysCollection.CollectionChanged += OnOverlaysCollectionChanged;
+            Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(RenderOverlays));
+        }
+
+        private void OnOverlaysCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(RenderOverlays));
         }
 
         #endregion
@@ -112,12 +135,27 @@ namespace NoCodeVision.Views.Controls
         private void GetImageRect(out double offX, out double offY, out double scale)
         {
             double ew = Img.ActualWidth, eh = Img.ActualHeight;
+            bool useControl = false;
+            // 兜底：图像元素尚未完成布局时 ActualWidth 为 0，用控件自身尺寸，避免叠加框以原始像素坐标绘制而错位
+            if (ew <= 0 || eh <= 0) { ew = ActualWidth; eh = ActualHeight; useControl = true; }
             double sw = ImagePixelWidth, sh = ImagePixelHeight;
             if (sw <= 0 || sh <= 0 || ew <= 0 || eh <= 0) { scale = 1; offX = 0; offY = 0; return; }
             scale = Math.Min(ew / sw, eh / sh);
             double dw = sw * scale, dh = sh * scale;
-            offX = (ew - dw) / 2;
-            offY = (eh - dh) / 2;
+            // Img 元素在控件坐标系中的真实左上角：若 Img 未撑满/被居中（例如被布局成内容尺寸），
+            // 其内容相对控件存在偏移，必须加上该偏移，否则叠加框与 ROI 会整体偏向一侧
+            double elemX = 0, elemY = 0;
+            if (!useControl)
+            {
+                try
+                {
+                    var p = Img.TranslatePoint(new Point(0, 0), this);
+                    elemX = p.X; elemY = p.Y;
+                }
+                catch { elemX = 0; elemY = 0; }
+            }
+            offX = elemX + (ew - dw) / 2;
+            offY = elemY + (eh - dh) / 2;
         }
 
         #endregion
@@ -228,7 +266,8 @@ namespace NoCodeVision.Views.Controls
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
             _dragging = true;
-            _start = e.GetPosition(Img);
+            // 用控件坐标，与 RenderOverlays 中 offX 的原点一致（Img 可能未撑满/被居中）
+            _start = e.GetPosition(this);
             Overlay.CaptureMouse();
             RoiTip.Visibility = Visibility.Visible;
             UpdateRoiFromPoint(_start, _start);
@@ -237,7 +276,7 @@ namespace NoCodeVision.Views.Controls
         private void OnMouseMove(object sender, MouseEventArgs e)
         {
             if (!_dragging) return;
-            UpdateRoiFromPoint(_start, e.GetPosition(Img));
+            UpdateRoiFromPoint(_start, e.GetPosition(this));
         }
 
         private void OnMouseUp(object sender, MouseButtonEventArgs e)
@@ -261,6 +300,12 @@ namespace NoCodeVision.Views.Controls
             double y = Math.Max(0, Math.Min(ay, by));
             double w = Math.Max(6, Math.Abs(bx - ax));
             double h = Math.Max(6, Math.Abs(by - ay));
+
+            // 限制 ROI 不超出图像边界，避免预览/匹配时包含黑边
+            if (ImagePixelWidth > 0) x = Math.Min(x, ImagePixelWidth - 1);
+            if (ImagePixelHeight > 0) y = Math.Min(y, ImagePixelHeight - 1);
+            if (ImagePixelWidth > 0) w = Math.Min(w, ImagePixelWidth - x);
+            if (ImagePixelHeight > 0) h = Math.Min(h, ImagePixelHeight - y);
 
             RoiX = x; RoiY = y; RoiW = w; RoiH = h;
         }

@@ -152,32 +152,6 @@
                     </TextBlock.Text>
                 </TextBlock>
 
-                <!-- ========== 通用参数（所有步骤都有） ========== -->
-                <Border Style="{StaticResource AppleGroupCard}">
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="通用参数" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="步骤名称" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Name, FallbackValue=''}" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="超时(ms)" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Timeout, FallbackValue=3000}" Width="100" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="重试次数" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="3" Width="80" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="扩展参数（key=value 每行一个）" Margin="16,8,16,4" />
-                        <TextBox Style="{StaticResource AppleCodeEditor}"
-                                 Text="{Binding SelectedStep.Parameters, FallbackValue=''}"
-                                 MinHeight="80" Margin="14,0,14,14" />
-                    </StackPanel>
-                </Border>
-
                 <!-- ========== 图像采集 ========== -->
                 <Border>
                     <Border.Style>
@@ -215,29 +189,30 @@
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding SelectedStep.ImageSource, FallbackValue='未选择图片'}" Margin="16,4,16,4" TextTrimming="CharacterEllipsis" />
-                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI（可拖拽绘制）" Margin="16,8,16,4" />
-                        <ctrl:RoiCanvas Height="220" Margin="14,0,14,10"
-                                        RoiX="{Binding SelectedStep.RoiX, FallbackValue=10}"
-                                        RoiY="{Binding SelectedStep.RoiY, FallbackValue=10}"
-                                        RoiW="{Binding SelectedStep.RoiW, FallbackValue=120}"
-                                        RoiH="{Binding SelectedStep.RoiH, FallbackValue=80}"
-                                        ImageSource="{Binding SelectedStep.ImageSource, FallbackValue=''}" />
+                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI（在采集到的图上拖拽绘制）" Margin="16,8,16,4" />
+                        <ctrl:RoiImageView Height="220" Margin="14,0,14,10"
+                                           SourceImage="{Binding CurrentImageSource}"
+                                           RoiX="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=10}"
+                                           RoiY="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=10}"
+                                           RoiW="{Binding SelectedStep.RoiW, Mode=TwoWay, FallbackValue=120}"
+                                           RoiH="{Binding SelectedStep.RoiH, Mode=TwoWay, FallbackValue=80}"
+                                           Overlays="{Binding MatchOverlays}" />
                         <UniformGrid Columns="4" Margin="16,0,16,8">
                             <StackPanel Margin="0,0,4,0">
                                 <TextBlock Text="X" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiX, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
                             </StackPanel>
                             <StackPanel Margin="0,0,4,0">
                                 <TextBlock Text="Y" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiY, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
                             </StackPanel>
                             <StackPanel Margin="0,0,4,0">
                                 <TextBlock Text="W" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiW, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiW, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
                             </StackPanel>
                             <StackPanel>
                                 <TextBlock Text="H" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiH, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiH, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
                             </StackPanel>
                         </UniformGrid>
                     </StackPanel>
@@ -257,31 +232,58 @@
                     </Border.Style>
                     <StackPanel>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="模板匹配" />
-                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI（在源图上拖拽绘制模板区域）" Margin="16,8,16,4" />
-                        <ctrl:RoiCanvas Height="220" Margin="14,0,14,10"
-                                        RoiX="{Binding SelectedStep.RoiX, FallbackValue=10}"
-                                        RoiY="{Binding SelectedStep.RoiY, FallbackValue=10}"
-                                        RoiW="{Binding SelectedStep.RoiW, FallbackValue=120}"
-                                        RoiH="{Binding SelectedStep.RoiH, FallbackValue=80}"
-                                        ImageSource="{Binding CurrentImagePath, FallbackValue=''}" />
+                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="源图（从图像采集传入，ROI 拖拽绘制模板区域）" Margin="16,8,16,4" />
+                        <ctrl:RoiImageView Height="260" Margin="14,0,14,10"
+                                           SourceImage="{Binding CurrentImageSource}"
+                                           RoiX="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=10}"
+                                           RoiY="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=10}"
+                                           RoiW="{Binding SelectedStep.RoiW, Mode=TwoWay, FallbackValue=120}"
+                                           RoiH="{Binding SelectedStep.RoiH, Mode=TwoWay, FallbackValue=80}"
+                                           Overlays="{Binding MatchOverlays}" />
                         <UniformGrid Columns="4" Margin="16,0,16,8">
                             <StackPanel Margin="0,0,4,0">
                                 <TextBlock Text="X" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiX, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
                             </StackPanel>
                             <StackPanel Margin="0,0,4,0">
                                 <TextBlock Text="Y" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiY, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
                             </StackPanel>
                             <StackPanel Margin="0,0,4,0">
                                 <TextBlock Text="W" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiW, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiW, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
                             </StackPanel>
                             <StackPanel>
                                 <TextBlock Text="H" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiH, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiH, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
                             </StackPanel>
                         </UniformGrid>
+                        <StackPanel Orientation="Horizontal" Margin="16,0,16,8">
+                            <Button Style="{StaticResource AppleBtn}" Content="确定模板" Command="{Binding ConfirmTemplateCmd}" />
+                            <Button Style="{StaticResource AppleBtn}" Content="开始匹配" Command="{Binding StartMatchCmd}" Margin="12,0,0,0" />
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="模板预览" Margin="16,2,16,4" />
+                        <Border Style="{StaticResource AppleGroupCard}" Padding="12" Margin="16,0,16,8">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Width="140" Height="150" Background="{StaticResource PreviewBgBrush}" CornerRadius="10">
+                                    <Image Source="{Binding TemplatePreviewSource}" Width="140" Height="150" Stretch="Uniform">
+                                        <Image.Style>
+                                            <Style TargetType="Image">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding TemplatePreviewSource}" Value="{x:Null}">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Image.Style>
+                                    </Image>
+                                </Border>
+                                <StackPanel Margin="14,0,0,0" VerticalAlignment="Center" MinWidth="120">
+                                    <TextBlock Style="{StaticResource AppleLabel}" Text="{Binding TemplatePreviewInfo, FallbackValue='尚未确定模板'}" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="匹配模式" />
@@ -356,29 +358,30 @@
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Tolerance, FallbackValue=0.05}" Width="80" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
-                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI（可拖拽绘制）" Margin="16,8,16,4" />
-                        <ctrl:RoiCanvas Height="220" Margin="14,0,14,10"
-                                        RoiX="{Binding SelectedStep.RoiX, FallbackValue=10}"
-                                        RoiY="{Binding SelectedStep.RoiY, FallbackValue=10}"
-                                        RoiW="{Binding SelectedStep.RoiW, FallbackValue=120}"
-                                        RoiH="{Binding SelectedStep.RoiH, FallbackValue=80}"
-                                        ImageSource="{Binding SelectedStep.ImageSource, FallbackValue=''}" />
+                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI（在采集到的图上拖拽绘制）" Margin="16,8,16,4" />
+                        <ctrl:RoiImageView Height="220" Margin="14,0,14,10"
+                                           SourceImage="{Binding CurrentImageSource}"
+                                           RoiX="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=10}"
+                                           RoiY="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=10}"
+                                           RoiW="{Binding SelectedStep.RoiW, Mode=TwoWay, FallbackValue=120}"
+                                           RoiH="{Binding SelectedStep.RoiH, Mode=TwoWay, FallbackValue=80}"
+                                           Overlays="{Binding MatchOverlays}" />
                         <UniformGrid Columns="4" Margin="16,0,16,8">
                             <StackPanel Margin="0,0,4,0">
                                 <TextBlock Text="X" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiX, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
                             </StackPanel>
                             <StackPanel Margin="0,0,4,0">
                                 <TextBlock Text="Y" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiY, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
                             </StackPanel>
                             <StackPanel Margin="0,0,4,0">
                                 <TextBlock Text="W" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiW, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiW, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
                             </StackPanel>
                             <StackPanel>
                                 <TextBlock Text="H" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiH, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiH, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
                             </StackPanel>
                         </UniformGrid>
                     </StackPanel>

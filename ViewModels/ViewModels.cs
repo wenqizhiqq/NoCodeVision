@@ -1,16 +1,20 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Windows.Threading;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 using GrayMatch;
 using OpenCvSharp;
+using NoCodeVision;
 
 namespace NoCodeVision.ViewModels;
 
@@ -27,10 +31,14 @@ public class RelayCommand : ICommand
         _can = can;
     }
 
-    public event EventHandler? CanExecuteChanged;
+    public event EventHandler? CanExecuteChanged
+    {
+        add => CommandManager.RequerySuggested += value;
+        remove => CommandManager.RequerySuggested -= value;
+    }
     public bool CanExecute(object? parameter) => _can == null || _can(parameter);
     public void Execute(object? parameter) => _exec(parameter);
-    public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+    public void RaiseCanExecuteChanged() => CommandManager.InvalidateRequerySuggested();
 }
 
 public class ViewModelBase : INotifyPropertyChanged
@@ -500,39 +508,50 @@ public class VariablesViewModel : ViewModelBase
 
 public class FlowViewModel : ViewModelBase
 {
-    public ObservableCollection<VisionFlow> Flows { get; } = new()
+    private ObservableCollection<VisionFlow> _flows = new();
+    public ObservableCollection<VisionFlow> Flows
     {
-        new VisionFlow
+        get => _flows;
+        set => SetField(ref _flows, value);
+    }
+
+    private static ObservableCollection<VisionFlow> CreateDefaultFlows()
+    {
+        return new ObservableCollection<VisionFlow>
         {
-            Name = "主流程", Icon = "🔀",
-            Steps = new ObservableCollection<VisionFlowStep>
+            new VisionFlow
             {
-                new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集左视野", ParamSummary = "打开文件", Timeout = 5000, CostMs = 12.3, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始" },
-                new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "定位基准", ParamSummary = "tpl_A / score≥0.85", Timeout = 3000, CostMs = 8.7, ActualValue = "(120,88)", Icon = "🎯", StepType = "TemplateMatch", ImageSource = "tpl_A.png", TemplateFile = "tpl_A.png", RoiX=80, RoiY=60, RoiW=160, RoiH=120, ScoreThreshold=0.85, StatusText = "匹配成功" },
-                new VisionFlowStep { Index = 3, Function = "几何测量", Name = "测量孔径", ParamSummary = "圆径 / 12.00±0.05", Timeout = 2000, CostMs = 5.4, ActualValue = "12.03", Icon = "📐", StepType = "Measure", StatusText = "尺寸合格" },
-                new VisionFlowStep { Index = 4, Function = "逻辑判断", Name = "判定合格", ParamSummary = "孔径 OK", Timeout = 1000, CostMs = 0.2, ActualValue = "Pass", Icon = "✅", StepType = "Logic", StatusText = "通过" },
-                new VisionFlowStep { Index = 5, Function = "结果输出", Name = "输出结果", ParamSummary = "PLC_D200=1", Timeout = 1000, CostMs = 0.5, ActualValue = "Done", Icon = "📤", StepType = "Output", StatusText = "已完成" },
-            }
-        },
-        new VisionFlow
-        {
-            Name = "定位流程", Icon = "🧭",
-            Steps = new ObservableCollection<VisionFlowStep>
+                Name = "主流程", Icon = "🔀",
+                Steps = new ObservableCollection<VisionFlowStep>
+                {
+                    new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集左视野", ParamSummary = "打开文件", Timeout = 5000, CostMs = 12.3, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始" },
+                    new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "定位基准", ParamSummary = "tpl_A / score≥0.85", Timeout = 3000, CostMs = 8.7, ActualValue = "(120,88)", Icon = "🎯", StepType = "TemplateMatch", ImageSource = "tpl_A.png", TemplateFile = "tpl_A.png", RoiX=80, RoiY=60, RoiW=160, RoiH=120, ScoreThreshold=0.85, StatusText = "匹配成功" },
+                    new VisionFlowStep { Index = 3, Function = "几何测量", Name = "测量孔径", ParamSummary = "圆径 / 12.00±0.05", Timeout = 2000, CostMs = 5.4, ActualValue = "12.03", Icon = "📐", StepType = "Measure", StatusText = "尺寸合格" },
+                    new VisionFlowStep { Index = 4, Function = "逻辑判断", Name = "判定合格", ParamSummary = "孔径 OK", Timeout = 1000, CostMs = 0.2, ActualValue = "Pass", Icon = "✅", StepType = "Logic", StatusText = "通过" },
+                    new VisionFlowStep { Index = 5, Function = "结果输出", Name = "输出结果", ParamSummary = "PLC_D200=1", Timeout = 1000, CostMs = 0.5, ActualValue = "Done", Icon = "📤", StepType = "Output", StatusText = "已完成" },
+                }
+            },
+            new VisionFlow
             {
-                new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集顶视野", ParamSummary = "打开文件", Timeout = 5000, CostMs = 15.1, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始" },
-                new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "找中心点", ParamSummary = "tpl_center / score≥0.80", Timeout = 3000, CostMs = 9.2, ActualValue = "(512,384)", Icon = "🎯", StepType = "TemplateMatch", ImageSource = "tpl_center.png", TemplateFile = "tpl_center.png", RoiX=200, RoiY=150, RoiW=180, RoiH=140, ScoreThreshold=0.80, StatusText = "匹配成功" },
-            }
-        },
-        new VisionFlow
-        {
-            Name = "检测流程", Icon = "🔍",
-            Steps = new ObservableCollection<VisionFlowStep>
+                Name = "定位流程", Icon = "🧭",
+                Steps = new ObservableCollection<VisionFlowStep>
+                {
+                    new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集顶视野", ParamSummary = "打开文件", Timeout = 5000, CostMs = 15.1, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始" },
+                    new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "找中心点", ParamSummary = "tpl_center / score≥0.80", Timeout = 3000, CostMs = 9.2, ActualValue = "(512,384)", Icon = "🎯", StepType = "TemplateMatch", ImageSource = "tpl_center.png", TemplateFile = "tpl_center.png", RoiX=200, RoiY=150, RoiW=180, RoiH=140, ScoreThreshold=0.80, StatusText = "匹配成功" },
+                }
+            },
+            new VisionFlow
             {
-                new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集检测图", ParamSummary = "打开文件", Timeout = 5000, CostMs = 12.3, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始" },
-                new VisionFlowStep { Index = 2, Function = "几何测量", Name = "测量边距", ParamSummary = "距离 / 45.0±0.1", Timeout = 2000, CostMs = 6.8, ActualValue = "45.02", Icon = "📐", StepType = "Measure", MeasureType="边距", RoiX=50, RoiY=50, RoiW=200, RoiH=100, StatusText = "尺寸合格" },
-            }
-        },
-    };
+                Name = "检测流程", Icon = "🔍",
+                Steps = new ObservableCollection<VisionFlowStep>
+                {
+                    new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集检测图", ParamSummary = "打开文件", Timeout = 5000, CostMs = 12.3, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始" },
+                    new VisionFlowStep { Index = 2, Function = "几何测量", Name = "测量边距", ParamSummary = "距离 / 45.0±0.1", Timeout = 2000, CostMs = 6.8, ActualValue = "45.02", Icon = "📐", StepType = "Measure", MeasureType="边距", RoiX=50, RoiY=50, RoiW=200, RoiH=100, StatusText = "尺寸合格" },
+                }
+            },
+        };
+    }
+
 
     public string[] StepFunctions { get; } = { "图像采集", "模板匹配", "几何测量", "逻辑判断", "结果输出" };
     public string[] PreprocessTypes { get; } = { "灰度化", "二值化", "高斯模糊", "中值滤波", "边缘检测" };
@@ -548,7 +567,18 @@ public class FlowViewModel : ViewModelBase
     public VisionFlow? SelectedFlow { get => _selectedFlow; set => SetField(ref _selectedFlow, value); }
 
     private VisionFlowStep? _selectedStep;
-    public VisionFlowStep? SelectedStep { get => _selectedStep; set => SetField(ref _selectedStep, value); }
+    public VisionFlowStep? SelectedStep
+    {
+        get => _selectedStep;
+        set
+        {
+            if (SetField(ref _selectedStep, value))
+            {
+                _matchOverlays.Clear();
+                LoadTemplatePreview(value);
+            }
+        }
+    }
 
     private string _newStepFunction = "模板匹配";
     public string NewStepFunction { get => _newStepFunction; set => SetField(ref _newStepFunction, value); }
@@ -562,7 +592,30 @@ public class FlowViewModel : ViewModelBase
     // 流程级共享图像：图像采集得到的 Mat，直接传给后续的模板匹配/几何测量步骤
     private Mat? _sharedImage;
     private string _currentImagePath = "";
-    public string CurrentImagePath { get => _currentImagePath; set => SetField(ref _currentImagePath, value); }
+    public string CurrentImagePath
+    {
+        get => _currentImagePath;
+        set
+        {
+            if (SetField(ref _currentImagePath, value))
+                LoadCurrentImageSource();
+        }
+    }
+
+    private BitmapImage? _currentImageSource;
+    public BitmapImage? CurrentImageSource { get => _currentImageSource; set => SetField(ref _currentImageSource, value); }
+
+    private ObservableCollection<OverlayItem> _matchOverlays = new();
+    public ObservableCollection<OverlayItem> MatchOverlays => _matchOverlays;
+
+    private BitmapImage? _templatePreviewSource;
+    public BitmapImage? TemplatePreviewSource { get => _templatePreviewSource; set => SetField(ref _templatePreviewSource, value); }
+
+    private string _templatePreviewInfo = "尚未确定模板";
+    public string TemplatePreviewInfo { get => _templatePreviewInfo; set => SetField(ref _templatePreviewInfo, value); }
+
+    private static string StateFilePath
+        => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NoCodeVision", "flows.json");
 
     public ICommand AddFlowCmd { get; }
     public ICommand DeleteFlowCmd { get; }
@@ -575,14 +628,19 @@ public class FlowViewModel : ViewModelBase
     public ICommand StepRunCmd { get; }
     public ICommand ClearCmd { get; }
     public ICommand PickImageCmd { get; }
+    public ICommand ConfirmTemplateCmd { get; }
+    public ICommand StartMatchCmd { get; }
     public ICommand AskAiCmd { get; }
     public ICommand RunLuaCmd { get; }
     public ICommand DebugLuaCmd { get; }
 
     public FlowViewModel()
     {
-        SelectedFlow = Flows[0];
-        SelectedStep = SelectedFlow.Steps[0];
+        if (!LoadState())
+            _flows = CreateDefaultFlows();
+        WireAutoSave();
+        SelectedFlow = Flows.FirstOrDefault();
+        SelectedStep = SelectedFlow?.Steps.FirstOrDefault();
 
         AddFlowCmd = new RelayCommand(_ =>
         {
@@ -712,6 +770,110 @@ public class FlowViewModel : ViewModelBase
             }
         }, _ => _selectedStep != null && _selectedStep.StepType == "ImageCapture");
 
+        ConfirmTemplateCmd = new RelayCommand(_ =>
+        {
+            if (_selectedStep == null || _selectedStep.StepType != "TemplateMatch") return;
+            Mat? src = _sharedImage;
+            bool own = false;
+            if (src == null && !string.IsNullOrWhiteSpace(CurrentImagePath) && File.Exists(CurrentImagePath))
+            {
+                src = Cv2.ImRead(CurrentImagePath, ImreadModes.Color);
+                own = true;
+            }
+            if (src == null || src.Empty())
+            {
+                _selectedStep.StatusText = "无图像源";
+                return;
+            }
+            var roi = new Rect((int)_selectedStep.RoiX, (int)_selectedStep.RoiY, Math.Max(4, (int)_selectedStep.RoiW), Math.Max(4, (int)_selectedStep.RoiH));
+            roi.X = Math.Max(0, Math.Min(roi.X, src.Width - 1));
+            roi.Y = Math.Max(0, Math.Min(roi.Y, src.Height - 1));
+            roi.Width = Math.Min(roi.Width, src.Width - roi.X);
+            roi.Height = Math.Min(roi.Height, src.Height - roi.Y);
+            if (roi.Width <= 0 || roi.Height <= 0)
+            {
+                _selectedStep.StatusText = "ROI无效";
+                if (own) src.Dispose();
+                return;
+            }
+            using var tpl = new Mat(src, roi);
+            var tplDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NoCodeVision", "templates");
+            Directory.CreateDirectory(tplDir);
+            var tmp = Path.Combine(tplDir, $"ncv_tpl_{DateTime.Now:yyyyMMddHHmmssfff}.png");
+            Cv2.ImWrite(tmp, tpl);
+            _selectedStep.TemplateFile = tmp;
+            _selectedStep.StatusText = "模板已确定";
+            _selectedStep.ActualValue = $"{roi.Width}x{roi.Height}";
+            LoadTemplatePreview(_selectedStep);
+            if (own) src.Dispose();
+        }, _ => _selectedStep != null && _selectedStep.StepType == "TemplateMatch");
+
+        StartMatchCmd = new RelayCommand(_ =>
+        {
+            if (_selectedStep == null || _selectedStep.StepType != "TemplateMatch") return;
+            _matchOverlays.Clear();
+            Mat? src = _sharedImage;
+            bool own = false;
+            try
+            {
+                if (src == null && !string.IsNullOrWhiteSpace(CurrentImagePath) && File.Exists(CurrentImagePath))
+                {
+                    src = Cv2.ImRead(CurrentImagePath, ImreadModes.Color);
+                    own = true;
+                }
+                if (src == null || src.Empty())
+                {
+                    _selectedStep.StatusText = "无图像源";
+                    _selectedStep.ActualValue = "匹配失败";
+                    return;
+                }
+                var matcher = new RotatedTemplateMatcher();
+                matcher.SetSource(src);
+                matcher.UseContour = _selectedStep.MatchMode == "轮廓匹配";
+                if (_selectedStep.MatchMode == "轮廓匹配")
+                {
+                    matcher.ContourThreshold = _selectedStep.ContourThreshold;
+                    matcher.ContourBlur = _selectedStep.ContourBlur;
+                }
+                var roi = new Rect((int)_selectedStep.RoiX, (int)_selectedStep.RoiY, Math.Max(4, (int)_selectedStep.RoiW), Math.Max(4, (int)_selectedStep.RoiH));
+                matcher.SetTemplateFromRoi(roi);
+                var sw = Stopwatch.StartNew();
+                // 模板较小（111×138 量级），金字塔 3 层会把模板压到约 13×17，容易丢特征；先用 1 层保证召回
+                var results = matcher.Match(1, 0.0, 360.0, 1.0, _selectedStep.ScoreThreshold, 0.3, 10, 0);
+                sw.Stop();
+                _selectedStep.CostMs = sw.Elapsed.TotalMilliseconds;
+                if (results.Count > 0)
+                {
+                    var r = results[0];
+                    _matchOverlays.Add(new OverlayItem
+                    {
+                        X = r.CenterX,
+                        Y = r.CenterY,
+                        // TemplateWidth/Height 已由原生端乘以 mapFactor（=Scale），此处不可再乘，否则框被放大 mapFactor² 倍
+                        W = r.TemplateWidth,
+                        H = r.TemplateHeight,
+                        // 与 VisionMotion 已验证路径一致：原生角度取负
+                        AngleDeg = -r.Angle,
+                        Color = "#007AFF",
+                        Label = $"score {r.Score:F2}  {_selectedStep.CostMs:F0}ms"
+                    });
+                    _selectedStep.ActualValue = $"({r.CenterX:F1},{r.CenterY:F1}) θ{r.Angle:F1} score{r.Score:F2} 耗时{_selectedStep.CostMs:F1}ms";
+                    _selectedStep.StatusText = $"匹配成功 · 结果数 {results.Count} · 耗时{_selectedStep.CostMs:F1}ms";
+                }
+                else
+                {
+                    _selectedStep.ActualValue = $"源图 {src.Width}×{src.Height}，模板 {roi.Width}×{roi.Height}，未匹配（阈值 {_selectedStep.ScoreThreshold:F2}）";
+                    _selectedStep.StatusText = "匹配失败";
+                }
+                if (own) src.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _selectedStep.ActualValue = $"匹配异常：{ex.Message}";
+                _selectedStep.StatusText = "匹配失败";
+            }
+        }, _ => _selectedStep != null && _selectedStep.StepType == "TemplateMatch");
+
         RunCmd = new RelayCommand(_ =>
         {
             if (_selectedFlow == null || _selectedFlow.Steps.Count == 0) return;
@@ -834,6 +996,147 @@ public class FlowViewModel : ViewModelBase
             return null;
         }
     }
+
+    private void LoadCurrentImageSource()
+    {
+        if (string.IsNullOrWhiteSpace(_currentImagePath) || !File.Exists(_currentImagePath))
+        {
+            CurrentImageSource = null;
+            return;
+        }
+        try
+        {
+            var bmp = new BitmapImage();
+            bmp.BeginInit();
+            bmp.UriSource = new Uri(_currentImagePath);
+            bmp.CacheOption = BitmapCacheOption.OnLoad;
+            bmp.EndInit();
+            bmp.Freeze();
+            CurrentImageSource = bmp;
+        }
+        catch
+        {
+            CurrentImageSource = null;
+        }
+    }
+
+    private void LoadTemplatePreview(VisionFlowStep? step)
+    {
+        if (step == null || step.StepType != "TemplateMatch"
+            || string.IsNullOrWhiteSpace(step.TemplateFile) || !File.Exists(step.TemplateFile))
+        {
+            TemplatePreviewSource = null;
+            TemplatePreviewInfo = "尚未确定模板";
+            return;
+        }
+        try
+        {
+            var bmp = new BitmapImage();
+            bmp.BeginInit();
+            bmp.UriSource = new Uri(step.TemplateFile);
+            bmp.CacheOption = BitmapCacheOption.OnLoad;
+            bmp.EndInit();
+            bmp.Freeze();
+            TemplatePreviewSource = bmp;
+            TemplatePreviewInfo = $"模板分辨率：{bmp.PixelWidth} × {bmp.PixelHeight} px";
+        }
+        catch
+        {
+            TemplatePreviewSource = null;
+            TemplatePreviewInfo = "模板读取失败";
+        }
+    }
+
+    #region 自动保存 / 自动载入
+
+    private bool LoadState()
+    {
+        try
+        {
+            var path = StateFilePath;
+            if (!File.Exists(path)) return false;
+            var json = File.ReadAllText(path);
+            if (string.IsNullOrWhiteSpace(json)) return false;
+            var flows = JsonSerializer.Deserialize<List<VisionFlow>>(json);
+            if (flows == null || flows.Count == 0) return false;
+            _flows = new ObservableCollection<VisionFlow>(flows);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private void SaveState()
+    {
+        try
+        {
+            var path = StateFilePath;
+            var dir = Path.GetDirectoryName(path);
+            if (!string.IsNullOrWhiteSpace(dir)) Directory.CreateDirectory(dir);
+            var json = JsonSerializer.Serialize(_flows, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(path, json);
+        }
+        catch
+        {
+            // 忽略保存失败（如目录不可写）
+        }
+    }
+
+    private DispatcherTimer? _saveTimer;
+    private void RequestSave()
+    {
+        if (_saveTimer == null)
+        {
+            _saveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
+            _saveTimer.Tick += (_, _) => { _saveTimer?.Stop(); SaveState(); };
+        }
+        _saveTimer.Stop();
+        _saveTimer.Start();
+    }
+
+    private void WireAutoSave()
+    {
+        WireFlows();
+        _flows.CollectionChanged += (_, e) =>
+        {
+            if (e.NewItems != null) foreach (VisionFlow f in e.NewItems) WireFlow(f);
+            if (e.OldItems != null) foreach (VisionFlow f in e.OldItems) UnwireFlow(f);
+            RequestSave();
+        };
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => SaveState();
+    }
+
+    private void WireFlows()
+    {
+        foreach (var f in _flows) WireFlow(f);
+    }
+
+    private void WireFlow(VisionFlow flow)
+    {
+        flow.Steps.CollectionChanged += FlowStepsChanged;
+        foreach (var s in flow.Steps) WireStep(s);
+    }
+
+    private void UnwireFlow(VisionFlow flow)
+    {
+        flow.Steps.CollectionChanged -= FlowStepsChanged;
+        foreach (var s in flow.Steps) UnwireStep(s);
+    }
+
+    private void FlowStepsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.NewItems != null) foreach (VisionFlowStep s in e.NewItems) WireStep(s);
+        if (e.OldItems != null) foreach (VisionFlowStep s in e.OldItems) UnwireStep(s);
+        RequestSave();
+    }
+
+    private void WireStep(VisionFlowStep step) => step.PropertyChanged += StepPropertyChanged;
+    private void UnwireStep(VisionFlowStep step) => step.PropertyChanged -= StepPropertyChanged;
+    private void StepPropertyChanged(object? sender, PropertyChangedEventArgs e) => RequestSave();
+
+    #endregion
 
     private void RunStep(VisionFlowStep step, RotatedTemplateMatcher matcher)
     {
