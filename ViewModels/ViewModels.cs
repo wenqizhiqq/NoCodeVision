@@ -2,9 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
+using Microsoft.Win32;
+using GrayMatch;
+using OpenCvSharp;
 
 namespace NoCodeVision.ViewModels;
 
@@ -625,7 +631,58 @@ public class FlowViewModel : ViewModelBase
 
         SetPropTabCmd = new RelayCommand(p => { if (p is string s) ActivePropTab = s; });
 
-        RunCmd = new RelayCommand(_ => Status = $"运行中 · {_selectedFlow?.Name} · 共 {_selectedFlow?.Steps.Count ?? 0} 步 · {DateTime.Now:HH:mm:ss}");
+        RunCmd = new RelayCommand(_ =>
+        {
+            if (_selectedFlow == null || _selectedFlow.Steps.Count == 0) return;
+            Status = $"运行中 · {_selectedFlow.Name} · 共 {_selectedFlow.Steps.Count} 步 · {DateTime.Now:HH:mm:ss}";
+            var matcher = new RotatedTemplateMatcher();
+            foreach (var step in _selectedFlow.Steps)
+            {
+                var sw = Stopwatch.StartNew();
+                try
+                {
+                    switch (step.StepType)
+                    {
+                        case "TemplateMatch":
+                            if (!string.IsNullOrWhiteSpace(step.ImageSource) && File.Exists(step.ImageSource))
+                            {
+                                matcher.LoadSource(step.ImageSource);
+                                var roi = new Rect((int)step.RoiX, (int)step.RoiY, Math.Max(4, (int)step.RoiW), Math.Max(4, (int)step.RoiH));
+                                matcher.SetTemplateFromRoi(roi);
+                                var results = matcher.Match(3, 0.0, 360.0, 1.0, step.ScoreThreshold, 0.3, 10, 0);
+                                if (results.Count > 0)
+                                {
+                                    var r = results[0];
+                                    step.ActualValue = $"({r.CenterX:F1},{r.CenterY:F1}) θ{r.Angle:F1} score{r.Score:F2}";
+                                    step.StatusText = "匹配成功";
+                                }
+                                else
+                                {
+                                    step.ActualValue = "未匹配";
+                                    step.StatusText = "匹配失败";
+                                }
+                            }
+                            else
+                            {
+                                step.ActualValue = "无图像源";
+                                step.StatusText = "匹配失败";
+                            }
+                            break;
+                        default:
+                            step.ActualValue = "OK";
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    step.ActualValue = $"错误:{ex.Message}";
+                    step.StatusText = "错误";
+                }
+                sw.Stop();
+                step.CostMs = sw.Elapsed.TotalMilliseconds;
+            }
+            Status = $"完成 · {_selectedFlow.Name} · {DateTime.Now:HH:mm:ss}";
+        }, _ => _selectedFlow != null && _selectedFlow.Steps.Count > 0);
         ClearCmd = new RelayCommand(_ =>
         {
             if (_selectedFlow != null)

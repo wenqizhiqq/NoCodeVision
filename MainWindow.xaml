@@ -44,29 +44,35 @@
                         </Button>
                         <Button x:Name="Nav2" Tag="2" Style="{StaticResource SegButton}" Click="Nav_Click">
                             <StackPanel Orientation="Horizontal">
+                                <ctrl:AppleIconTile Glyph="⚙️" TileSize="20" Margin="0,0,6,0" />
+                                <TextBlock Text="运控" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="Nav3" Tag="3" Style="{StaticResource SegButton}" Click="Nav_Click">
+                            <StackPanel Orientation="Horizontal">
                                 <ctrl:AppleIconTile Glyph="📡" TileSize="20" Margin="0,0,6,0" />
                                 <TextBlock Text="通讯" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
-                        <Button x:Name="Nav3" Tag="3" Style="{StaticResource SegButton}" Click="Nav_Click">
+                        <Button x:Name="Nav4" Tag="4" Style="{StaticResource SegButton}" Click="Nav_Click">
                             <StackPanel Orientation="Horizontal">
                                 <ctrl:AppleIconTile Glyph="🧮" TileSize="20" Margin="0,0,6,0" />
                                 <TextBlock Text="变量" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
-                        <Button x:Name="Nav4" Tag="4" Style="{StaticResource SegButton}" Click="Nav_Click">
+                        <Button x:Name="Nav5" Tag="5" Style="{StaticResource SegButton}" Click="Nav_Click">
                             <StackPanel Orientation="Horizontal">
                                 <ctrl:AppleIconTile Glyph="🔀" TileSize="20" Margin="0,0,6,0" />
                                 <TextBlock Text="流程" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
-                        <Button x:Name="Nav5" Tag="5" Style="{StaticResource SegButton}" Click="Nav_Click">
+                        <Button x:Name="Nav6" Tag="6" Style="{StaticResource SegButton}" Click="Nav_Click">
                             <StackPanel Orientation="Horizontal">
                                 <ctrl:AppleIconTile Glyph="🛠" TileSize="20" Margin="0,0,6,0" />
                                 <TextBlock Text="工程师" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
-                        <Button x:Name="Nav6" Tag="6" Style="{StaticResource SegButton}" Click="Nav_Click">
+                        <Button x:Name="Nav7" Tag="7" Style="{StaticResource SegButton}" Click="Nav_Click">
                             <StackPanel Orientation="Horizontal">
                                 <ctrl:AppleIconTile Glyph="👤" TileSize="20" Margin="0,0,6,0" />
                                 <TextBlock Text="操作员" VerticalAlignment="Center" />

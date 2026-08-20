@@ -12,4 +12,20 @@
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="OpenCvSharp4" Version="4.8.0.20230708" />
+    <PackageReference Include="OpenCvSharp4.Extensions" Version="4.8.0.20230708" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Libs\GrayModelNative.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>GrayModelNative.dll</TargetPath>
+    </Content>
+    <Content Include="Libs\opencv_world480.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>opencv_world480.dll</TargetPath>
+    </Content>
+  </ItemGroup>
+
 </Project>

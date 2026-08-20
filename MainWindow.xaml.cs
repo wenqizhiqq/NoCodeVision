@@ -16,13 +16,14 @@ public partial class MainWindow : Window
         {
             new ProjectView(),
             new CameraView(),
+            new MotionControlView(),
             new CommunicationView(),
             new VariablesView(),
             new FlowView(),
             new EngineerView(),
             new OperatorView(),
         };
-        _navButtons = new[] { Nav0, Nav1, Nav2, Nav3, Nav4, Nav5, Nav6 };
+        _navButtons = new[] { Nav0, Nav1, Nav2, Nav3, Nav4, Nav5, Nav6, Nav7 };
         Navigate(0);
     }
 
