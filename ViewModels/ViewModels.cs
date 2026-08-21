@@ -194,6 +194,134 @@ public class VisionFlowStep : ViewModelBase
     public string InputValue { get => _inputValue; set => SetField(ref _inputValue, value); }
     private string _inputValue = "";
 
+    // ===== 运动控制：轴运动 =====
+    public string TargetAxis { get => _targetAxis; set => SetField(ref _targetAxis, value); }
+    private string _targetAxis = "X轴";
+    public string MoveType { get => _moveType; set => SetField(ref _moveType, value); }
+    private string _moveType = "绝对运动";
+    public string MoveMode { get => _moveMode; set => SetField(ref _moveMode, value); }
+    private string _moveMode = "点位运动";
+    public double TargetX { get => _targetX; set => SetField(ref _targetX, value); }
+    private double _targetX;
+    public double TargetY { get => _targetY; set => SetField(ref _targetY, value); }
+    private double _targetY;
+    public double TargetZ { get => _targetZ; set => SetField(ref _targetZ, value); }
+    private double _targetZ;
+    public double Speed { get => _speed; set => SetField(ref _speed, value); }
+    private double _speed = 50;
+    public double Accel { get => _accel; set => SetField(ref _accel, value); }
+    private double _accel = 100;
+    public double Decel { get => _decel; set => SetField(ref _decel, value); }
+    private double _decel = 100;
+    public int InPosTimeout { get => _inPosTimeout; set => SetField(ref _inPosTimeout, value); }
+    private int _inPosTimeout = 5000;
+    public int ServoOn { get => _servoOn; set => SetField(ref _servoOn, value); }
+    private int _servoOn = 1;
+
+    // ===== 运动控制：IO 控制 =====
+    public string IoChannel { get => _ioChannel; set => SetField(ref _ioChannel, value); }
+    private string _ioChannel = "DO_0";
+    public string IoType { get => _ioType; set => SetField(ref _ioType, value); }
+    private string _ioType = "输出";
+    public int IoValue { get => _ioValue; set => SetField(ref _ioValue, value); }
+    private int _ioValue = 1;
+    public int WaitDone { get => _waitDone; set => SetField(ref _waitDone, value); }
+    private int _waitDone = 1;
+
+    // ===== 运动控制：气缸动作 =====
+    public string CylName { get => _cylName; set => SetField(ref _cylName, value); }
+    private string _cylName = "气缸1";
+    public string CylAction { get => _cylAction; set => SetField(ref _cylAction, value); }
+    private string _cylAction = "伸出";
+    public int CylTimeout { get => _cylTimeout; set => SetField(ref _cylTimeout, value); }
+    private int _cylTimeout = 3000;
+    public string SensorIn { get => _sensorIn; set => SetField(ref _sensorIn, value); }
+    private string _sensorIn = "IN_0";
+    public string SensorOut { get => _sensorOut; set => SetField(ref _sensorOut, value); }
+    private string _sensorOut = "IN_1";
+
+    // ===== 运动控制：等待延时 =====
+    public string WaitType { get => _waitType; set => SetField(ref _waitType, value); }
+    private string _waitType = "时间";
+    public int WaitTime { get => _waitTime; set => SetField(ref _waitTime, value); }
+    private int _waitTime = 1000;
+    public string WaitCondition { get => _waitCondition; set => SetField(ref _waitCondition, value); }
+    private string _waitCondition = "signal == 1";
+
+    // ===== 运动控制：通讯指令 =====
+    public string CommChannel { get => _commChannel; set => SetField(ref _commChannel, value); }
+    private string _commChannel = "PLC-串口";
+    public string CommCmd { get => _commCmd; set => SetField(ref _commCmd, value); }
+    private string _commCmd = "发送";
+    public string CommContent { get => _commContent; set => SetField(ref _commContent, value); }
+    private string _commContent = "M100=1";
+    public string CommEncoding { get => _commEncoding; set => SetField(ref _commEncoding, value); }
+    private string _commEncoding = "ASCII";
+
+    // ===== 图像采集扩展参数 =====
+    public double Exposure { get => _exposure; set => SetField(ref _exposure, value); }
+    private double _exposure = 8000;
+    public double Gain { get => _gain; set => SetField(ref _gain, value); }
+    private double _gain = 10;
+    public string TriggerMode { get => _triggerMode; set => SetField(ref _triggerMode, value); }
+    private string _triggerMode = "连续采集";
+    public string PixelFormat { get => _pixelFormat; set => SetField(ref _pixelFormat, value); }
+    private string _pixelFormat = "RGB8";
+    public int ImageWidth { get => _imageWidth; set => SetField(ref _imageWidth, value); }
+    private int _imageWidth = 2448;
+    public int ImageHeight { get => _imageHeight; set => SetField(ref _imageHeight, value); }
+    private int _imageHeight = 2048;
+    public int AutoExposure { get => _autoExposure; set => SetField(ref _autoExposure, value); }
+    private int _autoExposure = 0;
+    public int SaveImage { get => _saveImage; set => SetField(ref _saveImage, value); }
+    private int _saveImage = 0;
+    public string ImageFormat { get => _imageFormat; set => SetField(ref _imageFormat, value); }
+    private string _imageFormat = "PNG";
+
+    // ===== 模板匹配扩展参数 =====
+    public string SortBy { get => _sortBy; set => SetField(ref _sortBy, value); }
+    private string _sortBy = "相似度";
+    public string BorderMode { get => _borderMode; set => SetField(ref _borderMode, value); }
+    private string _borderMode = "常数填充";
+    public int UseMask { get => _useMask; set => SetField(ref _useMask, value); }
+    private int _useMask = 0;
+    public double MinDistance { get => _minDistance; set => SetField(ref _minDistance, value); }
+    private double _minDistance = 10;
+
+    // ===== 几何测量扩展参数 =====
+    public string MeasureUnit { get => _measureUnit; set => SetField(ref _measureUnit, value); }
+    private string _measureUnit = "像素";
+    public int Decimals { get => _decimals; set => SetField(ref _decimals, value); }
+    private int _decimals = 3;
+    public int CaliperCount { get => _caliperCount; set => SetField(ref _caliperCount, value); }
+    private int _caliperCount = 20;
+    public string EdgePolarity { get => _edgePolarity; set => SetField(ref _edgePolarity, value); }
+    private string _edgePolarity = "由亮到暗";
+    public double EdgeThreshold { get => _edgeThreshold; set => SetField(ref _edgeThreshold, value); }
+    private double _edgeThreshold = 20;
+    public string OutputVar { get => _outputVar; set => SetField(ref _outputVar, value); }
+    private string _outputVar = "dMeasure";
+
+    // ===== 逻辑判断扩展参数 =====
+    public string CompareVar { get => _compareVar; set => SetField(ref _compareVar, value); }
+    private string _compareVar = "score";
+    public string CompareSource { get => _compareSource; set => SetField(ref _compareSource, value); }
+    private string _compareSource = "匹配分数";
+    public string Remark { get => _remark; set => SetField(ref _remark, value); }
+    private string _remark = "";
+
+    // ===== 结果输出扩展参数 =====
+    public string OutputType { get => _outputType; set => SetField(ref _outputType, value); }
+    private string _outputType = "PLC";
+    public string DataType { get => _dataType; set => SetField(ref _dataType, value); }
+    private string _dataType = "整数";
+    public string Trigger { get => _trigger; set => SetField(ref _trigger, value); }
+    private string _trigger = "立即";
+    public int Verify { get => _verify; set => SetField(ref _verify, value); }
+    private int _verify = 0;
+    public string OnFail { get => _onFail; set => SetField(ref _onFail, value); }
+    private string _onFail = "忽略";
+
     public string AiHint
     {
         get => _aiHint;
@@ -583,15 +711,48 @@ public class FlowViewModel : ViewModelBase
     }
 
 
-    public string[] StepFunctions { get; } = { "图像采集", "模板匹配", "几何测量", "逻辑判断", "结果输出" };
+    public string[] StepFunctions { get; } = { "图像采集", "模板匹配", "几何测量", "逻辑判断", "结果输出", "轴运动", "IO控制", "气缸动作", "等待延时", "通讯指令" };
     public string[] PreprocessTypes { get; } = { "灰度化", "二值化", "高斯模糊", "中值滤波", "边缘检测" };
     public string[] MeasureTypes { get; } = { "圆径", "边距", "角度", "面积", "中心距" };
     public string[] LogicRelations { get; } = { "如果", "并且", "或者", "否则", "循环", "跳出", "并行", "等待" };
     public string[] Operators { get; } = { "大于", "小于", "等于", "大于等于", "小于等于", "不等于", "包含", "不包含", "开头为", "结尾为" };
-    public string[] StatusOptions { get; } = { "未开始", "运行中", "已完成", "已跳过", "等待中", "错误", "超时", "已暂停", "通过", "不通过", "告警", "采集成功", "采集失败", "匹配成功", "匹配失败", "ROI 内", "ROI 外", "尺寸合格", "尺寸超差", "亮度正常", "亮度异常", "通讯正常", "通讯中断" };
+    public string[] StatusOptions { get; } = { "未开始", "运行中", "已完成", "已跳过", "等待中", "错误", "超时", "已暂停", "通过", "不通过", "告警", "采集成功", "采集失败", "匹配成功", "匹配失败", "ROI 内", "ROI 外", "尺寸合格", "尺寸超差", "亮度正常", "亮度异常", "通讯正常", "通讯中断", "运动完成", "到位", "未到位", "动作完成" };
     public string[] CaptureModes { get; } = { "采集相机", "打开文件夹", "打开文件" };
     public string[] MatchModes { get; } = { "灰度匹配", "轮廓匹配" };
     public string[] PropTabs { get; } = { "图像", "Lua", "参数设置" };
+
+    // 运动控制：轴运动
+    public string[] AxisNames { get; } = { "X轴", "Y轴", "Z轴", "R轴(旋转)", "U轴", "V轴" };
+    public string[] MoveTypes { get; } = { "绝对运动", "相对运动" };
+    public string[] MoveModes { get; } = { "点位运动", "直线插补", "圆弧插补", "圆弧插补(逆时针)" };
+    // 运动控制：IO 控制
+    public string[] IoTypes { get; } = { "输出", "输入" };
+    public string[] IoChannels { get; } = { "DO_0", "DO_1", "DO_2", "DO_3", "DO_4", "DO_5", "DO_6", "DO_7" };
+    public string[] IoInputChannels { get; } = { "DI_0", "DI_1", "DI_2", "DI_3", "DI_4", "DI_5", "DI_6", "DI_7" };
+    // 运动控制：气缸动作
+    public string[] CylActions { get; } = { "伸出", "缩回" };
+    // 运动控制：等待延时
+    public string[] WaitTypes { get; } = { "时间", "信号", "条件" };
+    // 运动控制：通讯指令
+    public string[] CommCmds { get; } = { "发送", "接收" };
+    public string[] CommEncodings { get; } = { "ASCII", "HEX", "UTF8" };
+    // 图像采集扩展
+    public string[] CaptureTriggerModes { get; } = { "连续采集", "软触发", "硬触发" };
+    public string[] CapturePixelFormats { get; } = { "Mono8", "RGB8", "Mono12" };
+    public string[] ImageFormats { get; } = { "PNG", "BMP", "JPG", "TIFF" };
+    // 模板匹配扩展
+    public string[] SortBys { get; } = { "相似度", "位置", "角度" };
+    public string[] BorderModes { get; } = { "常数填充", "边缘复制", "镜像" };
+    // 几何测量扩展
+    public string[] MeasureUnits { get; } = { "像素", "毫米", "微米" };
+    public string[] EdgePolarities { get; } = { "由亮到暗", "由暗到亮", "任意" };
+    // 逻辑判断扩展
+    public string[] CompareSources { get; } = { "匹配分数", "测量值", "变量", "输入值" };
+    // 结果输出扩展
+    public string[] OutputTypes { get; } = { "PLC", "变量", "通讯", "文件" };
+    public string[] DataTypes { get; } = { "整数", "浮点", "字符串", "布尔" };
+    public string[] OutputTriggers { get; } = { "立即", "到位后", "条件满足" };
+    public string[] OnFails { get; } = { "忽略", "报警", "停机" };
 
     private VisionFlow? _selectedFlow;
     private int _stepCursor = 0;
@@ -809,6 +970,11 @@ public class FlowViewModel : ViewModelBase
                 "几何测量" => ("📐", "Measure"),
                 "逻辑判断" => ("✅", "Logic"),
                 "结果输出" => ("📤", "Output"),
+                "轴运动" => ("🦾", "AxisMove"),
+                "IO控制" => ("🔌", "IOControl"),
+                "气缸动作" => ("🟢", "Cylinder"),
+                "等待延时" => ("⏱", "Wait"),
+                "通讯指令" => ("📡", "Comm"),
                 _ => ("➕", "Other")
             };
             var step = new VisionFlowStep

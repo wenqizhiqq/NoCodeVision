@@ -180,13 +180,63 @@
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="曝光(us)" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="8000" Width="80" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Exposure, FallbackValue=8000}" Width="100" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="增益" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="10" Width="80" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Gain, FallbackValue=10}" Width="100" />
                         </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="触发模式" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="140"
+                                      ItemsSource="{Binding CaptureTriggerModes}" SelectedItem="{Binding SelectedStep.TriggerMode, FallbackValue='连续采集'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="像素格式" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="140"
+                                      ItemsSource="{Binding CapturePixelFormats}" SelectedItem="{Binding SelectedStep.PixelFormat, FallbackValue='RGB8'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <Grid Margin="16,8,16,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                                <TextBlock Text="分辨率宽(px)" Style="{StaticResource AppleSubLabel}" FontSize="10" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ImageWidth, FallbackValue=2448}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="6,0,0,0">
+                                <TextBlock Text="分辨率高(px)" Style="{StaticResource AppleSubLabel}" FontSize="10" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ImageHeight, FallbackValue=2048}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                            </StackPanel>
+                        </Grid>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="图像格式" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
+                                      ItemsSource="{Binding ImageFormats}" SelectedItem="{Binding SelectedStep.ImageFormat, FallbackValue='PNG'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <Grid Margin="16,4,16,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                <CheckBox Content="自动曝光"
+                                          IsChecked="{Binding SelectedStep.AutoExposure, Converter={StaticResource IntToBoolConverter}}"
+                                          Style="{StaticResource AppleCheckBox}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <CheckBox Content="保存原图"
+                                          IsChecked="{Binding SelectedStep.SaveImage, Converter={StaticResource IntToBoolConverter}}"
+                                          Style="{StaticResource AppleCheckBox}" />
+                            </StackPanel>
+                        </Grid>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="采集方式" />
@@ -453,6 +503,29 @@
                         </Grid>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="结果排序" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="130"
+                                      ItemsSource="{Binding SortBys}" SelectedItem="{Binding SelectedStep.SortBy, FallbackValue='相似度'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="边缘填充" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="130"
+                                      ItemsSource="{Binding BorderModes}" SelectedItem="{Binding SelectedStep.BorderMode, FallbackValue='常数填充'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="最小匹配间距(px)" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.MinDistance, FallbackValue=10}" Width="100" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <CheckBox Content="启用掩膜(忽略背景)"
+                                      IsChecked="{Binding SelectedStep.UseMask, Converter={StaticResource IntToBoolConverter}}"
+                                      Style="{StaticResource AppleCheckBox}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="模板文件" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.TemplateFile, FallbackValue=''}" />
                         </DockPanel>
@@ -487,6 +560,38 @@
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="公差(±)" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Tolerance, FallbackValue=0.05}" Width="80" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="单位" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
+                                      ItemsSource="{Binding MeasureUnits}" SelectedItem="{Binding SelectedStep.MeasureUnit, FallbackValue='像素'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="小数位" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Decimals, FallbackValue=3}" Width="80" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="卡尺数" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.CaliperCount, FallbackValue=20}" Width="80" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="边缘极性" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="130"
+                                      ItemsSource="{Binding EdgePolarities}" SelectedItem="{Binding SelectedStep.EdgePolarity, FallbackValue='由亮到暗'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="边缘阈值" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.EdgeThreshold, FallbackValue=20}" Width="80" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="输出变量" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.OutputVar, FallbackValue='dMeasure'}" Width="120" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI（在采集到的图上拖拽绘制）" Margin="16,8,16,4" />
@@ -546,6 +651,22 @@
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="False 分支" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="NG" Width="80" />
                         </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="比较变量" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.CompareVar, FallbackValue='score'}" Width="120" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="比较来源" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="140"
+                                      ItemsSource="{Binding CompareSources}" SelectedItem="{Binding SelectedStep.CompareSource, FallbackValue='匹配分数'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="备注" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Remark, FallbackValue=''}" />
+                        </DockPanel>
                     </StackPanel>
                 </Border>
 
@@ -571,6 +692,284 @@
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="输出值" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.OutputValue, FallbackValue=1}" Width="80" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="输出类型" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
+                                      ItemsSource="{Binding OutputTypes}" SelectedItem="{Binding SelectedStep.OutputType, FallbackValue='PLC'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="数据类型" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
+                                      ItemsSource="{Binding DataTypes}" SelectedItem="{Binding SelectedStep.DataType, FallbackValue='整数'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="触发方式" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
+                                      ItemsSource="{Binding OutputTriggers}" SelectedItem="{Binding SelectedStep.Trigger, FallbackValue='立即'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="失败处理" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
+                                      ItemsSource="{Binding OnFails}" SelectedItem="{Binding SelectedStep.OnFail, FallbackValue='忽略'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <CheckBox Content="写后读校验"
+                                      IsChecked="{Binding SelectedStep.Verify, Converter={StaticResource IntToBoolConverter}}"
+                                      Style="{StaticResource AppleCheckBox}" />
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- ========== 轴运动 ========== -->
+                <Border>
+                    <Border.Style>
+                        <Style BasedOn="{StaticResource AppleGroupCard}" TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedStep.StepType}" Value="AxisMove">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="轴运动" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="目标轴" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="150"
+                                      ItemsSource="{Binding AxisNames}" SelectedItem="{Binding SelectedStep.TargetAxis, FallbackValue='X轴'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="运动类型" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="150"
+                                      ItemsSource="{Binding MoveTypes}" SelectedItem="{Binding SelectedStep.MoveType, FallbackValue='绝对运动'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="运动模式" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="150"
+                                      ItemsSource="{Binding MoveModes}" SelectedItem="{Binding SelectedStep.MoveMode, FallbackValue='点位运动'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="目标位置" Margin="16,8,16,4" />
+                        <UniformGrid Columns="3" Margin="16,0,16,8">
+                            <StackPanel Margin="0,0,6,0">
+                                <TextBlock Text="X" Style="{StaticResource AppleSubLabel}" FontSize="10" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.TargetX, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                            </StackPanel>
+                            <StackPanel Margin="0,0,6,0">
+                                <TextBlock Text="Y" Style="{StaticResource AppleSubLabel}" FontSize="10" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.TargetY, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Z" Style="{StaticResource AppleSubLabel}" FontSize="10" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.TargetZ, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                            </StackPanel>
+                        </UniformGrid>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <Grid Margin="16,4,16,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="70" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="速度" VerticalAlignment="Center" />
+                            <Slider Grid.Column="1" Minimum="1" Maximum="500" TickFrequency="1" IsSnapToTickEnabled="True"
+                                    Value="{Binding SelectedStep.Speed}" VerticalAlignment="Center" Margin="8,0" />
+                            <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Speed, FallbackValue=50}" />
+                        </Grid>
+                        <Grid Margin="16,4,16,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="70" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="加速度" VerticalAlignment="Center" />
+                            <Slider Grid.Column="1" Minimum="1" Maximum="1000" TickFrequency="1" IsSnapToTickEnabled="True"
+                                    Value="{Binding SelectedStep.Accel}" VerticalAlignment="Center" Margin="8,0" />
+                            <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Accel, FallbackValue=100}" />
+                        </Grid>
+                        <Grid Margin="16,4,16,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="70" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="减速度" VerticalAlignment="Center" />
+                            <Slider Grid.Column="1" Minimum="1" Maximum="1000" TickFrequency="1" IsSnapToTickEnabled="True"
+                                    Value="{Binding SelectedStep.Decel}" VerticalAlignment="Center" Margin="8,0" />
+                            <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Decel, FallbackValue=100}" />
+                        </Grid>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="到位超时(ms)" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.InPosTimeout, FallbackValue=5000}" Width="100" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <CheckBox Content="伺服使能"
+                                      IsChecked="{Binding SelectedStep.ServoOn, Converter={StaticResource IntToBoolConverter}}"
+                                      Style="{StaticResource AppleCheckBox}" />
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- ========== IO 控制 ========== -->
+                <Border>
+                    <Border.Style>
+                        <Style BasedOn="{StaticResource AppleGroupCard}" TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedStep.StepType}" Value="IOControl">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="IO 控制" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="IO 类型" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
+                                      ItemsSource="{Binding IoTypes}" SelectedItem="{Binding SelectedStep.IoType, FallbackValue='输出'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="IO 通道" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="140" IsEditable="True"
+                                      ItemsSource="{Binding IoChannels}" SelectedItem="{Binding SelectedStep.IoChannel, FallbackValue='DO_0'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="输出值" />
+                            <CheckBox Content="开"
+                                      IsChecked="{Binding SelectedStep.IoValue, Converter={StaticResource IntToBoolConverter}}"
+                                      Style="{StaticResource AppleCheckBox}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <CheckBox Content="等待完成"
+                                      IsChecked="{Binding SelectedStep.WaitDone, Converter={StaticResource IntToBoolConverter}}"
+                                      Style="{StaticResource AppleCheckBox}" />
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- ========== 气缸动作 ========== -->
+                <Border>
+                    <Border.Style>
+                        <Style BasedOn="{StaticResource AppleGroupCard}" TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedStep.StepType}" Value="Cylinder">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="气缸动作" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="气缸名称" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.CylName, FallbackValue='气缸1'}" Width="140" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="动作" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
+                                      ItemsSource="{Binding CylActions}" SelectedItem="{Binding SelectedStep.CylAction, FallbackValue='伸出'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="到位传感器" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.SensorIn, FallbackValue='IN_0'}" Width="100" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="缩回传感器" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.SensorOut, FallbackValue='IN_1'}" Width="100" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="动作超时(ms)" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.CylTimeout, FallbackValue=3000}" Width="100" />
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- ========== 等待延时 ========== -->
+                <Border>
+                    <Border.Style>
+                        <Style BasedOn="{StaticResource AppleGroupCard}" TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedStep.StepType}" Value="Wait">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="等待延时" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="等待类型" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
+                                      ItemsSource="{Binding WaitTypes}" SelectedItem="{Binding SelectedStep.WaitType, FallbackValue='时间'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="等待时间(ms)" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.WaitTime, FallbackValue=1000}" Width="100" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="等待条件" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.WaitCondition, FallbackValue='signal == 1'}" />
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- ========== 通讯指令 ========== -->
+                <Border>
+                    <Border.Style>
+                        <Style BasedOn="{StaticResource AppleGroupCard}" TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedStep.StepType}" Value="Comm">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="通讯指令" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="通讯通道" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.CommChannel, FallbackValue='PLC-串口'}" Width="140" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="指令类型" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
+                                      ItemsSource="{Binding CommCmds}" SelectedItem="{Binding SelectedStep.CommCmd, FallbackValue='发送'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="编码" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
+                                      ItemsSource="{Binding CommEncodings}" SelectedItem="{Binding SelectedStep.CommEncoding, FallbackValue='ASCII'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="指令内容" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.CommContent, FallbackValue='M100=1'}" />
                         </DockPanel>
                     </StackPanel>
                 </Border>
