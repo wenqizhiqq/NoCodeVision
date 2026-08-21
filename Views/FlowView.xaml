@@ -81,7 +81,7 @@
         </ctrl:AppleMasterList>
 
         <!-- 脚本流程视图（选中脚本流程时显示，占中间+右侧两列） -->
-        <views:ScriptFlowView Grid.Column="1" Grid.ColumnSpan="2" Margin="16,0" DataContext="{Binding}" Visibility="Collapsed">
+        <views:ScriptFlowView Grid.Column="1" Grid.ColumnSpan="2" Margin="16,0" DataContext="{Binding}">
             <views:ScriptFlowView.Style>
                 <Style TargetType="UserControl">
                     <Setter Property="Visibility" Value="Collapsed" />
