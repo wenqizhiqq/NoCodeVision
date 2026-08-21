@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using NoCodeVision.Hardware;
 using OpenCvSharp;
 using System.Windows;
 using System.Windows.Input;
@@ -308,6 +309,25 @@ namespace NoCodeVision.ViewModels
                         Occupied = (r + c) % 3 == 0,
                         Product = (r + c) % 3 == 0 ? "料号A" : "",
                     });
+
+            // Connect real motion controller (simulated for now); refresh axis positions on a timer
+            HardwareManager.Instance.Motion.Connect();
+            var _baseAxes = Axes.ToList();
+            var _rnd = new System.Random();
+            var _mt = new System.Threading.Timer(_ =>
+            {
+                try
+                {
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        foreach (var ax in _baseAxes)
+                            if (ax.Enabled) ax.Value += (_rnd.NextDouble() - 0.5) * 0.06;
+                        Axes.Clear();
+                        foreach (var ax in _baseAxes) Axes.Add(ax);
+                    });
+                }
+                catch { }
+            }, null, 0, 400);
         }
     }
 

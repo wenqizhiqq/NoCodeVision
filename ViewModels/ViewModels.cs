@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using NoCodeVision.Hardware;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -338,6 +339,8 @@ public class CameraViewModel : ViewModelBase
     public bool IsConnected { get => _isConnected; set { if (SetField(ref _isConnected, value)) OnPropertyChanged(nameof(StatusText)); } }
 
     public string StatusText => IsConnected ? "实时采集中" : "未连接";
+    private System.Windows.Media.Imaging.BitmapSource? _liveImage;
+    public System.Windows.Media.Imaging.BitmapSource? CameraLiveImage { get => _liveImage; set => SetField(ref _liveImage, value); }
 
     public ICommand ConnectCmd { get; }
     public ICommand StartCmd { get; }
@@ -346,6 +349,7 @@ public class CameraViewModel : ViewModelBase
     public CameraViewModel()
     {
         SelectedCamera = Cameras[0];
+        HardwareManager.Instance.Camera.FrameReady += bmp => System.Windows.Application.Current.Dispatcher.Invoke(() => CameraLiveImage = bmp);
 
         AddCmd = new RelayCommand(_ =>
         {
@@ -361,9 +365,9 @@ public class CameraViewModel : ViewModelBase
             }
         }, _ => _selectedCamera != null);
 
-        ConnectCmd = new RelayCommand(_ => IsConnected = true);
-        StartCmd = new RelayCommand(_ => IsConnected = true);
-        StopCmd = new RelayCommand(_ => IsConnected = false, _ => IsConnected);
+        ConnectCmd = new RelayCommand(_ => { IsConnected = true; HardwareManager.Instance.Camera.Start(SelectedCamera?.Name); });
+        StartCmd = new RelayCommand(_ => { IsConnected = true; HardwareManager.Instance.Camera.Start(SelectedCamera?.Name); });
+        StopCmd = new RelayCommand(_ => { IsConnected = false; HardwareManager.Instance.Camera.Stop(); }, _ => IsConnected);
     }
 }
 
@@ -426,6 +430,8 @@ public class CommunicationViewModel : ViewModelBase
     public CommunicationViewModel()
     {
         SelectedConfig = Configs[0];
+        HardwareManager.Instance.Comm.Log += msg => PushLog(msg);
+        HardwareManager.Instance.Comm.DataReceived += msg => PushLog($"[接收] " + msg.TrimEnd());
 
         AddCmd = new RelayCommand(_ =>
         {
@@ -441,21 +447,29 @@ public class CommunicationViewModel : ViewModelBase
             }
         }, _ => _selectedConfig != null);
 
-        ConnectCmd = new RelayCommand(_ =>
+                ConnectCmd = new RelayCommand(async _ =>
         {
-            IsConnected = true;
-            if (_selectedConfig != null)
-                PushLog($"[连接] {(_selectedConfig.CommType == "串口" ? $"{_selectedConfig.Port} @ {_selectedConfig.Baud}" : $"{_selectedConfig.NetIp}:{_selectedConfig.NetPort}")}");
+            if (_selectedConfig == null) return;
+            try
+            {
+                await HardwareManager.Instance.Comm.ConnectAsync(
+                    _selectedConfig.CommType, _selectedConfig.Port, _selectedConfig.Baud,
+                    _selectedConfig.DataBits, _selectedConfig.Parity, _selectedConfig.StopBits, _selectedConfig.Flow,
+                    _selectedConfig.NetIp, _selectedConfig.NetPort);
+                IsConnected = HardwareManager.Instance.Comm.IsOpen;
+            }
+            catch { IsConnected = false; }
         });
-        DisconnectCmd = new RelayCommand(_ =>
+                DisconnectCmd = new RelayCommand(async _ =>
         {
+            await HardwareManager.Instance.Comm.DisconnectAsync();
             IsConnected = false;
-            PushLog("[断开] 连接已关闭");
         }, _ => IsConnected);
-        SendCmd = new RelayCommand(_ =>
+                SendCmd = new RelayCommand(async _ =>
         {
             if (string.IsNullOrWhiteSpace(_sendText)) return;
-            PushLog($"[发送] {_sendText}");
+            var t = _sendText;
+            await HardwareManager.Instance.Comm.SendAsync(t);
             _sendText = "";
             OnPropertyChanged(nameof(SendText));
         });

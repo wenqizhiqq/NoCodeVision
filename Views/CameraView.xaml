@@ -53,10 +53,30 @@
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="实时预览" />
                         <Border Height="240" Margin="14,4,14,8" Background="{StaticResource PreviewBgBrush}" CornerRadius="10">
                             <Grid>
-                                <Line X1="0" Y1="120" X2="1000" Y2="120" Stroke="#2A2A30" StrokeThickness="1" />
-                                <Line X1="500" Y1="0" X2="500" Y2="240" Stroke="#2A2A30" StrokeThickness="1" />
+                                <Image Source="{Binding CameraLiveImage}" Stretch="Uniform" IsHitTestVisible="False">
+                                    <Image.Style>
+                                        <Style TargetType="Image">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CameraLiveImage}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Image.Style>
+                                </Image>
                                 <Border HorizontalAlignment="Center" VerticalAlignment="Center" Background="#1C1C22"
                                         CornerRadius="8" Padding="12,6">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CameraLiveImage}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
                                     <TextBlock Text="{Binding StatusText}" Foreground="#8E8E93" FontSize="13" />
                                 </Border>
                             </Grid>
