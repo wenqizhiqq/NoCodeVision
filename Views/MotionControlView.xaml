@@ -5,6 +5,20 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d">
 
+    <UserControl.Resources>
+        <!-- 紧凑字段：标签在上、输入在下，固定宽度以便两列换行排布 -->
+        <Style x:Key="AxisField" TargetType="Grid">
+            <Setter Property="Width" Value="240" />
+            <Setter Property="Margin" Value="0,3" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+        <Style x:Key="AxisLabel" TargetType="TextBlock" BasedOn="{StaticResource AppleLabel}">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+            <Setter Property="Margin" Value="0,0,0,3" />
+        </Style>
+    </UserControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -84,25 +98,49 @@
                         </Style.Triggers>
                     </Style>
                 </Border.Style>
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="轴参数" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,8,0,4" Text="名称" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.Name, FallbackValue=''}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="速度" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.Speed, StringFormat={}{0:F2}, FallbackValue=0}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="加速度" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.Acceleration, StringFormat={}{0:F2}, FallbackValue=0}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="减速度" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.Deceleration, StringFormat={}{0:F2}, FallbackValue=0}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="回零偏移" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.HomeOffset, StringFormat={}{0:F2}, FallbackValue=0}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="正软限位" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.SoftLimitPos, StringFormat={}{0:F2}, FallbackValue=0}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="负软限位" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.SoftLimitNeg, StringFormat={}{0:F2}, FallbackValue=0}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="备注" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.Note, FallbackValue=''}" />
-                </StackPanel>
+                <WrapPanel Orientation="Horizontal" Margin="0,4,0,0">
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="轴参数" Width="100000" Margin="0,0,0,4" />
+                    <Grid Style="{StaticResource AxisField}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="名称" />
+                        <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.Name, FallbackValue=''}" />
+                    </Grid>
+                    <Grid Style="{StaticResource AxisField}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="速度" />
+                        <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.Speed, StringFormat={}{0:F2}, FallbackValue=0}" />
+                    </Grid>
+                    <Grid Style="{StaticResource AxisField}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="加速度" />
+                        <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.Acceleration, StringFormat={}{0:F2}, FallbackValue=0}" />
+                    </Grid>
+                    <Grid Style="{StaticResource AxisField}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="减速度" />
+                        <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.Deceleration, StringFormat={}{0:F2}, FallbackValue=0}" />
+                    </Grid>
+                    <Grid Style="{StaticResource AxisField}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="回零偏移" />
+                        <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.HomeOffset, StringFormat={}{0:F2}, FallbackValue=0}" />
+                    </Grid>
+                    <Grid Style="{StaticResource AxisField}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="正软限位" />
+                        <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.SoftLimitPos, StringFormat={}{0:F2}, FallbackValue=0}" />
+                    </Grid>
+                    <Grid Style="{StaticResource AxisField}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="负软限位" />
+                        <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.SoftLimitNeg, StringFormat={}{0:F2}, FallbackValue=0}" />
+                    </Grid>
+                    <Grid Style="{StaticResource AxisField}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="备注" />
+                        <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.Note, FallbackValue=''}" />
+                    </Grid>
+                </WrapPanel>
             </Border>
 
             <!-- ===== IO ===== -->
@@ -152,21 +190,39 @@
                         </Style.Triggers>
                     </Style>
                 </Border.Style>
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="IO 参数" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,8,0,4" Text="名称" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedIo.Name, FallbackValue=''}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="地址" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedIo.Address, FallbackValue=''}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="类型" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedIo.Type, FallbackValue=''}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="极性" />
-                    <CheckBox IsChecked="{Binding SelectedIo.Polarity}" Content="高电平有效" VerticalAlignment="Center" Margin="0,4" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="延迟 (ms)" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedIo.Delay, StringFormat={}{0:F1}, FallbackValue=0}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="说明" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedIo.Note, FallbackValue=''}" />
-                </StackPanel>
+                <WrapPanel Orientation="Horizontal" Margin="0,4,0,0">
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="IO 参数" Width="100000" Margin="0,0,0,4" />
+                    <Grid Style="{StaticResource AxisField}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="名称" />
+                        <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedIo.Name, FallbackValue=''}" />
+                    </Grid>
+                    <Grid Style="{StaticResource AxisField}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="地址" />
+                        <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedIo.Address, FallbackValue=''}" />
+                    </Grid>
+                    <Grid Style="{StaticResource AxisField}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="类型" />
+                        <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedIo.Type, FallbackValue=''}" />
+                    </Grid>
+                    <Grid Style="{StaticResource AxisField}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="延迟 (ms)" />
+                        <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedIo.Delay, StringFormat={}{0:F1}, FallbackValue=0}" />
+                    </Grid>
+                    <Grid Style="{StaticResource AxisField}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="说明" />
+                        <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedIo.Note, FallbackValue=''}" />
+                    </Grid>
+                    <Grid Style="{StaticResource AxisField}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="极性" />
+                        <CheckBox Grid.Row="1" IsChecked="{Binding SelectedIo.Polarity}" Content="高电平有效" VerticalAlignment="Center" />
+                    </Grid>
+                </WrapPanel>
             </Border>
 
             <!-- ===== 气缸 ===== -->
@@ -215,21 +271,39 @@
                         </Style.Triggers>
                     </Style>
                 </Border.Style>
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="气缸参数" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,8,0,4" Text="名称" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedCylinder.Name, FallbackValue=''}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="状态" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedCylinder.Status, FallbackValue=''}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="动作" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedCylinder.Action, FallbackValue=''}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="伸出时间 (ms)" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedCylinder.ExtendTime, StringFormat={}{0:F1}, FallbackValue=0}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="缩回时间 (ms)" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedCylinder.RetractTime, StringFormat={}{0:F1}, FallbackValue=0}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="延迟 (ms)" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedCylinder.Delay, StringFormat={}{0:F1}, FallbackValue=0}" />
-                </StackPanel>
+                <WrapPanel Orientation="Horizontal" Margin="0,4,0,0">
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="气缸参数" Width="100000" Margin="0,0,0,4" />
+                    <Grid Style="{StaticResource AxisField}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="名称" />
+                        <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedCylinder.Name, FallbackValue=''}" />
+                    </Grid>
+                    <Grid Style="{StaticResource AxisField}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="状态" />
+                        <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedCylinder.Status, FallbackValue=''}" />
+                    </Grid>
+                    <Grid Style="{StaticResource AxisField}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="动作" />
+                        <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedCylinder.Action, FallbackValue=''}" />
+                    </Grid>
+                    <Grid Style="{StaticResource AxisField}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="伸出时间 (ms)" />
+                        <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedCylinder.ExtendTime, StringFormat={}{0:F1}, FallbackValue=0}" />
+                    </Grid>
+                    <Grid Style="{StaticResource AxisField}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="缩回时间 (ms)" />
+                        <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedCylinder.RetractTime, StringFormat={}{0:F1}, FallbackValue=0}" />
+                    </Grid>
+                    <Grid Style="{StaticResource AxisField}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="延迟 (ms)" />
+                        <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedCylinder.Delay, StringFormat={}{0:F1}, FallbackValue=0}" />
+                    </Grid>
+                </WrapPanel>
             </Border>
 
             <!-- ===== 轴点位表 ===== -->

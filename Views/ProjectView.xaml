@@ -13,6 +13,23 @@
                 <TextBlock Text="{Binding ProjectName}" Style="{StaticResource AppleLabel}" />
             </DockPanel>
         </DataTemplate>
+
+        <!-- 紧凑行：标签固定宽度，控件紧随其后，不再左右拉开 -->
+        <Style x:Key="CompactRow" TargetType="Grid">
+            <Setter Property="MinHeight" Value="40" />
+            <Setter Property="Margin" Value="14,2" />
+        </Style>
+        <Style x:Key="CompactLabel" TargetType="TextBlock" BasedOn="{StaticResource AppleLabel}">
+            <Setter Property="Width" Value="92" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="CompactInput" TargetType="TextBox" BasedOn="{StaticResource AppleTextField}">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+        <Style x:Key="CompactCombo" TargetType="ComboBox" BasedOn="{StaticResource AppleComboBox}">
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="MinWidth" Value="140" />
+        </Style>
     </UserControl.Resources>
 
     <Grid>
@@ -37,25 +54,105 @@
                 <Border Style="{StaticResource AppleGroupCard}">
                     <StackPanel>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="项目信息" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="项目名称" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedProject.ProjectName, UpdateSourceTrigger=PropertyChanged}" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="负责人" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedProject.Author, UpdateSourceTrigger=PropertyChanged}" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="创建时间" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedProject.CreateTime}" IsReadOnly="True" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="项目路径" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedProject.ProjectPath}" IsReadOnly="True" />
-                        </DockPanel>
+
+                        <!-- 基本信息 -->
+                        <Border Background="{StaticResource HoverBrush}" CornerRadius="10" Margin="10,8,10,4" Padding="0,4">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="基本信息" Margin="14,6,14,2" FontWeight="SemiBold" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="项目名称" />
+                                    <TextBox Grid.Column="1" Style="{StaticResource CompactInput}" Text="{Binding SelectedProject.ProjectName, UpdateSourceTrigger=PropertyChanged}" />
+                                </Grid>
+                                <Rectangle Style="{StaticResource AppleDivider}" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="负责人" />
+                                    <TextBox Grid.Column="1" Style="{StaticResource CompactInput}" Text="{Binding SelectedProject.Author, UpdateSourceTrigger=PropertyChanged}" />
+                                </Grid>
+                                <Rectangle Style="{StaticResource AppleDivider}" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="客户名称" />
+                                    <TextBox Grid.Column="1" Style="{StaticResource CompactInput}" Text="{Binding SelectedProject.Customer, UpdateSourceTrigger=PropertyChanged}" />
+                                </Grid>
+                                <Rectangle Style="{StaticResource AppleDivider}" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="标签" />
+                                    <TextBox Grid.Column="1" Style="{StaticResource CompactInput}" Text="{Binding SelectedProject.Tags, UpdateSourceTrigger=PropertyChanged}" />
+                                </Grid>
+                                <Rectangle Style="{StaticResource AppleDivider}" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="项目描述" />
+                                    <TextBox Grid.Column="1" Style="{StaticResource CompactInput}" Text="{Binding SelectedProject.Description, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap" AcceptsReturn="True" MinHeight="48" VerticalContentAlignment="Top" Padding="0,6" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 版本与日期 -->
+                        <Border Background="{StaticResource HoverBrush}" CornerRadius="10" Margin="10,8,10,4" Padding="0,4">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="版本与日期" Margin="14,6,14,2" FontWeight="SemiBold" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="项目版本" />
+                                    <TextBox Grid.Column="1" Style="{StaticResource CompactInput}" Text="{Binding SelectedProject.ProjectVersion, UpdateSourceTrigger=PropertyChanged}" />
+                                </Grid>
+                                <Rectangle Style="{StaticResource AppleDivider}" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="创建时间" />
+                                    <TextBox Grid.Column="1" Style="{StaticResource CompactInput}" Text="{Binding SelectedProject.CreateTime}" IsReadOnly="True" />
+                                </Grid>
+                                <Rectangle Style="{StaticResource AppleDivider}" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="修改时间" />
+                                    <TextBox Grid.Column="1" Style="{StaticResource CompactInput}" Text="{Binding SelectedProject.ModifyTime, UpdateSourceTrigger=PropertyChanged}" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 路径 -->
+                        <Border Background="{StaticResource HoverBrush}" CornerRadius="10" Margin="10,8,10,10" Padding="0,4">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="路径" Margin="14,6,14,2" FontWeight="SemiBold" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="项目路径" />
+                                    <TextBox Grid.Column="1" Style="{StaticResource CompactInput}" Text="{Binding SelectedProject.ProjectPath}" IsReadOnly="True" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </Border>
 
@@ -63,22 +160,238 @@
                 <Border Style="{StaticResource AppleGroupCard}">
                     <StackPanel>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="工程设置" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="自动保存" />
-                            <CheckBox Style="{StaticResource AppleToggle}" DockPanel.Dock="Right" IsChecked="{Binding SelectedProject.AutoSave}" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="保存间隔" />
-                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedProject.SaveInterval, UpdateSourceTrigger=PropertyChanged}" Width="70" />
-                                <TextBlock Style="{StaticResource AppleUnit}" Text="秒" />
+
+                        <!-- 自动保存 -->
+                        <Border Background="{StaticResource HoverBrush}" CornerRadius="10" Margin="10,8,10,4" Padding="0,4">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="自动保存" Margin="14,6,14,2" FontWeight="SemiBold" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="启用自动保存" />
+                                    <CheckBox Grid.Column="1" Style="{StaticResource AppleToggle}" IsChecked="{Binding SelectedProject.AutoSave}" HorizontalAlignment="Left" />
+                                </Grid>
+                                <Rectangle Style="{StaticResource AppleDivider}" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="保存间隔" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedProject.SaveInterval, UpdateSourceTrigger=PropertyChanged}" Width="70" />
+                                        <TextBlock Style="{StaticResource AppleUnit}" Text="秒" />
+                                    </StackPanel>
+                                </Grid>
                             </StackPanel>
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <TextBlock Style="{StaticResource AppleLabel}" Margin="14,10,14,6" Text="界面语言" />
-                        <ListBox ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedProject.Language}"
-                                 Style="{StaticResource ApplePillList}" Margin="10,0,10,12" />
+                        </Border>
+
+                        <!-- 界面与语言 -->
+                        <Border Background="{StaticResource HoverBrush}" CornerRadius="10" Margin="10,8,10,4" Padding="0,4">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="界面与语言" Margin="14,6,14,2" FontWeight="SemiBold" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="界面主题" />
+                                    <ComboBox Grid.Column="1" Style="{StaticResource CompactCombo}"
+                                              ItemsSource="{Binding Themes}" SelectedItem="{Binding SelectedProject.Theme}" />
+                                </Grid>
+                                <Rectangle Style="{StaticResource AppleDivider}" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="默认单位" />
+                                    <ComboBox Grid.Column="1" Style="{StaticResource CompactCombo}"
+                                              ItemsSource="{Binding Units}" SelectedItem="{Binding SelectedProject.DefaultUnit}" />
+                                </Grid>
+                                <Rectangle Style="{StaticResource AppleDivider}" />
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="界面语言" Margin="14,8,14,2" />
+                                <ListBox ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedProject.Language}"
+                                         Style="{StaticResource ApplePillList}" Margin="10,0,10,12" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 日志 -->
+                        <Border Background="{StaticResource HoverBrush}" CornerRadius="10" Margin="10,8,10,4" Padding="0,4">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="日志" Margin="14,6,14,2" FontWeight="SemiBold" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="日志级别" />
+                                    <ComboBox Grid.Column="1" Style="{StaticResource CompactCombo}"
+                                              ItemsSource="{Binding LogLevels}" SelectedItem="{Binding SelectedProject.LogLevel}" />
+                                </Grid>
+                                <Rectangle Style="{StaticResource AppleDivider}" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="保留天数" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedProject.LogKeepDays, UpdateSourceTrigger=PropertyChanged}" Width="70" />
+                                        <TextBlock Style="{StaticResource AppleUnit}" Text="天" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 运行 -->
+                        <Border Background="{StaticResource HoverBrush}" CornerRadius="10" Margin="10,8,10,4" Padding="0,4">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="运行" Margin="14,6,14,2" FontWeight="SemiBold" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="开机自启动" />
+                                    <CheckBox Grid.Column="1" Style="{StaticResource AppleToggle}" IsChecked="{Binding SelectedProject.AutoStart}" HorizontalAlignment="Left" />
+                                </Grid>
+                                <Rectangle Style="{StaticResource AppleDivider}" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="启动后自动运行" />
+                                    <CheckBox Grid.Column="1" Style="{StaticResource AppleToggle}" IsChecked="{Binding SelectedProject.AutoRunAfterStart}" HorizontalAlignment="Left" />
+                                </Grid>
+                                <Rectangle Style="{StaticResource AppleDivider}" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="异常自动停机" />
+                                    <CheckBox Grid.Column="1" Style="{StaticResource AppleToggle}" IsChecked="{Binding SelectedProject.EmergencyStopOnError}" HorizontalAlignment="Left" />
+                                </Grid>
+                                <Rectangle Style="{StaticResource AppleDivider}" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="调试模式" />
+                                    <CheckBox Grid.Column="1" Style="{StaticResource AppleToggle}" IsChecked="{Binding SelectedProject.DebugMode}" HorizontalAlignment="Left" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 存储路径 -->
+                        <Border Background="{StaticResource HoverBrush}" CornerRadius="10" Margin="10,8,10,4" Padding="0,4">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="存储路径" Margin="14,6,14,2" FontWeight="SemiBold" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="图像保存路径" />
+                                    <TextBox Grid.Column="1" Style="{StaticResource CompactInput}" Text="{Binding SelectedProject.ImageSavePath, UpdateSourceTrigger=PropertyChanged}" />
+                                </Grid>
+                                <Rectangle Style="{StaticResource AppleDivider}" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="数据保存路径" />
+                                    <TextBox Grid.Column="1" Style="{StaticResource CompactInput}" Text="{Binding SelectedProject.DataSavePath, UpdateSourceTrigger=PropertyChanged}" />
+                                </Grid>
+                                <Rectangle Style="{StaticResource AppleDivider}" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="备份路径" />
+                                    <TextBox Grid.Column="1" Style="{StaticResource CompactInput}" Text="{Binding SelectedProject.BackupPath, UpdateSourceTrigger=PropertyChanged}" />
+                                </Grid>
+                                <Rectangle Style="{StaticResource AppleDivider}" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="最大备份数" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedProject.MaxBackupCount, UpdateSourceTrigger=PropertyChanged}" Width="70" />
+                                        <TextBlock Style="{StaticResource AppleUnit}" Text="个" />
+                                    </StackPanel>
+                                </Grid>
+                                <Rectangle Style="{StaticResource AppleDivider}" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="结果保留" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedProject.ResultRetainDays, UpdateSourceTrigger=PropertyChanged}" Width="70" />
+                                        <TextBlock Style="{StaticResource AppleUnit}" Text="天" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 安全 -->
+                        <Border Background="{StaticResource HoverBrush}" CornerRadius="10" Margin="10,8,10,10" Padding="0,4">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="安全" Margin="14,6,14,2" FontWeight="SemiBold" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="启用密码" />
+                                    <CheckBox Grid.Column="1" Style="{StaticResource AppleToggle}" IsChecked="{Binding SelectedProject.PasswordEnabled}" HorizontalAlignment="Left" />
+                                </Grid>
+                                <Rectangle Style="{StaticResource AppleDivider}" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="自动锁屏" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedProject.AutoLockMinutes, UpdateSourceTrigger=PropertyChanged}" Width="70" />
+                                        <TextBlock Style="{StaticResource AppleUnit}" Text="分钟" />
+                                    </StackPanel>
+                                </Grid>
+                                <Rectangle Style="{StaticResource AppleDivider}" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="撤销步数" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedProject.MaxUndoSteps, UpdateSourceTrigger=PropertyChanged}" Width="70" />
+                                        <TextBlock Style="{StaticResource AppleUnit}" Text="步" />
+                                    </StackPanel>
+                                </Grid>
+                                <Rectangle Style="{StaticResource AppleDivider}" />
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="允许远程" />
+                                    <CheckBox Grid.Column="1" Style="{StaticResource AppleToggle}" IsChecked="{Binding SelectedProject.AllowRemote}" HorizontalAlignment="Left" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </Border>
 
@@ -86,15 +399,20 @@
                 <Border Style="{StaticResource AppleGroupCard}">
                     <StackPanel>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="操作" />
-                        <DockPanel Style="{StaticResource AppleRow}" LastChildFill="True">
-                            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                        <Grid Style="{StaticResource CompactRow}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Orientation="Horizontal">
                                 <Button Style="{StaticResource AppleBtnSecondary}" Content="新建" Command="{Binding NewCmd}" />
                                 <Button Style="{StaticResource AppleBtnSecondary}" Content="打开" Command="{Binding OpenCmd}" />
                                 <Button Style="{StaticResource AppleBtn}" Content="保存" Command="{Binding SaveCmd}" />
+                                <Button Style="{StaticResource AppleBtnSecondary}" Content="另存为" Command="{Binding SaveCmd}" />
                             </StackPanel>
-                            <TextBlock Style="{StaticResource AppleSubLabel}" DockPanel.Dock="Right" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="1" Style="{StaticResource AppleSubLabel}" VerticalAlignment="Center" HorizontalAlignment="Right"
                                        Text="{Binding SelectedProject.Status}" Foreground="{StaticResource AccentBrush}" />
-                        </DockPanel>
+                        </Grid>
                     </StackPanel>
                 </Border>
 

@@ -349,13 +349,40 @@ public class VisionFlow
 
 public class ProjectItem
 {
+    // 项目信息
     public string ProjectName { get; set; } = "";
     public string Author { get; set; } = "";
-    public string ProjectPath { get; set; } = "";
+    public string Customer { get; set; } = "";
+    public string Description { get; set; } = "";
+    public string Tags { get; set; } = "";
+    public string ProjectVersion { get; set; } = "1.0.0";
     public string CreateTime { get; set; } = "";
+    public string ModifyTime { get; set; } = "";
+    public string ProjectPath { get; set; } = "";
+
+    // 工程设置
     public bool AutoSave { get; set; } = true;
     public int SaveInterval { get; set; } = 300;
     public string Language { get; set; } = "简体中文";
+    public string Theme { get; set; } = "浅色";
+    public string DefaultUnit { get; set; } = "毫米";
+    public string LogLevel { get; set; } = "Info";
+    public int LogKeepDays { get; set; } = 30;
+    public bool AutoStart { get; set; } = false;
+    public bool AutoRunAfterStart { get; set; } = false;
+    public bool EmergencyStopOnError { get; set; } = true;
+    public string ImageSavePath { get; set; } = @"D:\Images";
+    public string DataSavePath { get; set; } = @"D:\Data";
+    public string BackupPath { get; set; } = @"D:\Backup";
+    public int MaxBackupCount { get; set; } = 10;
+    public bool PasswordEnabled { get; set; } = false;
+    public int AutoLockMinutes { get; set; } = 5;
+    public bool AllowRemote { get; set; } = false;
+    public int MaxUndoSteps { get; set; } = 50;
+    public int ResultRetainDays { get; set; } = 90;
+    public bool DebugMode { get; set; } = false;
+
+    // 状态
     public string Status { get; set; } = "就绪";
 }
 
@@ -363,13 +390,111 @@ public class ProjectViewModel : ViewModelBase
 {
     public ObservableCollection<ProjectItem> Projects { get; } = new()
     {
-        new ProjectItem { ProjectName = "DemoVision-01", Author = "admin", ProjectPath = @"D:\Projects\DemoVision-01.ncv", CreateTime = DateTime.Now.ToString("yyyy-MM-dd"), AutoSave = true, SaveInterval = 300, Language = "简体中文" },
-        new ProjectItem { ProjectName = "MotorBracket-A", Author = "admin", ProjectPath = @"D:\Projects\MotorBracket-A.ncv", CreateTime = "2026-08-10", AutoSave = true, SaveInterval = 120, Language = "简体中文" },
-        new ProjectItem { ProjectName = "PCB-Inspection", Author = "admin", ProjectPath = @"D:\Projects\PCB-Inspection.ncv", CreateTime = "2026-07-22", AutoSave = false, SaveInterval = 600, Language = "English" },
+        new ProjectItem
+        {
+            ProjectName = "DemoVision-01",
+            Author = "admin",
+            Customer = "内部测试",
+            Description = "演示项目：电机支架视觉检测",
+            Tags = "检测,电机,支架",
+            ProjectVersion = "1.0.0",
+            ProjectPath = @"D:\Projects\DemoVision-01.ncv",
+            CreateTime = DateTime.Now.ToString("yyyy-MM-dd"),
+            ModifyTime = DateTime.Now.ToString("yyyy-MM-dd"),
+            AutoSave = true,
+            SaveInterval = 300,
+            Language = "简体中文",
+            Theme = "浅色",
+            DefaultUnit = "毫米",
+            LogLevel = "Info",
+            LogKeepDays = 30,
+            AutoStart = false,
+            AutoRunAfterStart = false,
+            EmergencyStopOnError = true,
+            ImageSavePath = @"D:\Images",
+            DataSavePath = @"D:\Data",
+            BackupPath = @"D:\Backup",
+            MaxBackupCount = 10,
+            PasswordEnabled = false,
+            AutoLockMinutes = 5,
+            AllowRemote = false,
+            MaxUndoSteps = 50,
+            ResultRetainDays = 90,
+            DebugMode = false
+        },
+        new ProjectItem
+        {
+            ProjectName = "MotorBracket-A",
+            Author = "admin",
+            Customer = "客户 A",
+            Description = "电机支架外观检测",
+            Tags = "外观,支架",
+            ProjectVersion = "1.2.0",
+            ProjectPath = @"D:\Projects\MotorBracket-A.ncv",
+            CreateTime = "2026-08-10",
+            ModifyTime = "2026-08-18",
+            AutoSave = true,
+            SaveInterval = 120,
+            Language = "简体中文",
+            Theme = "浅色",
+            DefaultUnit = "毫米",
+            LogLevel = "Info",
+            LogKeepDays = 30,
+            AutoStart = false,
+            AutoRunAfterStart = true,
+            EmergencyStopOnError = true,
+            ImageSavePath = @"D:\Images",
+            DataSavePath = @"D:\Data",
+            BackupPath = @"D:\Backup",
+            MaxBackupCount = 10,
+            PasswordEnabled = false,
+            AutoLockMinutes = 5,
+            AllowRemote = false,
+            MaxUndoSteps = 50,
+            ResultRetainDays = 90,
+            DebugMode = false
+        },
+        new ProjectItem
+        {
+            ProjectName = "PCB-Inspection",
+            Author = "admin",
+            Customer = "客户 B",
+            Description = "PCB 焊点与元件检测",
+            Tags = "PCB,焊点,SMT",
+            ProjectVersion = "2.0.1",
+            ProjectPath = @"D:\Projects\PCB-Inspection.ncv",
+            CreateTime = "2026-07-22",
+            ModifyTime = "2026-08-15",
+            AutoSave = false,
+            SaveInterval = 600,
+            Language = "English",
+            Theme = "深色",
+            DefaultUnit = "毫米",
+            LogLevel = "Warning",
+            LogKeepDays = 15,
+            AutoStart = true,
+            AutoRunAfterStart = false,
+            EmergencyStopOnError = true,
+            ImageSavePath = @"D:\Images",
+            DataSavePath = @"D:\Data",
+            BackupPath = @"D:\Backup",
+            MaxBackupCount = 5,
+            PasswordEnabled = true,
+            AutoLockMinutes = 10,
+            AllowRemote = true,
+            MaxUndoSteps = 30,
+            ResultRetainDays = 60,
+            DebugMode = true
+        },
     };
 
     private ProjectItem? _selectedProject;
     public ProjectItem? SelectedProject { get => _selectedProject; set => SetField(ref _selectedProject, value); }
+
+    public string[] Languages { get; } = { "简体中文", "繁體中文", "English" };
+    public string[] Themes { get; } = { "浅色", "深色", "跟随系统" };
+    public string[] Units { get; } = { "毫米", "厘米", "英寸", "像素" };
+    public string[] LogLevels { get; } = { "Debug", "Info", "Warning", "Error" };
 
     public ICommand AddCmd { get; }
     public ICommand DeleteCmd { get; }
@@ -388,11 +513,33 @@ public class ProjectViewModel : ViewModelBase
             {
                 ProjectName = $"新建项目-{next}",
                 Author = "admin",
+                Customer = "",
+                Description = "",
+                Tags = "",
+                ProjectVersion = "1.0.0",
                 ProjectPath = $"D:\\Projects\\NewProject-{next}.ncv",
                 CreateTime = DateTime.Now.ToString("yyyy-MM-dd"),
+                ModifyTime = DateTime.Now.ToString("yyyy-MM-dd"),
                 AutoSave = true,
                 SaveInterval = 300,
-                Language = "简体中文"
+                Language = "简体中文",
+                Theme = "浅色",
+                DefaultUnit = "毫米",
+                LogLevel = "Info",
+                LogKeepDays = 30,
+                AutoStart = false,
+                AutoRunAfterStart = false,
+                EmergencyStopOnError = true,
+                ImageSavePath = @"D:\Images",
+                DataSavePath = @"D:\Data",
+                BackupPath = @"D:\Backup",
+                MaxBackupCount = 10,
+                PasswordEnabled = false,
+                AutoLockMinutes = 5,
+                AllowRemote = false,
+                MaxUndoSteps = 50,
+                ResultRetainDays = 90,
+                DebugMode = false
             });
         });
         DeleteCmd = new RelayCommand(_ =>
@@ -462,6 +609,99 @@ public class CameraViewModel : ViewModelBase
 
     private int _height = 2048;
     public int Height { get => _height; set => SetField(ref _height, value); }
+
+    // 图像参数扩展
+    private double _frameRate = 30.0;
+    public double FrameRate { get => _frameRate; set => SetField(ref _frameRate, value); }
+
+    private double _gamma = 1.0;
+    public double Gamma { get => _gamma; set => SetField(ref _gamma, value); }
+
+    private double _brightness;
+    public double Brightness { get => _brightness; set => SetField(ref _brightness, value); }
+
+    private double _contrast;
+    public double Contrast { get => _contrast; set => SetField(ref _contrast, value); }
+
+    private double _sharpness;
+    public double Sharpness { get => _sharpness; set => SetField(ref _sharpness, value); }
+
+    private int _exposureAuto;
+    public int ExposureAuto { get => _exposureAuto; set => SetField(ref _exposureAuto, value); }
+
+    private int _gainAuto;
+    public int GainAuto { get => _gainAuto; set => SetField(ref _gainAuto, value); }
+
+    private int _whiteBalanceAuto = 1;
+    public int WhiteBalanceAuto { get => _whiteBalanceAuto; set => SetField(ref _whiteBalanceAuto, value); }
+
+    private int _whiteBalanceR = 512;
+    public int WhiteBalanceR { get => _whiteBalanceR; set => SetField(ref _whiteBalanceR, value); }
+
+    private int _whiteBalanceG = 512;
+    public int WhiteBalanceG { get => _whiteBalanceG; set => SetField(ref _whiteBalanceG, value); }
+
+    private int _whiteBalanceB = 512;
+    public int WhiteBalanceB { get => _whiteBalanceB; set => SetField(ref _whiteBalanceB, value); }
+
+    // ROI
+    private int _roiX;
+    public int RoiX { get => _roiX; set => SetField(ref _roiX, value); }
+
+    private int _roiY;
+    public int RoiY { get => _roiY; set => SetField(ref _roiY, value); }
+
+    private int _roiW = 2448;
+    public int RoiW { get => _roiW; set => SetField(ref _roiW, value); }
+
+    private int _roiH = 2048;
+    public int RoiH { get => _roiH; set => SetField(ref _roiH, value); }
+
+    // 触发与采集
+    public string[] TriggerSources { get; } = { "内部", "外部Line0", "外部Line1", "软件" };
+    private string _triggerSource = "内部";
+    public string TriggerSource { get => _triggerSource; set => SetField(ref _triggerSource, value); }
+
+    public string[] TriggerEdges { get; } = { "上升沿", "下降沿", "任意沿" };
+    private string _triggerEdge = "上升沿";
+    public string TriggerEdge { get => _triggerEdge; set => SetField(ref _triggerEdge, value); }
+
+    public string[] AcquisitionModes { get; } = { "连续", "单帧", "多帧" };
+    private string _acquisitionMode = "连续";
+    public string AcquisitionMode { get => _acquisitionMode; set => SetField(ref _acquisitionMode, value); }
+
+    private int _bufferCount = 3;
+    public int BufferCount { get => _bufferCount; set => SetField(ref _bufferCount, value); }
+
+    private int _timeoutMs = 5000;
+    public int TimeoutMs { get => _timeoutMs; set => SetField(ref _timeoutMs, value); }
+
+    // 处理与输出
+    public string[] Binnings { get; } = { "1×1", "2×2", "4×4" };
+    private string _binning = "1×1";
+    public string Binning { get => _binning; set => SetField(ref _binning, value); }
+
+    private int _flipH;
+    public int FlipH { get => _flipH; set => SetField(ref _flipH, value); }
+
+    private int _flipV;
+    public int FlipV { get => _flipV; set => SetField(ref _flipV, value); }
+
+    private int _packetSize = 1500;
+    public int PacketSize { get => _packetSize; set => SetField(ref _packetSize, value); }
+
+    private int _interPacketDelay;
+    public int InterPacketDelay { get => _interPacketDelay; set => SetField(ref _interPacketDelay, value); }
+
+    private int _saveImage;
+    public int SaveImage { get => _saveImage; set => SetField(ref _saveImage, value); }
+
+    public string[] ImageFormats { get; } = { "PNG", "BMP", "JPG", "TIFF" };
+    private string _imageFormat = "PNG";
+    public string ImageFormat { get => _imageFormat; set => SetField(ref _imageFormat, value); }
+
+    private string _saveImagePath = @"D:\Images";
+    public string SaveImagePath { get => _saveImagePath; set => SetField(ref _saveImagePath, value); }
 
     private bool _isConnected;
     public bool IsConnected { get => _isConnected; set { if (SetField(ref _isConnected, value)) OnPropertyChanged(nameof(StatusText)); } }

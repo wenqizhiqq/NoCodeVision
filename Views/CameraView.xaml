@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:ctrl="clr-namespace:NoCodeVision.Views.Controls"
+             xmlns:local="clr-namespace:NoCodeVision"
              mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -27,6 +28,39 @@
                 <TextBlock Style="{StaticResource AppleLabel}" Text="{Binding Name}" />
             </DockPanel>
         </DataTemplate>
+
+        <local:IntToBoolConverter x:Key="IntToBoolConverter" />
+
+        <Style x:Key="CompactRow" TargetType="Grid">
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Margin" Value="10,1" />
+        </Style>
+        <Style x:Key="CompactField" TargetType="Grid" BasedOn="{StaticResource CompactRow}">
+            <Setter Property="Width" Value="300" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+        <Style x:Key="CompactLabel" TargetType="TextBlock" BasedOn="{StaticResource AppleLabel}">
+            <Setter Property="Width" Value="92" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="CompactInput" TargetType="TextBox" BasedOn="{StaticResource AppleTextField}">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+        <Style x:Key="CompactCombo" TargetType="ComboBox" BasedOn="{StaticResource AppleComboBox}">
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="MinWidth" Value="130" />
+        </Style>
+        <Style x:Key="SubCard" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource HoverBrush}" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Margin" Value="8,6,8,2" />
+            <Setter Property="Padding" Value="0,2" />
+        </Style>
+        <!-- 分块卡片：横向平铺用，固定宽度、紧凑边距 -->
+        <Style x:Key="BlockCard" TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+            <Setter Property="Width" Value="440" />
+            <Setter Property="Margin" Value="0,0,12,12" />
+        </Style>
     </UserControl.Resources>
 
     <Grid>
@@ -44,131 +78,459 @@
 
         <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel Margin="0,2,0,8">
-
                 <TextBlock Style="{StaticResource iOSTitle}" Text="相机" />
 
-                <!-- 实时预览 -->
-                <Border Style="{StaticResource AppleGroupCard}">
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="实时预览" />
-                        <Border Height="240" Margin="14,4,14,8" Background="{StaticResource PreviewBgBrush}" CornerRadius="10">
-                            <Grid>
-                                <Image Source="{Binding CameraLiveImage}" Stretch="Uniform" IsHitTestVisible="False">
-                                    <Image.Style>
-                                        <Style TargetType="Image">
-                                            <Setter Property="Visibility" Value="Visible" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding CameraLiveImage}" Value="{x:Null}">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Image.Style>
-                                </Image>
-                                <Border HorizontalAlignment="Center" VerticalAlignment="Center" Background="#1C1C22"
-                                        CornerRadius="8" Padding="12,6">
+                <!-- 分块布局：预览 + 各参数组作为卡片横向平铺、自动换行 -->
+                <WrapPanel Orientation="Horizontal">
+
+                    <!-- 实时预览 -->
+                    <Border Style="{StaticResource BlockCard}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource AppleSectionHeader}" Text="实时预览" />
+                            <Border Margin="14,4,14,8" Background="{StaticResource PreviewBgBrush}" CornerRadius="10"
+                                    HorizontalAlignment="Stretch" MaxHeight="320">
+                                <Viewbox Stretch="Uniform">
+                                    <Grid Width="{Binding Width}" Height="{Binding Height}" Background="{StaticResource PreviewBgBrush}">
+                                        <Image Source="{Binding CameraLiveImage}" Stretch="Uniform" IsHitTestVisible="False">
+                                            <Image.Style>
+                                                <Style TargetType="Image">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding CameraLiveImage}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Image.Style>
+                                        </Image>
+                                        <Border HorizontalAlignment="Center" VerticalAlignment="Center" Background="#1C1C22"
+                                                CornerRadius="8" Padding="12,6">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding CameraLiveImage}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding StatusText}" Foreground="#8E8E93" FontSize="13" />
+                                        </Border>
+                                    </Grid>
+                                </Viewbox>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 曝光与增益 -->
+                    <Border Style="{StaticResource BlockCard}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource AppleSectionHeader}" Text="曝光与增益" />
+                            <Border Style="{StaticResource SubCard}">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="曝光" Margin="12,4,12,0" FontWeight="SemiBold" />
+                                    <Grid Style="{StaticResource CompactRow}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="64" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="曝光时间" />
+                                        <Slider Grid.Column="1" Minimum="0.1" Maximum="50" TickFrequency="0.1"
+                                                Value="{Binding Exposure}" VerticalAlignment="Center" Margin="8,0" />
+                                        <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding Exposure, StringFormat={}{0:F1}}" />
+                                    </Grid>
+                                    <Rectangle Style="{StaticResource AppleDivider}" />
+                                    <Grid Style="{StaticResource CompactRow}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="自动曝光" />
+                                        <CheckBox Grid.Column="1" Style="{StaticResource AppleToggle}"
+                                                  IsChecked="{Binding ExposureAuto, Converter={StaticResource IntToBoolConverter}}" HorizontalAlignment="Left" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource SubCard}">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="增益" Margin="12,4,12,0" FontWeight="SemiBold" />
+                                    <Grid Style="{StaticResource CompactRow}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="64" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="增益" />
+                                        <Slider Grid.Column="1" Minimum="0" Maximum="24" TickFrequency="0.1"
+                                                Value="{Binding Gain}" VerticalAlignment="Center" Margin="8,0" />
+                                        <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding Gain, StringFormat={}{0:F1}}" />
+                                    </Grid>
+                                    <Rectangle Style="{StaticResource AppleDivider}" />
+                                    <Grid Style="{StaticResource CompactRow}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="自动增益" />
+                                        <CheckBox Grid.Column="1" Style="{StaticResource AppleToggle}"
+                                                  IsChecked="{Binding GainAuto, Converter={StaticResource IntToBoolConverter}}" HorizontalAlignment="Left" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 图像调整 -->
+                    <Border Style="{StaticResource BlockCard}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource AppleSectionHeader}" Text="图像调整" />
+                            <Border Style="{StaticResource SubCard}">
+                                <WrapPanel Orientation="Horizontal">
+                                    <Grid Style="{StaticResource CompactField}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="64" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="伽马" />
+                                        <Slider Grid.Column="1" Minimum="0.5" Maximum="3" TickFrequency="0.05" Value="{Binding Gamma}" VerticalAlignment="Center" Margin="8,0" />
+                                        <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding Gamma, StringFormat={}{0:F2}}" />
+                                    </Grid>
+                                    <Grid Style="{StaticResource CompactField}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="64" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="亮度" />
+                                        <Slider Grid.Column="1" Minimum="-100" Maximum="100" TickFrequency="1" Value="{Binding Brightness}" VerticalAlignment="Center" Margin="8,0" />
+                                        <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding Brightness}" />
+                                    </Grid>
+                                    <Grid Style="{StaticResource CompactField}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="64" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="对比度" />
+                                        <Slider Grid.Column="1" Minimum="-100" Maximum="100" TickFrequency="1" Value="{Binding Contrast}" VerticalAlignment="Center" Margin="8,0" />
+                                        <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding Contrast}" />
+                                    </Grid>
+                                    <Grid Style="{StaticResource CompactField}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="64" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="锐度" />
+                                        <Slider Grid.Column="1" Minimum="0" Maximum="100" TickFrequency="1" Value="{Binding Sharpness}" VerticalAlignment="Center" Margin="8,0" />
+                                        <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding Sharpness}" />
+                                    </Grid>
+                                </WrapPanel>
+                            </Border>
+                            <Border Style="{StaticResource SubCard}">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="白平衡" Margin="12,4,12,0" FontWeight="SemiBold" />
+                                    <Grid Style="{StaticResource CompactRow}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="自动白平衡" />
+                                        <CheckBox Grid.Column="1" Style="{StaticResource AppleToggle}"
+                                                  IsChecked="{Binding WhiteBalanceAuto, Converter={StaticResource IntToBoolConverter}}" HorizontalAlignment="Left" />
+                                    </Grid>
+                                    <Rectangle Style="{StaticResource AppleDivider}" />
+                                    <Grid Style="{StaticResource CompactRow}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="R/G/B" />
+                                        <StackPanel Grid.Column="1" Margin="0,0,4,0">
+                                            <TextBlock Text="R" Style="{StaticResource AppleSubLabel}" FontSize="10" />
+                                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding WhiteBalanceR}" TextAlignment="Left" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Margin="0,0,4,0">
+                                            <TextBlock Text="G" Style="{StaticResource AppleSubLabel}" FontSize="10" />
+                                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding WhiteBalanceG}" TextAlignment="Left" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="3">
+                                            <TextBlock Text="B" Style="{StaticResource AppleSubLabel}" FontSize="10" />
+                                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding WhiteBalanceB}" TextAlignment="Left" />
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 触发与采集 -->
+                    <Border Style="{StaticResource BlockCard}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource AppleSectionHeader}" Text="触发与采集" />
+                            <Border Style="{StaticResource SubCard}">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="触发模式" Margin="12,4,12,0" FontWeight="SemiBold" />
+                                    <ListBox ItemsSource="{Binding TriggerModes}" SelectedItem="{Binding TriggerMode}"
+                                             Style="{StaticResource ApplePillList}" Margin="8,0,8,8" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource SubCard}">
+                                <WrapPanel Orientation="Horizontal">
+                                    <Grid Style="{StaticResource CompactField}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="触发源" />
+                                        <ComboBox Grid.Column="1" Style="{StaticResource CompactCombo}" ItemsSource="{Binding TriggerSources}" SelectedItem="{Binding TriggerSource}" />
+                                    </Grid>
+                                    <Grid Style="{StaticResource CompactField}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="触发边沿" />
+                                        <ComboBox Grid.Column="1" Style="{StaticResource CompactCombo}" ItemsSource="{Binding TriggerEdges}" SelectedItem="{Binding TriggerEdge}" />
+                                    </Grid>
+                                    <Grid Style="{StaticResource CompactField}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="采集模式" />
+                                        <ComboBox Grid.Column="1" Style="{StaticResource CompactCombo}" ItemsSource="{Binding AcquisitionModes}" SelectedItem="{Binding AcquisitionMode}" />
+                                    </Grid>
+                                    <Grid Style="{StaticResource CompactField}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="64" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="帧率" />
+                                        <Slider Grid.Column="1" Minimum="1" Maximum="120" TickFrequency="1" Value="{Binding FrameRate}" VerticalAlignment="Center" Margin="8,0" />
+                                        <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding FrameRate, StringFormat={}{0:F1}}" />
+                                    </Grid>
+                                    <Grid Style="{StaticResource CompactField}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="缓存数" />
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding BufferCount}" Width="64" />
+                                            <TextBlock Style="{StaticResource AppleUnit}" Text="帧" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <Grid Style="{StaticResource CompactField}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="超时" />
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding TimeoutMs}" Width="64" />
+                                            <TextBlock Style="{StaticResource AppleUnit}" Text="ms" />
+                                        </StackPanel>
+                                    </Grid>
+                                </WrapPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 分辨率与像素格式 -->
+                    <Border Style="{StaticResource BlockCard}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource AppleSectionHeader}" Text="分辨率与像素格式" />
+                            <Border Style="{StaticResource SubCard}">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="分辨率" Margin="12,4,12,0" FontWeight="SemiBold" />
+                                    <Grid Style="{StaticResource CompactRow}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="宽" />
+                                        <TextBox Grid.Column="1" Style="{StaticResource CompactInput}" Text="{Binding Width, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,6,0" />
+                                        <TextBlock Grid.Column="2" Style="{StaticResource CompactLabel}" Text="高" />
+                                        <TextBox Grid.Column="3" Style="{StaticResource CompactInput}" Text="{Binding Height, UpdateSourceTrigger=PropertyChanged}" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource SubCard}">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="像素格式" Margin="12,4,12,0" FontWeight="SemiBold" />
+                                    <ListBox ItemsSource="{Binding PixelFormats}" SelectedItem="{Binding PixelFormat}"
+                                             Style="{StaticResource ApplePillList}" Margin="8,0,8,8" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource SubCard}">
+                                <WrapPanel Orientation="Horizontal">
+                                    <Grid Style="{StaticResource CompactField}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="Binning" />
+                                        <ComboBox Grid.Column="1" Style="{StaticResource CompactCombo}" ItemsSource="{Binding Binnings}" SelectedItem="{Binding Binning}" />
+                                    </Grid>
+                                    <Grid Style="{StaticResource CompactField}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="镜像" />
+                                        <CheckBox Grid.Column="1" Content="水平" Style="{StaticResource AppleCheckBox}"
+                                                  IsChecked="{Binding FlipH, Converter={StaticResource IntToBoolConverter}}" VerticalAlignment="Center" />
+                                        <CheckBox Grid.Column="2" Content="垂直" Style="{StaticResource AppleCheckBox}"
+                                                  IsChecked="{Binding FlipV, Converter={StaticResource IntToBoolConverter}}" VerticalAlignment="Center" />
+                                    </Grid>
+                                </WrapPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ROI / 高级 / 保存 -->
+                    <Border Style="{StaticResource BlockCard}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource AppleSectionHeader}" Text="ROI / 高级 / 保存" />
+                            <Border Style="{StaticResource SubCard}">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI" Margin="12,4,12,0" FontWeight="SemiBold" />
+                                    <Grid Style="{StaticResource CompactRow}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="X" />
+                                        <TextBox Grid.Column="1" Style="{StaticResource CompactInput}" Text="{Binding RoiX}" Margin="0,0,6,0" />
+                                        <TextBlock Grid.Column="2" Style="{StaticResource CompactLabel}" Text="Y" />
+                                        <TextBox Grid.Column="3" Style="{StaticResource CompactInput}" Text="{Binding RoiY}" />
+                                    </Grid>
+                                    <Rectangle Style="{StaticResource AppleDivider}" />
+                                    <Grid Style="{StaticResource CompactRow}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="宽" />
+                                        <TextBox Grid.Column="1" Style="{StaticResource CompactInput}" Text="{Binding RoiW}" Margin="0,0,6,0" />
+                                        <TextBlock Grid.Column="2" Style="{StaticResource CompactLabel}" Text="高" />
+                                        <TextBox Grid.Column="3" Style="{StaticResource CompactInput}" Text="{Binding RoiH}" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource SubCard}">
+                                <WrapPanel Orientation="Horizontal">
+                                    <Grid Style="{StaticResource CompactField}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="数据包大小" />
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding PacketSize}" Width="64" />
+                                            <TextBlock Style="{StaticResource AppleUnit}" Text="字节" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <Grid Style="{StaticResource CompactField}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="包间隔" />
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding InterPacketDelay}" Width="64" />
+                                            <TextBlock Style="{StaticResource AppleUnit}" Text="tick" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <Grid Style="{StaticResource CompactField}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="保存图像" />
+                                        <CheckBox Grid.Column="1" Style="{StaticResource AppleToggle}"
+                                                  IsChecked="{Binding SaveImage, Converter={StaticResource IntToBoolConverter}}" HorizontalAlignment="Left" />
+                                    </Grid>
+                                    <Grid Style="{StaticResource CompactField}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="图像格式" />
+                                        <ComboBox Grid.Column="1" Style="{StaticResource CompactCombo}" ItemsSource="{Binding ImageFormats}" SelectedItem="{Binding ImageFormat}" />
+                                    </Grid>
+                                </WrapPanel>
+                            </Border>
+                            <Border Style="{StaticResource SubCard}">
+                                <Grid Style="{StaticResource CompactRow}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="保存路径" />
+                                    <TextBox Grid.Column="1" Style="{StaticResource CompactInput}" Text="{Binding SaveImagePath, UpdateSourceTrigger=PropertyChanged}" />
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 操作 -->
+                    <Border Style="{StaticResource BlockCard}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource AppleSectionHeader}" Text="操作" />
+                            <Grid Style="{StaticResource CompactRow}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                    <Button Style="{StaticResource AppleBtn}" Content="连接相机" Command="{Binding ConnectCmd}" />
+                                    <Button Style="{StaticResource AppleBtnSecondary}" Content="开始采集" Command="{Binding StartCmd}" />
+                                    <Button Style="{StaticResource AppleBtnSecondary}" Content="停止" Command="{Binding StopCmd}" />
+                                </StackPanel>
+                                <Border Grid.Column="1" HorizontalAlignment="Right">
                                     <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Setter Property="Visibility" Value="Visible" />
+                                        <Style TargetType="Border" BasedOn="{StaticResource AppleStatusPill}">
+                                            <Setter Property="Background" Value="{StaticResource AccentSoftBrush}" />
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding CameraLiveImage}" Value="{x:Null}">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                                    <Setter Property="Background" Value="{StaticResource SuccessBrush}" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    <TextBlock Text="{Binding StatusText}" Foreground="#8E8E93" FontSize="13" />
+                                    <TextBlock Text="{Binding StatusText}" FontSize="12">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                                        <Setter Property="Foreground" Value="White" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
                                 </Border>
                             </Grid>
-                        </Border>
-                    </StackPanel>
-                </Border>
+                        </StackPanel>
+                    </Border>
 
-                <!-- 图像参数 -->
-                <Border Style="{StaticResource AppleGroupCard}">
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="图像参数" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="曝光时间" />
-                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="260">
-                                <Slider Minimum="0.1" Maximum="50" Value="{Binding Exposure}" Width="170" VerticalAlignment="Center" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding Exposure, StringFormat={}{0:F1}}" Width="50" />
-                                <TextBlock Style="{StaticResource AppleUnit}" Text="ms" />
-                            </StackPanel>
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="增益" />
-                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="260">
-                                <Slider Minimum="0" Maximum="24" Value="{Binding Gain}" Width="170" VerticalAlignment="Center" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding Gain, StringFormat={}{0:F1}}" Width="50" />
-                                <TextBlock Style="{StaticResource AppleUnit}" Text="dB" />
-                            </StackPanel>
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <TextBlock Style="{StaticResource AppleLabel}" Margin="14,10,14,6" Text="触发模式" />
-                        <ListBox ItemsSource="{Binding TriggerModes}" SelectedItem="{Binding TriggerMode}"
-                                 Style="{StaticResource ApplePillList}" Margin="10,0,10,12" />
-                    </StackPanel>
-                </Border>
-
-                <!-- 分辨率与像素格式 -->
-                <Border Style="{StaticResource AppleGroupCard}">
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="分辨率与像素格式" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="分辨率" />
-                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding Width, UpdateSourceTrigger=PropertyChanged}" Width="70" />
-                                <TextBlock Style="{StaticResource AppleUnit}" Text="×" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding Height, UpdateSourceTrigger=PropertyChanged}" Width="70" />
-                            </StackPanel>
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <TextBlock Style="{StaticResource AppleLabel}" Margin="14,10,14,6" Text="像素格式" />
-                        <ListBox ItemsSource="{Binding PixelFormats}" SelectedItem="{Binding PixelFormat}"
-                                 Style="{StaticResource ApplePillList}" Margin="10,0,10,12" />
-                    </StackPanel>
-                </Border>
-
-                <!-- 操作 -->
-                <Border Style="{StaticResource AppleGroupCard}">
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="操作" />
-                        <DockPanel Style="{StaticResource AppleRow}" LastChildFill="True">
-                            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
-                                <Button Style="{StaticResource AppleBtn}" Content="连接相机" Command="{Binding ConnectCmd}" />
-                                <Button Style="{StaticResource AppleBtnSecondary}" Content="开始采集" Command="{Binding StartCmd}" />
-                                <Button Style="{StaticResource AppleBtnSecondary}" Content="停止" Command="{Binding StopCmd}" />
-                            </StackPanel>
-                            <Border DockPanel.Dock="Right">
-                                <Border.Style>
-                                    <Style TargetType="Border" BasedOn="{StaticResource AppleStatusPill}">
-                                        <Setter Property="Background" Value="{StaticResource AccentSoftBrush}" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsConnected}" Value="True">
-                                                <Setter Property="Background" Value="{StaticResource SuccessBrush}" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                                <TextBlock Text="{Binding StatusText}" FontSize="12">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsConnected}" Value="True">
-                                                    <Setter Property="Foreground" Value="White" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                            </Border>
-                        </DockPanel>
-                    </StackPanel>
-                </Border>
-
+                </WrapPanel>
             </StackPanel>
         </ScrollViewer>
     </Grid>
