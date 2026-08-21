@@ -1,9 +1,9 @@
 using System.Collections.ObjectModel;
+using OpenCvSharp;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using Microsoft.Win32;
 using GrayMatch;
 
 namespace NoCodeVision
@@ -108,7 +108,7 @@ namespace NoCodeVision.ViewModels
 
         private void LoadImage()
         {
-            var dlg = new OpenFileDialog
+            var dlg = new Microsoft.Win32.OpenFileDialog
             {
                 Filter = "图像|*.bmp;*.png;*.jpg;*.jpeg;*.tif;*.tiff",
                 Title = "选择源图像"
