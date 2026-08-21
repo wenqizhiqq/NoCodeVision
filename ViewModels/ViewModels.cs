@@ -16,6 +16,8 @@ using Microsoft.Win32;
 using GrayMatch;
 using OpenCvSharp;
 using NoCodeVision;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace NoCodeVision.ViewModels;
 
@@ -1128,6 +1130,43 @@ public class FlowViewModel : ViewModelBase
     private string _status = "就绪";
     public string Status { get => _status; set => SetField(ref _status, value); }
 
+    // 运行控制：协作式异步运行（全部运行时可在每步之间暂停/停止，并自动跳到当前运行行）
+    private bool _isRunning;
+    private bool _isPaused;
+    private CancellationTokenSource? _cts;
+    private const int StepPaceMs = 250;
+
+    public bool IsRunning
+    {
+        get => _isRunning;
+        set
+        {
+            if (SetField(ref _isRunning, value))
+            {
+                OnPropertyChanged(nameof(PauseResumeText));
+                OnPropertyChanged(nameof(RunStateText));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+    }
+
+    public bool IsPaused
+    {
+        get => _isPaused;
+        set
+        {
+            if (SetField(ref _isPaused, value))
+            {
+                OnPropertyChanged(nameof(PauseResumeText));
+                OnPropertyChanged(nameof(RunStateText));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+    }
+
+    public string PauseResumeText => _isPaused ? "▶ 继续" : "⏸ 暂停";
+    public string RunStateText => IsRunning ? (IsPaused ? "⏸ 已暂停" : "▶ 运行中") : "就绪";
+
     // 流程级共享图像：图像采集得到的 Mat，直接传给后续的模板匹配/几何测量步骤
     private Mat? _sharedImage;
     private string _currentImagePath = "";
@@ -1168,6 +1207,8 @@ public class FlowViewModel : ViewModelBase
     public ICommand SetPropTabCmd { get; }
     public ICommand RunCmd { get; }
     public ICommand StepRunCmd { get; }
+    public ICommand PauseResumeCmd { get; }
+    public ICommand StopCmd { get; }
     public ICommand ClearCmd { get; }
     public ICommand PickImageCmd { get; }
     public ICommand ConfirmTemplateCmd { get; }
@@ -1427,28 +1468,8 @@ public class FlowViewModel : ViewModelBase
             }
         }, _ => _selectedStep != null && _selectedStep.StepType == "TemplateMatch");
 
-        RunCmd = new RelayCommand(_ =>
-        {
-            if (_selectedFlow == null || _selectedFlow.Steps.Count == 0) return;
-            Status = $"运行中 · {_selectedFlow.Name} · 共 {_selectedFlow.Steps.Count} 步 · {DateTime.Now:HH:mm:ss}";
-            _sharedImage?.Dispose();
-            _sharedImage = null;
-            CurrentImagePath = "";
-            var matcher = new RotatedTemplateMatcher();
-            _stepCursor = 0;
-            int guard = 0;
-            int maxIter = _selectedFlow.Steps.Count * 20 + 50;
-            while (_stepCursor >= 0 && _stepCursor < _selectedFlow.Steps.Count && guard++ < maxIter)
-            {
-                var step = _selectedFlow.Steps[_stepCursor];
-                SelectedStep = step;
-                RunStep(step, matcher);
-                _stepCursor = NextStepIndex(_stepCursor);
-            }
-            _sharedImage?.Dispose();
-            _sharedImage = null;
-            Status = "完成 · " + _selectedFlow.Name;
-        }, _ => _selectedFlow != null && _selectedFlow.Steps.Count > 0);
+        RunCmd = new RelayCommand(_ => _ = RunAllAsync(),
+            _ => _selectedFlow != null && _selectedFlow.Steps.Count > 0 && !IsRunning);
 
         StepRunCmd = new RelayCommand(_ =>
         {
@@ -1460,7 +1481,16 @@ public class FlowViewModel : ViewModelBase
             RunStep(step, matcher);
             _stepCursor = NextStepIndex(_stepCursor);
             Status = "单步完成 · 第" + step.Index + "步 " + step.Name;
-        }, _ => _selectedFlow != null && _selectedFlow.Steps.Count > 0);
+        }, _ => _selectedFlow != null && _selectedFlow.Steps.Count > 0 && !IsRunning);
+
+        PauseResumeCmd = new RelayCommand(_ => { IsPaused = !IsPaused; }, _ => IsRunning);
+
+        StopCmd = new RelayCommand(_ =>
+        {
+            _cts?.Cancel();
+            IsPaused = false;
+        }, _ => IsRunning);
+
         ClearCmd = new RelayCommand(_ =>
         {
             if (_selectedFlow != null)
@@ -1490,6 +1520,54 @@ public class FlowViewModel : ViewModelBase
             if (_selectedStep == null) return;
             Status = $"Lua 调试 · {_selectedStep.Name} · 断点待命中 · {DateTime.Now:HH:mm:ss}";
         }, _ => _selectedStep != null && _selectedStep.StepType == "Lua");
+    }
+
+    private async Task RunAllAsync()
+    {
+        if (_selectedFlow == null || _selectedFlow.Steps.Count == 0) return;
+        _cts = new CancellationTokenSource();
+        IsRunning = true;
+        IsPaused = false;
+        _sharedImage?.Dispose();
+        _sharedImage = null;
+        CurrentImagePath = "";
+        var matcher = new RotatedTemplateMatcher();
+        _stepCursor = 0;
+        int guard = 0;
+        int maxIter = _selectedFlow.Steps.Count * 20 + 50;
+        try
+        {
+            while (!_cts.IsCancellationRequested && _stepCursor >= 0 && _stepCursor < _selectedFlow.Steps.Count && guard++ < maxIter)
+            {
+                // 暂停：等待恢复或停止
+                while (IsPaused && !_cts.IsCancellationRequested)
+                    await Task.Delay(120);
+                if (_cts.IsCancellationRequested) break;
+
+                var step = _selectedFlow.Steps[_stepCursor];
+                SelectedStep = step;                       // 选中并自动跳到该行
+                Status = $"运行中 · 第{step.Index}步 {step.Name} · {DateTime.Now:HH:mm:ss}";
+                RunStep(step, matcher);                    // 在当前(UI)线程执行本步
+
+                // 让 UI 重绘、滚动到当前行、并响应暂停/停止点击
+                await Task.Delay(StepPaceMs);
+
+                _stepCursor = NextStepIndex(_stepCursor);
+            }
+        }
+        finally
+        {
+            bool cancelled = _cts != null && _cts.IsCancellationRequested;
+            _sharedImage?.Dispose();
+            _sharedImage = null;
+            IsRunning = false;
+            IsPaused = false;
+            _cts?.Dispose();
+            _cts = null;
+            Status = cancelled
+                ? $"已停止 · {_selectedFlow.Name}"
+                : $"完成 · {_selectedFlow.Name}";
+        }
     }
 
     private static string MeasureRoi(Mat src, VisionFlowStep step)
