@@ -10,7 +10,6 @@
     <RootNamespace>NoCodeVision</RootNamespace>
     <LangVersion>latest</LangVersion>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <!-- LuaHostTest 是独立的无头验证工程，排除出主工程默认编译项，避免重复 Main / AssemblyInfo -->
     <DefaultItemExcludes>$(DefaultItemExcludes);LuaHostTest\**</DefaultItemExcludes>
   </PropertyGroup>
 
@@ -18,7 +17,7 @@
     <PackageReference Include="OpenCvSharp4" Version="4.8.0.20230708" />
     <PackageReference Include="OpenCvSharp4.Extensions" Version="4.8.0.20230708" />
     <PackageReference Include="System.IO.Ports" Version="9.0.0" />
-    <PackageReference Include="AvalonEdit" Version="6.3.1.1" />
+    <PackageReference Include="AvalonEdit" Version="6.3.1.120" />
     <PackageReference Include="NLua" Version="1.6.3" />
   </ItemGroup>
 

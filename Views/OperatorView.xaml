@@ -107,37 +107,92 @@
                     </StackPanel>
                 </Border>
 
-                <!-- 操作 -->
+                <!-- 机台运行控制 -->
                 <Border Style="{StaticResource AppleGroupCard}">
                     <StackPanel Margin="14,12">
-                        <Grid>
-                            <Button Content="开始检测" Command="{Binding StartCmd}">
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource AppleBigButton}">
-                                        <Setter Property="Visibility" Value="Visible" />
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="机台运行控制" />
+
+                        <!-- 运行状态指示 -->
+                        <DockPanel Style="{StaticResource AppleRow}" Margin="0,4,0,8">
+                            <Ellipse Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,10,0">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="{StaticResource TextMutedBrush}" />
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                                                <Setter Property="Fill" Value="{StaticResource WarningBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsFaulted}" Value="True">
+                                                <Setter Property="Fill" Value="{StaticResource DangerBrush}" />
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
-                                </Button.Style>
-                            </Button>
-                            <Button Content="停止检测" Command="{Binding StopCmd}">
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource AppleBigButtonDanger}">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                                                <Setter Property="Visibility" Value="Visible" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
+                                </Ellipse.Style>
+                            </Ellipse>
+                            <TextBlock Style="{StaticResource AppleLabel}" Text="{Binding StateText}" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Right" HorizontalAlignment="Right"
+                                       Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"
+                                       Text="{Binding LastResult}" />
+                        </DockPanel>
+
+                        <!-- 急停报警横幅 -->
+                        <Border CornerRadius="8" Background="{StaticResource DangerSoftBrush}"
+                                Padding="10,8" Margin="0,0,0,8">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsFaulted}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock Foreground="{StaticResource DangerBrush}" FontWeight="SemiBold"
+                                       Text="⛔ 急停已触发：机台已锁停，请排除故障后点「复位」恢复" />
+                        </Border>
+
+                        <!-- 五个真实按钮：运行/暂停/停止/急停/复位 -->
+                        <Grid Margin="0,4,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <Button Grid.Row="0" Grid.Column="0" Margin="0,0,6,8" Height="46"
+                                    Content="{Binding RunButtonText}" Command="{Binding RunCmd}"
+                                    Style="{StaticResource AppleBigButton}" />
+                            <Button Grid.Row="0" Grid.Column="1" Margin="6,0,6,8" Height="46"
+                                    Content="暂停" Command="{Binding PauseCmd}"
+                                    Style="{StaticResource AppleBigButton}" />
+                            <Button Grid.Row="0" Grid.Column="2" Margin="6,0,0,8" Height="46"
+                                    Content="停止" Command="{Binding StopCmd}"
+                                    Style="{StaticResource AppleBigButtonDanger}" />
+
+                            <Button Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,6,0" Height="46"
+                                    Content="急停" Command="{Binding EmergencyStopCmd}"
+                                    Style="{StaticResource AppleBigButtonDanger}" />
+                            <Button Grid.Row="1" Grid.Column="2" Margin="6,0,0,0" Height="46"
+                                    Content="复位" Command="{Binding ResetCmd}"
+                                    Style="{StaticResource AppleBtnSecondary}" />
                         </Grid>
-                        <Button Style="{StaticResource AppleBtnSecondary}" Content="模拟一次检测" Margin="0,12,0,0" Height="40"
-                                Command="{Binding SampleCmd}" />
+
+                        <TextBlock Style="{StaticResource AppleSubLabel}" Margin="0,10,0,4" Text="机台通信日志" />
+                        <Border Background="{StaticResource CanvasBrush}" CornerRadius="8"
+                                BorderBrush="{StaticResource LineBrush}" BorderThickness="1" Padding="8">
+                            <ScrollViewer MaxHeight="160" VerticalScrollBarVisibility="Auto">
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding MachineLog}"
+                                           Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" />
+                            </ScrollViewer>
+                        </Border>
                     </StackPanel>
                 </Border>
 

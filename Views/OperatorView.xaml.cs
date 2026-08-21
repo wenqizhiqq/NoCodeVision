@@ -7,6 +7,6 @@ public partial class OperatorView : UserControl
     public OperatorView()
     {
         InitializeComponent();
-        DataContext = new ViewModels.OperatorViewModel();
+        DataContext = new ViewModels.OperatorRunViewModel();
     }
 }
