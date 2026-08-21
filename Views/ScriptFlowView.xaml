@@ -3,35 +3,134 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
              mc:Ignorable="d">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="180" />
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="300" />
+        </Grid.ColumnDefinitions>
 
-        <TextBlock Grid.Row="0" Style="{StaticResource iOSTitle}" Text="{Binding SelectedFlow.Name, FallbackValue='脚本流程'}" />
+        <!-- 标题 -->
+        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Style="{StaticResource iOSTitle}"
+                   Text="{Binding SelectedFlow.Name, FallbackValue='脚本流程'}" Margin="0,0,0,8" />
 
-        <Border Grid.Row="1" Style="{StaticResource AppleGroupCard}" Padding="14" Margin="0,12,0,12">
+        <!-- 工具栏 -->
+        <Border Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource AppleGroupCard}" Padding="12" Margin="0,0,0,10">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Style="{StaticResource AppleBtn}" Content="▶ 运行脚本" Command="{Binding RunScriptCmd}" VerticalAlignment="Center" />
-                <Button Style="{StaticResource AppleBtnSecondary}" Content="⏹ 停止" Command="{Binding StopScriptCmd}" VerticalAlignment="Center" Margin="10,0,0,0" />
-                <Border Style="{StaticResource AppleStatusPill}" Background="{StaticResource AccentSoftBrush}" Margin="12,0,0,0" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Status}" FontSize="12" Foreground="{StaticResource AccentBrush}" />
+                <Button Style="{StaticResource AppleBtn}" Content="▶ 运行" Command="{Binding RunScriptCmd}" />
+                <Button Style="{StaticResource AppleBtn}" Content="⏯ 单步" Command="{Binding StepScriptCmd}" Margin="8,0,0,0" />
+                <Button Style="{StaticResource AppleBtnSecondary}" Content="{Binding ScriptPauseResumeText}"
+                        Command="{Binding PauseResumeScriptCmd}" Margin="8,0,0,0" />
+                <Button Style="{StaticResource AppleBtnSecondary}" Content="⏹ 停止"
+                        Command="{Binding StopScriptCmd}" Margin="8,0,0,0" />
+                <Button Style="{StaticResource AppleBtnSecondary}" Content="🔴 断点"
+                        Click="BreakpointButton_Click" Margin="8,0,0,0" />
+                <Button Style="{StaticResource AppleBtnSecondary}" Content="🔍 查找"
+                        Click="FindButton_Click" Margin="8,0,0,0" />
+                <Button Style="{StaticResource AppleBtnSecondary}" Content="💡 提示"
+                        Click="CompleteButton_Click" Margin="8,0,0,0" ToolTip="Ctrl+Space 智能提示" />
+                <Rectangle Width="1" Height="24" Fill="{StaticResource LineBrush}" Margin="12,0" VerticalAlignment="Center" />
+                <Border Style="{StaticResource AppleStatusPill}" Background="{StaticResource AccentSoftBrush}" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding ScriptStateText}" FontSize="12" Foreground="{StaticResource AccentBrush}" />
                 </Border>
+                <TextBlock Text="{Binding ScriptElapsedText}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                           VerticalAlignment="Center" Margin="8,0,0,0" />
+                <TextBlock Text="· 点击变量名查看值" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                           VerticalAlignment="Center" Margin="12,0,0,0" />
             </StackPanel>
         </Border>
 
-        <Border Grid.Row="2" Style="{StaticResource AppleGroupCard}" Padding="0">
-            <TextBox Style="{StaticResource AppleCodeEditor}"
-                     Text="{Binding SelectedFlow.ScriptContent, UpdateSourceTrigger=PropertyChanged}"
-                     VerticalAlignment="Stretch" HorizontalAlignment="Stretch" />
+        <!-- 编辑器 -->
+        <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource AppleGroupCard}" Padding="0">
+            <avalonEdit:TextEditor x:Name="Editor" Margin="6"
+                                    FontFamily="Consolas, 'Courier New', monospace" FontSize="13"
+                                    ShowLineNumbers="True"
+                                    VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" />
         </Border>
 
-        <Border Grid.Row="3" Style="{StaticResource AppleGroupCard}" Padding="14" Margin="0,12,0,0">
-            <TextBlock Style="{StaticResource AppleSubLabel}" Text="Lua 脚本将在运行时按顺序执行 vision.match / plc.write 等接口调用。" TextWrapping="Wrap" />
+        <!-- 右侧检查面板 -->
+        <Grid Grid.Row="2" Grid.Column="1" Margin="12,0,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="变量监视" />
+                    <ItemsControl ItemsSource="{Binding Variables}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,0,0,4" Padding="8,6" Background="{StaticResource CanvasBrush}" CornerRadius="8">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12" />
+                                            <TextBlock Text="{Binding Scope}" FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" Margin="6,0,0,0" />
+                                            <TextBlock Text="{Binding Type}" FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" Margin="6,0,0,0" />
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding Value}" FontSize="12" Foreground="{StaticResource AccentBrush}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="调用栈" Margin="0,12,0,4" />
+                    <ItemsControl ItemsSource="{Binding CallStack}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" FontSize="11" FontFamily="Consolas, monospace"
+                                           Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,2" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="断点列表" Margin="0,12,0,4" />
+                    <ItemsControl ItemsSource="{Binding Breakpoints}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding StringFormat=第{0}行}" FontSize="11" FontFamily="Consolas, monospace"
+                                           Margin="0,0,0,2" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- 变量检查（点击变量显示名称+值） -->
+            <Border Grid.Row="1" Style="{StaticResource AppleGroupCard}" Padding="10" Margin="0,10,0,0">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="变量检查" />
+                    <TextBlock FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap">
+                        <Run Text="{Binding SelectedVariable.Name, Mode=OneWay, TargetNullValue='—'}" />
+                        <Run Text="{Binding SelectedVariable.Type, Mode=OneWay, TargetNullValue=''}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10" />
+                    </TextBlock>
+                    <TextBlock Text="{Binding SelectedVariable.Value, Mode=OneWay, TargetNullValue='点击编辑器中的变量名查看值（运行并在断点/单步暂停后可见）'}"
+                               FontSize="12" Foreground="{StaticResource AccentBrush}" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- 输出控制台 -->
+        <Border Grid.Row="3" Grid.ColumnSpan="2" Style="{StaticResource AppleGroupCard}" Padding="10" Margin="0,10,0,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <TextBlock Style="{StaticResource AppleSubLabel}" Text="输出控制台" />
+                <TextBox Grid.Row="1" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                         Text="{Binding ScriptOutput, Mode=OneWay}"
+                         FontFamily="Consolas, monospace" FontSize="11" Background="{StaticResource CanvasBrush}"
+                         BorderThickness="0" AcceptsReturn="True" />
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

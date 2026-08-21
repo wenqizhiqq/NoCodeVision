@@ -16,6 +16,7 @@ using Microsoft.Win32;
 using GrayMatch;
 using OpenCvSharp;
 using NoCodeVision;
+using NoCodeVision.Scripting;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -1001,7 +1002,25 @@ public class FlowViewModel : ViewModelBase
 
     private VisionFlow? _selectedFlow;
     private int _stepCursor = 0;
-    public VisionFlow? SelectedFlow { get => _selectedFlow; set { if (SetField(ref _selectedFlow, value)) _stepCursor = 0; } }
+    public VisionFlow? SelectedFlow
+    {
+        get => _selectedFlow;
+        set
+        {
+            if (!SetField(ref _selectedFlow, value)) return;
+            _stepCursor = 0;
+            // 切换流程时重置脚本调试状态
+            ScriptOutput = "";
+            Variables.Clear();
+            CallStack.Clear();
+            Breakpoints.Clear();
+            CurrentLine = -1;
+            ScriptIsRunning = false;
+            ScriptIsPaused = false;
+            ScriptElapsedMs = 0;
+            _luaHost?.Stop();
+        }
+    }
 
     private VisionFlowStep? _selectedStep;
     public VisionFlowStep? SelectedStep
@@ -1221,16 +1240,50 @@ public class FlowViewModel : ViewModelBase
     public ICommand AskAiCmd { get; }
     public ICommand RunLuaCmd { get; }
     public ICommand DebugLuaCmd { get; }
-    public ICommand RunScriptCmd { get; }
-    public ICommand StopScriptCmd { get; }
+        public ICommand RunScriptCmd { get; }
+        public ICommand StopScriptCmd { get; }
+        public ICommand StepScriptCmd { get; }
+        public ICommand PauseResumeScriptCmd { get; }
+        public ICommand ToggleBreakpointCmd { get; }
 
-    public FlowViewModel()
-    {
-        if (!LoadState())
-            _flows = CreateDefaultFlows();
-        WireAutoSave();
-        SelectedFlow = Flows.FirstOrDefault();
-        SelectedStep = SelectedFlow?.Steps.FirstOrDefault();
+        // ---- 脚本流程调试状态 ----
+        private LuaDebugHost? _luaHost;
+        private bool _scriptIsRunning;
+        private bool _scriptIsPaused;
+        private double _scriptElapsedMs;
+        private string _scriptOutput = "";
+        private int _currentLine = -1;
+        private NoCodeVision.Scripting.VarItem? _selectedVariable;
+
+        public ObservableCollection<NoCodeVision.Scripting.VarItem> Variables { get; } = new();
+        public ObservableCollection<string> CallStack { get; } = new();
+        public ObservableCollection<int> Breakpoints { get; } = new();
+        public bool ScriptIsRunning { get => _scriptIsRunning; set { if (SetField(ref _scriptIsRunning, value)) { OnPropertyChanged(nameof(ScriptStateText)); OnPropertyChanged(nameof(ScriptPauseResumeText)); } } }
+        public bool ScriptIsPaused { get => _scriptIsPaused; set { if (SetField(ref _scriptIsPaused, value)) { OnPropertyChanged(nameof(ScriptStateText)); OnPropertyChanged(nameof(ScriptPauseResumeText)); } } }
+        public string ScriptPauseResumeText => ScriptIsPaused ? "▶ 继续" : "⏸ 暂停";
+        public double ScriptElapsedMs { get => _scriptElapsedMs; set { if (SetField(ref _scriptElapsedMs, value)) OnPropertyChanged(nameof(ScriptElapsedText)); } }
+        public string ScriptOutput { get => _scriptOutput; set => SetField(ref _scriptOutput, value); }
+        public int CurrentLine { get => _currentLine; set => SetField(ref _currentLine, value); }
+        public NoCodeVision.Scripting.VarItem? SelectedVariable { get => _selectedVariable; set => SetField(ref _selectedVariable, value); }
+        public string ScriptStateText => !ScriptIsRunning ? "就绪" : (ScriptIsPaused ? "⏸ 已暂停" : "▶ 运行中");
+        public string ScriptElapsedText => ScriptElapsedMs >= 1000 ? (ScriptElapsedMs / 1000).ToString("F2") + " s" : ((int)ScriptElapsedMs).ToString() + " ms";
+
+        public FlowViewModel()
+        {
+            if (!LoadState())
+                _flows = CreateDefaultFlows();
+            WireAutoSave();
+            var uiCtx = SynchronizationContext.Current;
+            _luaHost = new LuaDebugHost(
+                uiCtx,
+                onOutput: s => { ScriptOutput = ScriptOutput.Length > 8000 ? s + "\n" : ScriptOutput + s + "\n"; },
+                onVariables: vars => { Variables.Clear(); foreach (var v in vars) Variables.Add(v); },
+                onCallStack: st => { CallStack.Clear(); foreach (var l in st) CallStack.Add(l); },
+                onCurrentLine: ln => CurrentLine = ln,
+                onElapsed: ms => ScriptElapsedMs = ms,
+                onRunState: (running, paused) => { ScriptIsRunning = running; ScriptIsPaused = paused; CommandManager.InvalidateRequerySuggested(); });
+            SelectedFlow = Flows.FirstOrDefault();
+            SelectedStep = SelectedFlow?.Steps.FirstOrDefault();
 
         AddFlowCmd = new RelayCommand(_ =>
         {
@@ -1554,13 +1607,37 @@ public class FlowViewModel : ViewModelBase
         RunScriptCmd = new RelayCommand(_ =>
         {
             if (_selectedFlow == null || _selectedFlow.FlowKind != "Script") return;
-            Status = $"脚本运行中 · {_selectedFlow.Name} · {DateTime.Now:HH:mm:ss}";
+            _luaHost?.SetBreakpoints(Breakpoints);
+            _luaHost?.Run(_selectedFlow.ScriptContent, false);
+        }, _ => _selectedFlow != null && _selectedFlow.FlowKind == "Script" && !ScriptIsRunning);
+
+        StepScriptCmd = new RelayCommand(_ =>
+        {
+            if (_selectedFlow == null || _selectedFlow.FlowKind != "Script") return;
+            _luaHost?.SetBreakpoints(Breakpoints);
+            _luaHost?.Step(_selectedFlow.ScriptContent);
         }, _ => _selectedFlow != null && _selectedFlow.FlowKind == "Script");
+
+        PauseResumeScriptCmd = new RelayCommand(_ =>
+        {
+            if (_luaHost == null) return;
+            if (ScriptIsPaused) _luaHost.Resume();
+            else _luaHost.Pause();
+        }, _ => _selectedFlow != null && _selectedFlow.FlowKind == "Script" && ScriptIsRunning);
 
         StopScriptCmd = new RelayCommand(_ =>
         {
-            if (_selectedFlow == null) return;
-            Status = $"脚本已停止 · {_selectedFlow.Name}";
+            _luaHost?.Stop();
+        }, _ => _selectedFlow != null && _selectedFlow.FlowKind == "Script" && ScriptIsRunning);
+
+        ToggleBreakpointCmd = new RelayCommand(p =>
+        {
+            if (p is int line && line > 0)
+            {
+                if (Breakpoints.Contains(line)) Breakpoints.Remove(line);
+                else Breakpoints.Add(line);
+                _luaHost?.SetBreakpoints(Breakpoints);
+            }
         }, _ => _selectedFlow != null && _selectedFlow.FlowKind == "Script");
     }
 
