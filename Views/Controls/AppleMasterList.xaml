@@ -28,20 +28,21 @@
                      ItemContainerStyle="{StaticResource AppleListBoxItem}"
                      Margin="0,0,0,8" />
 
-            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="14,0,14,14">
-                <Button Style="{StaticResource AppleBtn}" Command="{Binding AddCommand, ElementName=Root}">
+            <WrapPanel Grid.Row="2" Orientation="Horizontal" Margin="14,0,14,14">
+                <Button Style="{StaticResource AppleBtn}" Command="{Binding AddCommand, ElementName=Root}" Margin="0,0,8,8">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="➕" FontSize="13" Margin="0,0,6,0" />
                         <TextBlock Text="添加" />
                     </StackPanel>
                 </Button>
-                <Button Style="{StaticResource AppleBtnSecondary}" Command="{Binding DeleteCommand, ElementName=Root}">
+                <Button Style="{StaticResource AppleBtnSecondary}" Command="{Binding DeleteCommand, ElementName=Root}" Margin="0,0,8,8">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="🗑" FontSize="13" Margin="0,0,6,0" />
                         <TextBlock Text="删除" />
                     </StackPanel>
                 </Button>
-            </StackPanel>
+                <ContentPresenter Content="{Binding (ctrl:MasterListBehaviors.FooterContent), ElementName=Root}" />
+            </WrapPanel>
         </Grid>
     </Border>
 </UserControl>

@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:ctrl="clr-namespace:NoCodeVision.Views.Controls"
+             xmlns:views="clr-namespace:NoCodeVision.Views"
              xmlns:local="clr-namespace:NoCodeVision"
              mc:Ignorable="d">
 
@@ -61,7 +62,7 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="260" />
+            <ColumnDefinition Width="300" />
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
@@ -70,10 +71,41 @@
         <ctrl:AppleMasterList Grid.Column="0" Header="流程方案" HeaderIcon="🔀"
                               ItemsSource="{Binding Flows}" SelectedItem="{Binding SelectedFlow}"
                               AddCommand="{Binding AddFlowCmd}" DeleteCommand="{Binding DeleteFlowCmd}"
-                              ItemTemplate="{StaticResource FlowItemTemplate}" />
+                              ItemTemplate="{StaticResource FlowItemTemplate}">
+            <ctrl:MasterListBehaviors.FooterContent>
+                <StackPanel Orientation="Horizontal" Margin="8,0,0,0">
+                    <Button Style="{StaticResource AppleBtn}" Content="📝 添加脚本流程" Command="{Binding AddScriptFlowCmd}" VerticalAlignment="Center" />
+                    <Button Style="{StaticResource AppleBtnSecondary}" Content="✏️ 重命名" Command="{Binding RenameFlowCmd}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                </StackPanel>
+            </ctrl:MasterListBehaviors.FooterContent>
+        </ctrl:AppleMasterList>
 
-        <!-- 中间：流程步骤 -->
+        <!-- 脚本流程视图（选中脚本流程时显示，占中间+右侧两列） -->
+        <views:ScriptFlowView Grid.Column="1" Grid.ColumnSpan="2" Margin="16,0" DataContext="{Binding}" Visibility="Collapsed">
+            <views:ScriptFlowView.Style>
+                <Style TargetType="UserControl">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding SelectedFlow.FlowKind}" Value="Script">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </views:ScriptFlowView.Style>
+        </views:ScriptFlowView>
+
+        <!-- 中间：流程步骤（普通流程显示） -->
         <Grid Grid.Column="1" Margin="16,0">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding SelectedFlow.FlowKind}" Value="Script">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -187,8 +219,18 @@
             </Border>
         </Grid>
 
-        <!-- 右侧：步骤属性（按步骤类型动态切换） -->
+        <!-- 右侧：步骤属性（按步骤类型动态切换；脚本流程隐藏） -->
         <ScrollViewer Grid.Column="2" Margin="16,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <ScrollViewer.Style>
+                <Style TargetType="ScrollViewer">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding SelectedFlow.FlowKind}" Value="Script">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ScrollViewer.Style>
             <StackPanel>
                 <TextBlock Style="{StaticResource iOSTitle}">
                     <TextBlock.Text>

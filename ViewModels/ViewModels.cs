@@ -338,10 +338,13 @@ public class VisionFlowStep : ViewModelBase
     public bool HasAiHint => !string.IsNullOrWhiteSpace(_aiHint);
 }
 
-public class VisionFlow
+public class VisionFlow : ViewModelBase
 {
-    public string Name { get; set; } = "";
+    private string _name = "";
+    public string Name { get => _name; set => SetField(ref _name, value); }
     public string Icon { get; set; } = "🔀";
+    public string FlowKind { get; set; } = "Normal";
+    public string ScriptContent { get; set; } = "-- 脚本流程入口\nlocal score = vision.match(\"tpl_A.png\")\nif score >= 0.85 then\n    plc.write(200, 1)\nend";
     public ObservableCollection<VisionFlowStep> Steps { get; set; } = new();
 }
 
@@ -953,7 +956,7 @@ public class FlowViewModel : ViewModelBase
     }
 
 
-    public string[] StepFunctions { get; } = { "图像采集", "模板匹配", "几何测量", "逻辑判断", "结果输出", "轴运动", "IO控制", "气缸动作", "等待延时", "通讯指令" };
+    public string[] StepFunctions { get; } = { "图像采集", "模板匹配", "几何测量", "逻辑判断", "结果输出", "Lua脚本", "轴运动", "IO控制", "气缸动作", "等待延时", "通讯指令" };
     public string[] PreprocessTypes { get; } = { "灰度化", "二值化", "高斯模糊", "中值滤波", "边缘检测" };
     public string[] MeasureTypes { get; } = { "圆径", "边距", "角度", "面积", "中心距" };
     public string[] LogicRelations { get; } = { "如果", "并且", "或者", "否则", "循环", "跳出", "并行", "等待" };
@@ -1209,6 +1212,8 @@ public class FlowViewModel : ViewModelBase
     public ICommand StepRunCmd { get; }
     public ICommand PauseResumeCmd { get; }
     public ICommand StopCmd { get; }
+    public ICommand AddScriptFlowCmd { get; }
+    public ICommand RenameFlowCmd { get; }
     public ICommand ClearCmd { get; }
     public ICommand PickImageCmd { get; }
     public ICommand ConfirmTemplateCmd { get; }
@@ -1216,6 +1221,8 @@ public class FlowViewModel : ViewModelBase
     public ICommand AskAiCmd { get; }
     public ICommand RunLuaCmd { get; }
     public ICommand DebugLuaCmd { get; }
+    public ICommand RunScriptCmd { get; }
+    public ICommand StopScriptCmd { get; }
 
     public FlowViewModel()
     {
@@ -1251,6 +1258,7 @@ public class FlowViewModel : ViewModelBase
                 "几何测量" => ("📐", "Measure"),
                 "逻辑判断" => ("✅", "Logic"),
                 "结果输出" => ("📤", "Output"),
+                "Lua脚本" => ("📝", "Lua"),
                 "轴运动" => ("🦾", "AxisMove"),
                 "IO控制" => ("🔌", "IOControl"),
                 "气缸动作" => ("🟢", "Cylinder"),
@@ -1274,6 +1282,28 @@ public class FlowViewModel : ViewModelBase
             _selectedFlow.Steps.Add(step);
             Reindex(_selectedFlow);
             SelectedStep = step;
+        }, _ => _selectedFlow != null);
+
+        AddScriptFlowCmd = new RelayCommand(_ =>
+        {
+            var next = Flows.Count + 1;
+            var flow = new VisionFlow
+            {
+                Name = $"脚本流程-{next}",
+                Icon = "📝",
+                FlowKind = "Script"
+            };
+            Flows.Add(flow);
+            SelectedFlow = flow;
+        }, _ => true);
+
+        RenameFlowCmd = new RelayCommand(_ =>
+        {
+            if (_selectedFlow == null) return;
+            var owner = System.Windows.Application.Current.MainWindow;
+            var newName = Views.InputDialog.Show(owner, "请输入新流程名称：", _selectedFlow.Name);
+            if (!string.IsNullOrWhiteSpace(newName))
+                _selectedFlow.Name = newName.Trim();
         }, _ => _selectedFlow != null);
 
         DeleteStepCmd = new RelayCommand(_ =>
@@ -1520,6 +1550,18 @@ public class FlowViewModel : ViewModelBase
             if (_selectedStep == null) return;
             Status = $"Lua 调试 · {_selectedStep.Name} · 断点待命中 · {DateTime.Now:HH:mm:ss}";
         }, _ => _selectedStep != null && _selectedStep.StepType == "Lua");
+
+        RunScriptCmd = new RelayCommand(_ =>
+        {
+            if (_selectedFlow == null || _selectedFlow.FlowKind != "Script") return;
+            Status = $"脚本运行中 · {_selectedFlow.Name} · {DateTime.Now:HH:mm:ss}";
+        }, _ => _selectedFlow != null && _selectedFlow.FlowKind == "Script");
+
+        StopScriptCmd = new RelayCommand(_ =>
+        {
+            if (_selectedFlow == null) return;
+            Status = $"脚本已停止 · {_selectedFlow.Name}";
+        }, _ => _selectedFlow != null && _selectedFlow.FlowKind == "Script");
     }
 
     private async Task RunAllAsync()
