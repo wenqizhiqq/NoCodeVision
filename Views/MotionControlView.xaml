@@ -255,14 +255,11 @@
                         <TextBox Style="{StaticResource AppleTextField}" Text="{Binding NewItemName, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="12,0,0,0" />
                         <Button Style="{StaticResource AppleBtnSecondary}" Content="重命名" Command="{Binding RenameCmd}" Margin="8,0,0,0" />
                     </StackPanel>
-                    <ListView Grid.Row="1" ItemsSource="{Binding PointTable}" SelectedItem="{Binding SelectedPoint, Mode=TwoWay}" BorderThickness="0">
+                    <ListView Grid.Row="1" ItemsSource="{Binding PointTables}" SelectedItem="{Binding SelectedPointTable, Mode=TwoWay}" BorderThickness="0">
                         <ListView.View>
                             <GridView>
-                                <GridViewColumn Header="点位名" DisplayMemberBinding="{Binding Name}" Width="100" />
-                                <GridViewColumn Header="X" DisplayMemberBinding="{Binding X, StringFormat={}{0:F1}}" Width="70" />
-                                <GridViewColumn Header="Y" DisplayMemberBinding="{Binding Y, StringFormat={}{0:F1}}" Width="70" />
-                                <GridViewColumn Header="Z" DisplayMemberBinding="{Binding Z, StringFormat={}{0:F1}}" Width="70" />
-                                <GridViewColumn Header="说明" DisplayMemberBinding="{Binding Desc}" Width="120" />
+                                <GridViewColumn Header="点位表名" DisplayMemberBinding="{Binding Name}" Width="140" />
+                                <GridViewColumn Header="点数" DisplayMemberBinding="{Binding Points.Count}" Width="60" />
                             </GridView>
                         </ListView.View>
                     </ListView>
@@ -280,29 +277,61 @@
                         </Style.Triggers>
                     </Style>
                 </Border.Style>
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="点位参数" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,8,0,4" Text="点位名" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Name, FallbackValue=''}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="X" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.X, StringFormat={}{0:F2}, FallbackValue=0}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="Y" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Y, StringFormat={}{0:F2}, FallbackValue=0}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="Z" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Z, StringFormat={}{0:F2}, FallbackValue=0}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="偏移 X" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.OffsetX, StringFormat={}{0:F2}, FallbackValue=0}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="偏移 Y" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.OffsetY, StringFormat={}{0:F2}, FallbackValue=0}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="偏移 Z" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.OffsetZ, StringFormat={}{0:F2}, FallbackValue=0}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="速度" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Speed, StringFormat={}{0:F2}, FallbackValue=0}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="说明" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Desc, FallbackValue=''}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="备注" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Note, FallbackValue=''}" />
-                </StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.15*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <!-- 选中表内的点位列表 -->
+                    <Border Grid.Column="0" Padding="0,0,12,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                                <Button Style="{StaticResource AppleBtn}" Content="新增点" Command="{Binding AddPointCmd}" />
+                                <Button Style="{StaticResource AppleBtnSecondary}" Content="删除点" Command="{Binding DeletePointCmd}" Margin="8,0,0,0" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding NewItemName, UpdateSourceTrigger=PropertyChanged}" Width="96" Margin="12,0,0,0" />
+                                <Button Style="{StaticResource AppleBtnSecondary}" Content="重命名点" Command="{Binding RenamePointCmd}" Margin="8,0,0,0" />
+                            </StackPanel>
+                            <ListView Grid.Row="1" ItemsSource="{Binding SelectedPointTable.Points}" SelectedItem="{Binding SelectedPoint, Mode=TwoWay}" BorderThickness="0">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn Header="点位名" DisplayMemberBinding="{Binding Name}" Width="90" />
+                                        <GridViewColumn Header="X" DisplayMemberBinding="{Binding X, StringFormat={}{0:F1}}" Width="56" />
+                                        <GridViewColumn Header="Y" DisplayMemberBinding="{Binding Y, StringFormat={}{0:F1}}" Width="56" />
+                                        <GridViewColumn Header="Z" DisplayMemberBinding="{Binding Z, StringFormat={}{0:F1}}" Width="56" />
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+                        </Grid>
+                    </Border>
+                    <!-- 点位属性 -->
+                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="点位参数" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,8,0,4" Text="点位名" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Name, FallbackValue=''}" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="X" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.X, StringFormat={}{0:F2}, FallbackValue=0}" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="Y" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Y, StringFormat={}{0:F2}, FallbackValue=0}" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="Z" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Z, StringFormat={}{0:F2}, FallbackValue=0}" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="偏移 X" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.OffsetX, StringFormat={}{0:F2}, FallbackValue=0}" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="偏移 Y" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.OffsetY, StringFormat={}{0:F2}, FallbackValue=0}" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="偏移 Z" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.OffsetZ, StringFormat={}{0:F2}, FallbackValue=0}" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="速度" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Speed, StringFormat={}{0:F2}, FallbackValue=0}" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="说明" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Desc, FallbackValue=''}" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="备注" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Note, FallbackValue=''}" />
+                    </StackPanel>
+                </Grid>
             </Border>
 
             <!-- ===== 料盘 ===== -->
@@ -323,42 +352,19 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                        <Button Style="{StaticResource AppleBtnSecondary}" Content="删除" Command="{Binding DeleteCmd}" />
+                        <Button Style="{StaticResource AppleBtn}" Content="新增" Command="{Binding AddCmd}" />
+                        <Button Style="{StaticResource AppleBtnSecondary}" Content="删除" Command="{Binding DeleteCmd}" Margin="8,0,0,0" />
                         <TextBox Style="{StaticResource AppleTextField}" Text="{Binding NewItemName, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="12,0,0,0" />
                         <Button Style="{StaticResource AppleBtnSecondary}" Content="重命名" Command="{Binding RenameCmd}" Margin="8,0,0,0" />
                     </StackPanel>
-                    <ItemsControl Grid.Row="1" ItemsSource="{Binding TrayCells}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <UniformGrid Rows="{Binding TrayRows}" Columns="{Binding TrayCols}" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Margin="3" Height="46" CornerRadius="8" BorderThickness="1"
-                                        MouseLeftButtonDown="TrayCell_Click">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Setter Property="Background" Value="#F2F2F7" />
-                                            <Setter Property="BorderBrush" Value="#C7C7CC" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Occupied}" Value="True">
-                                                    <Setter Property="Background" Value="{StaticResource WarningSoftBrush}" />
-                                                    <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Label}" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
-                                        <TextBlock Text="{Binding Product}" FontSize="10"
-                                                   Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" />
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                    <ListView Grid.Row="1" ItemsSource="{Binding Trays}" SelectedItem="{Binding SelectedTray, Mode=TwoWay}" BorderThickness="0">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="料盘名" DisplayMemberBinding="{Binding Name}" Width="140" />
+                                <GridViewColumn Header="行×列" DisplayMemberBinding="{Binding GridText}" Width="70" />
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
                 </Grid>
             </Border>
 
@@ -373,23 +379,65 @@
                         </Style.Triggers>
                     </Style>
                 </Border.Style>
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="料盘参数" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,8,0,4" Text="标签" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedTrayCell.Label, FallbackValue=''}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="行" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedTrayCell.Row, FallbackValue=0}" IsReadOnly="True" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="列" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedTrayCell.Col, FallbackValue=0}" IsReadOnly="True" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="占用" />
-                    <CheckBox IsChecked="{Binding SelectedTrayCell.Occupied}" Content="已占用" VerticalAlignment="Center" Margin="0,4" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="料号" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedTrayCell.Product, FallbackValue=''}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="高度" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedTrayCell.Height, StringFormat={}{0:F2}, FallbackValue=0}" />
-                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="状态" />
-                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedTrayCell.State, FallbackValue=''}" />
-                </StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.4*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <!-- 选中料盘的格子 -->
+                    <Border Grid.Column="0" Padding="0,0,12,0">
+                        <ItemsControl ItemsSource="{Binding SelectedTray.Cells}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Rows="{Binding SelectedTray.Rows}" Columns="{Binding SelectedTray.Cols}" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="3" Height="46" CornerRadius="8" BorderThickness="1"
+                                            MouseLeftButtonDown="TrayCell_Click">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="#F2F2F7" />
+                                                <Setter Property="BorderBrush" Value="#C7C7CC" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Occupied}" Value="True">
+                                                        <Setter Property="Background" Value="{StaticResource WarningSoftBrush}" />
+                                                        <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Label}" FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+                                            <TextBlock Text="{Binding Product}" FontSize="10"
+                                                       Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Border>
+                    <!-- 格子属性 -->
+                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="料盘格参数" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,8,0,4" Text="标签" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedTrayCell.Label, FallbackValue=''}" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="行" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedTrayCell.Row, FallbackValue=0}" IsReadOnly="True" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="列" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedTrayCell.Col, FallbackValue=0}" IsReadOnly="True" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="占用" />
+                        <CheckBox IsChecked="{Binding SelectedTrayCell.Occupied}" Content="已占用" VerticalAlignment="Center" Margin="0,4" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="料号" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedTrayCell.Product, FallbackValue=''}" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="高度" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedTrayCell.Height, StringFormat={}{0:F2}, FallbackValue=0}" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="状态" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedTrayCell.State, FallbackValue=''}" />
+                    </StackPanel>
+                </Grid>
             </Border>
 
         </Grid>

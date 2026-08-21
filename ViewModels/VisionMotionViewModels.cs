@@ -269,6 +269,23 @@ namespace NoCodeVision.ViewModels
         public string State { get; set; } = "";
     }
 
+    public class PointTableGroup : ViewModelBase
+    {
+        private string _name = "";
+        public string Name { get => _name; set => SetField(ref _name, value); }
+        public ObservableCollection<PointRow> Points { get; } = new();
+    }
+
+    public class TrayGroup : ViewModelBase
+    {
+        private string _name = "";
+        public string Name { get => _name; set => SetField(ref _name, value); }
+        public int Rows { get; set; } = 6;
+        public int Cols { get; set; } = 8;
+        public string GridText => $"{Rows}×{Cols}";
+        public ObservableCollection<TrayCell> Cells { get; } = new();
+    }
+
     public class MotionControlViewModel : ViewModelBase
     {
         public string[] Tabs { get; } = { "轴", "IO", "气缸", "轴点位表", "料盘" };
@@ -278,8 +295,8 @@ namespace NoCodeVision.ViewModels
         public ObservableCollection<MotionRow> Axes { get; }
         public ObservableCollection<MotionRow> IoPoints { get; }
         public ObservableCollection<MotionRow> Cylinders { get; }
-        public ObservableCollection<PointRow> PointTable { get; }
-        public ObservableCollection<TrayCell> TrayCells { get; }
+        public ObservableCollection<PointTableGroup> PointTables { get; }
+        public ObservableCollection<TrayGroup> Trays { get; }
 
         public MotionRow? SelectedAxis { get => _selectedAxis; set => SetField(ref _selectedAxis, value); }
         private MotionRow? _selectedAxis;
@@ -291,6 +308,10 @@ namespace NoCodeVision.ViewModels
         private PointRow? _selectedPoint;
         public TrayCell? SelectedTrayCell { get => _selectedTrayCell; set => SetField(ref _selectedTrayCell, value); }
         private TrayCell? _selectedTrayCell;
+        public PointTableGroup? SelectedPointTable { get => _selectedPointTable; set => SetField(ref _selectedPointTable, value); }
+        private PointTableGroup? _selectedPointTable;
+        public TrayGroup? SelectedTray { get => _selectedTray; set => SetField(ref _selectedTray, value); }
+        private TrayGroup? _selectedTray;
 
         public string NewItemName { get => _newItemName; set => SetField(ref _newItemName, value); }
         private string _newItemName = "";
@@ -298,6 +319,9 @@ namespace NoCodeVision.ViewModels
         public ICommand AddCmd { get; }
         public ICommand DeleteCmd { get; }
         public ICommand RenameCmd { get; }
+        public ICommand AddPointCmd { get; }
+        public ICommand DeletePointCmd { get; }
+        public ICommand RenamePointCmd { get; }
 
         public int TrayRows { get; } = 6;
         public int TrayCols { get; } = 8;
@@ -332,19 +356,28 @@ namespace NoCodeVision.ViewModels
                 new() { Name = "分料气缸", Status = "缩回", Action = "伸出" },
             };
 
-            PointTable = new ObservableCollection<PointRow>
+            PointTables = new ObservableCollection<PointTableGroup>
             {
-                new() { Name = "取料点", X = 10.0, Y = 20.0, Z = -5.0, Desc = "从料盘抓取" },
-                new() { Name = "放料点", X = 120.0, Y = 80.0, Z = 0.0, Desc = "放入工位" },
-                new() { Name = "安全点", X = 0.0, Y = 0.0, Z = 50.0, Desc = "抬高处过渡" },
-                new() { Name = "拍照点", X = 60.0, Y = 40.0, Z = 10.0, Desc = "视觉定位" },
-                new() { Name = "待机点", X = 0.0, Y = 100.0, Z = 30.0, Desc = "回零上方" },
+                new PointTableGroup
+                {
+                    Name = "默认点位表",
+                    Points =
+                    {
+                        new() { Name = "取料点", X = 10.0, Y = 20.0, Z = -5.0, Desc = "从料盘抓取" },
+                        new() { Name = "放料点", X = 120.0, Y = 80.0, Z = 0.0, Desc = "放入工位" },
+                        new() { Name = "安全点", X = 0.0, Y = 0.0, Z = 50.0, Desc = "抬高处过渡" },
+                        new() { Name = "拍照点", X = 60.0, Y = 40.0, Z = 10.0, Desc = "视觉定位" },
+                        new() { Name = "待机点", X = 0.0, Y = 100.0, Z = 30.0, Desc = "回零上方" },
+                    }
+                }
             };
+            SelectedPointTable = PointTables[0];
 
-            TrayCells = new ObservableCollection<TrayCell>();
-            for (int r = 0; r < TrayRows; r++)
-                for (int c = 0; c < TrayCols; c++)
-                    TrayCells.Add(new TrayCell
+            Trays = new ObservableCollection<TrayGroup>();
+            var _tray0 = new TrayGroup { Name = "默认料盘" };
+            for (int r = 0; r < _tray0.Rows; r++)
+                for (int c = 0; c < _tray0.Cols; c++)
+                    _tray0.Cells.Add(new TrayCell
                     {
                         Row = r,
                         Col = c,
@@ -352,6 +385,8 @@ namespace NoCodeVision.ViewModels
                         Occupied = (r + c) % 3 == 0,
                         Product = (r + c) % 3 == 0 ? "料号A" : "",
                     });
+            Trays.Add(_tray0);
+            SelectedTray = Trays[0];
 
             // 列表操作命令
             AddCmd = new RelayCommand(_ =>
@@ -361,7 +396,16 @@ namespace NoCodeVision.ViewModels
                     case "轴": Axes.Add(new MotionRow { Name = string.IsNullOrWhiteSpace(NewItemName) ? $"轴_{Axes.Count + 1}" : NewItemName, Status = "禁用", Value = 0, Unit = "mm", Enabled = false }); break;
                     case "IO": IoPoints.Add(new MotionRow { Name = string.IsNullOrWhiteSpace(NewItemName) ? $"IO_{IoPoints.Count + 1}" : NewItemName, Address = "0.0", Type = "输入", Status = "OFF" }); break;
                     case "气缸": Cylinders.Add(new MotionRow { Name = string.IsNullOrWhiteSpace(NewItemName) ? $"气缸_{Cylinders.Count + 1}" : NewItemName, Status = "缩回", Action = "伸出" }); break;
-                    case "轴点位表": PointTable.Add(new PointRow { Name = string.IsNullOrWhiteSpace(NewItemName) ? $"点位_{PointTable.Count + 1}" : NewItemName }); break;
+                    case "轴点位表": PointTables.Add(new PointTableGroup { Name = string.IsNullOrWhiteSpace(NewItemName) ? $"点位表_{PointTables.Count + 1}" : NewItemName }); break;
+                    case "料盘":
+                        {
+                            var _tg = new TrayGroup { Name = string.IsNullOrWhiteSpace(NewItemName) ? $"料盘_{Trays.Count + 1}" : NewItemName };
+                            for (int r = 0; r < _tg.Rows; r++)
+                                for (int c = 0; c < _tg.Cols; c++)
+                                    _tg.Cells.Add(new TrayCell { Row = r, Col = c, Label = $"R{r + 1}C{c + 1}" });
+                            Trays.Add(_tg);
+                            break;
+                        }
                 }
                 NewItemName = "";
                 OnPropertyChanged(nameof(NewItemName));
@@ -373,10 +417,10 @@ namespace NoCodeVision.ViewModels
                     case "轴": if (SelectedAxis != null) Axes.Remove(SelectedAxis); break;
                     case "IO": if (SelectedIo != null) IoPoints.Remove(SelectedIo); break;
                     case "气缸": if (SelectedCylinder != null) Cylinders.Remove(SelectedCylinder); break;
-                    case "轴点位表": if (SelectedPoint != null) PointTable.Remove(SelectedPoint); break;
-                    case "料盘": if (SelectedTrayCell != null) TrayCells.Remove(SelectedTrayCell); break;
+                    case "轴点位表": if (SelectedPointTable != null) PointTables.Remove(SelectedPointTable); break;
+                    case "料盘": if (SelectedTray != null) Trays.Remove(SelectedTray); break;
                 }
-            }, _ => SelectedTab != "料盘" || SelectedTrayCell != null);
+            }, _ => SelectedTab switch { "轴" => SelectedAxis != null, "IO" => SelectedIo != null, "气缸" => SelectedCylinder != null, "轴点位表" => SelectedPointTable != null, "料盘" => SelectedTray != null, _ => false });
             RenameCmd = new RelayCommand(_ =>
             {
                 if (string.IsNullOrWhiteSpace(NewItemName)) return;
@@ -385,12 +429,32 @@ namespace NoCodeVision.ViewModels
                     case "轴": if (SelectedAxis != null) SelectedAxis.Name = NewItemName; break;
                     case "IO": if (SelectedIo != null) SelectedIo.Name = NewItemName; break;
                     case "气缸": if (SelectedCylinder != null) SelectedCylinder.Name = NewItemName; break;
-                    case "轴点位表": if (SelectedPoint != null) SelectedPoint.Name = NewItemName; break;
-                    case "料盘": if (SelectedTrayCell != null) SelectedTrayCell.Label = NewItemName; break;
+                    case "轴点位表": if (SelectedPointTable != null) SelectedPointTable.Name = NewItemName; break;
+                    case "料盘": if (SelectedTray != null) SelectedTray.Name = NewItemName; break;
                 }
                 NewItemName = "";
                 OnPropertyChanged(nameof(NewItemName));
             }, _ => !string.IsNullOrWhiteSpace(NewItemName));
+
+            AddPointCmd = new RelayCommand(_ =>
+            {
+                if (SelectedPointTable == null) return;
+                SelectedPointTable.Points.Add(new PointRow { Name = string.IsNullOrWhiteSpace(NewItemName) ? $"点位_{SelectedPointTable.Points.Count + 1}" : NewItemName });
+                NewItemName = "";
+                OnPropertyChanged(nameof(NewItemName));
+            }, _ => SelectedPointTable != null);
+            DeletePointCmd = new RelayCommand(_ =>
+            {
+                if (SelectedPointTable != null && SelectedPoint != null)
+                    SelectedPointTable.Points.Remove(SelectedPoint);
+            }, _ => SelectedPointTable != null && SelectedPoint != null);
+            RenamePointCmd = new RelayCommand(_ =>
+            {
+                if (string.IsNullOrWhiteSpace(NewItemName) || SelectedPointTable == null || SelectedPoint == null) return;
+                SelectedPoint.Name = NewItemName;
+                NewItemName = "";
+                OnPropertyChanged(nameof(NewItemName));
+            }, _ => !string.IsNullOrWhiteSpace(NewItemName) && SelectedPointTable != null && SelectedPoint != null);
 
             // Connect real motion controller (simulated for now); refresh axis positions on a timer
             HardwareManager.Instance.Motion.Connect();
