@@ -214,9 +214,10 @@ namespace NoCodeVision.ViewModels
 
     #region 运控页面（轴 / IO / 气缸 / 轴点位表 / 料盘）
 
-    public class MotionRow
+    public class MotionRow : ViewModelBase
     {
-        public string Name { get; set; } = "";
+        private string _name = "";
+        public string Name { get => _name; set => SetField(ref _name, value); }
         public string Status { get; set; } = "";
         public double Value { get; set; }
         public string Unit { get; set; } = "";
@@ -224,24 +225,48 @@ namespace NoCodeVision.ViewModels
         public string Address { get; set; } = "";
         public string Type { get; set; } = "";
         public string Action { get; set; } = "";
+        // 扩展参数
+        public double Speed { get; set; }
+        public double Acceleration { get; set; }
+        public double Deceleration { get; set; }
+        public double HomeOffset { get; set; }
+        public double SoftLimitPos { get; set; }
+        public double SoftLimitNeg { get; set; }
+        public string Note { get; set; } = "";
+        public bool Polarity { get; set; }
+        public double Delay { get; set; }
+        public double ExtendTime { get; set; }
+        public double RetractTime { get; set; }
     }
 
-    public class PointRow
+    public class PointRow : ViewModelBase
     {
-        public string Name { get; set; } = "";
+        private string _name = "";
+        public string Name { get => _name; set => SetField(ref _name, value); }
         public double X { get; set; }
         public double Y { get; set; }
         public double Z { get; set; }
         public string Desc { get; set; } = "";
+        // 扩展参数
+        public double OffsetX { get; set; }
+        public double OffsetY { get; set; }
+        public double OffsetZ { get; set; }
+        public double Speed { get; set; }
+        public string Note { get; set; } = "";
     }
 
-    public class TrayCell
+    public class TrayCell : ViewModelBase
     {
         public int Row { get; set; }
         public int Col { get; set; }
-        public string Label { get; set; } = "";
+        private string _label = "";
+        public string Label { get => _label; set => SetField(ref _label, value); }
         public bool Occupied { get; set; }
-        public string Product { get; set; } = "";
+        private string _product = "";
+        public string Product { get => _product; set => SetField(ref _product, value); }
+        // 扩展参数
+        public double Height { get; set; }
+        public string State { get; set; } = "";
     }
 
     public class MotionControlViewModel : ViewModelBase
@@ -255,6 +280,24 @@ namespace NoCodeVision.ViewModels
         public ObservableCollection<MotionRow> Cylinders { get; }
         public ObservableCollection<PointRow> PointTable { get; }
         public ObservableCollection<TrayCell> TrayCells { get; }
+
+        public MotionRow? SelectedAxis { get => _selectedAxis; set => SetField(ref _selectedAxis, value); }
+        private MotionRow? _selectedAxis;
+        public MotionRow? SelectedIo { get => _selectedIo; set => SetField(ref _selectedIo, value); }
+        private MotionRow? _selectedIo;
+        public MotionRow? SelectedCylinder { get => _selectedCylinder; set => SetField(ref _selectedCylinder, value); }
+        private MotionRow? _selectedCylinder;
+        public PointRow? SelectedPoint { get => _selectedPoint; set => SetField(ref _selectedPoint, value); }
+        private PointRow? _selectedPoint;
+        public TrayCell? SelectedTrayCell { get => _selectedTrayCell; set => SetField(ref _selectedTrayCell, value); }
+        private TrayCell? _selectedTrayCell;
+
+        public string NewItemName { get => _newItemName; set => SetField(ref _newItemName, value); }
+        private string _newItemName = "";
+
+        public ICommand AddCmd { get; }
+        public ICommand DeleteCmd { get; }
+        public ICommand RenameCmd { get; }
 
         public int TrayRows { get; } = 6;
         public int TrayCols { get; } = 8;
@@ -309,6 +352,45 @@ namespace NoCodeVision.ViewModels
                         Occupied = (r + c) % 3 == 0,
                         Product = (r + c) % 3 == 0 ? "料号A" : "",
                     });
+
+            // 列表操作命令
+            AddCmd = new RelayCommand(_ =>
+            {
+                switch (SelectedTab)
+                {
+                    case "轴": Axes.Add(new MotionRow { Name = string.IsNullOrWhiteSpace(NewItemName) ? $"轴_{Axes.Count + 1}" : NewItemName, Status = "禁用", Value = 0, Unit = "mm", Enabled = false }); break;
+                    case "IO": IoPoints.Add(new MotionRow { Name = string.IsNullOrWhiteSpace(NewItemName) ? $"IO_{IoPoints.Count + 1}" : NewItemName, Address = "0.0", Type = "输入", Status = "OFF" }); break;
+                    case "气缸": Cylinders.Add(new MotionRow { Name = string.IsNullOrWhiteSpace(NewItemName) ? $"气缸_{Cylinders.Count + 1}" : NewItemName, Status = "缩回", Action = "伸出" }); break;
+                    case "轴点位表": PointTable.Add(new PointRow { Name = string.IsNullOrWhiteSpace(NewItemName) ? $"点位_{PointTable.Count + 1}" : NewItemName }); break;
+                }
+                NewItemName = "";
+                OnPropertyChanged(nameof(NewItemName));
+            });
+            DeleteCmd = new RelayCommand(_ =>
+            {
+                switch (SelectedTab)
+                {
+                    case "轴": if (SelectedAxis != null) Axes.Remove(SelectedAxis); break;
+                    case "IO": if (SelectedIo != null) IoPoints.Remove(SelectedIo); break;
+                    case "气缸": if (SelectedCylinder != null) Cylinders.Remove(SelectedCylinder); break;
+                    case "轴点位表": if (SelectedPoint != null) PointTable.Remove(SelectedPoint); break;
+                    case "料盘": if (SelectedTrayCell != null) TrayCells.Remove(SelectedTrayCell); break;
+                }
+            }, _ => SelectedTab != "料盘" || SelectedTrayCell != null);
+            RenameCmd = new RelayCommand(_ =>
+            {
+                if (string.IsNullOrWhiteSpace(NewItemName)) return;
+                switch (SelectedTab)
+                {
+                    case "轴": if (SelectedAxis != null) SelectedAxis.Name = NewItemName; break;
+                    case "IO": if (SelectedIo != null) SelectedIo.Name = NewItemName; break;
+                    case "气缸": if (SelectedCylinder != null) SelectedCylinder.Name = NewItemName; break;
+                    case "轴点位表": if (SelectedPoint != null) SelectedPoint.Name = NewItemName; break;
+                    case "料盘": if (SelectedTrayCell != null) SelectedTrayCell.Label = NewItemName; break;
+                }
+                NewItemName = "";
+                OnPropertyChanged(nameof(NewItemName));
+            }, _ => !string.IsNullOrWhiteSpace(NewItemName));
 
             // Connect real motion controller (simulated for now); refresh axis positions on a timer
             HardwareManager.Instance.Motion.Connect();

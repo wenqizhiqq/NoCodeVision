@@ -6,182 +6,392 @@
              mc:Ignorable="d">
 
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="200" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-        <!-- 左侧子导航 -->
-        <Border Grid.Column="0" Style="{StaticResource AppleGroupCard}" Padding="12" Margin="0,0,12,0" VerticalAlignment="Top">
-            <StackPanel>
-                <TextBlock Style="{StaticResource AppleSectionHeader}" Text="运控" Margin="2,0,0,8" />
-                <ListBox ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}"
-                         Style="{StaticResource ApplePillList}" />
-            </StackPanel>
+        <!-- 顶部一行 tab -->
+        <Border Grid.Row="0" Style="{StaticResource AppleGroupCard}" Padding="10" Margin="0,0,0,12">
+            <ListBox ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}"
+                     BorderThickness="0" Background="Transparent">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource ApplePillListItem}">
+                        <Setter Property="Padding" Value="14,6" />
+                        <Setter Property="Margin" Value="0,0,8,0" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+            </ListBox>
         </Border>
 
-        <!-- 右侧内容 -->
-        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
-            <StackPanel>
+        <!-- 下方左右分栏：左列表，右属性 -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.6*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-                <!-- 轴 -->
-                <Border x:Name="AxisPage" Padding="14" Margin="0,0,0,12">
-                    <Border.Style>
-                        <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding SelectedTab}" Value="轴">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="轴" />
-                        <ListView ItemsSource="{Binding Axes}" Margin="0,6,0,0" BorderThickness="0">
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn Header="名称" DisplayMemberBinding="{Binding Name}" Width="90" />
-                                    <GridViewColumn Header="状态" DisplayMemberBinding="{Binding Status}" Width="70" />
-                                    <GridViewColumn Header="当前位置" DisplayMemberBinding="{Binding Value, StringFormat={}{0:F2}}" Width="90" />
-                                    <GridViewColumn Header="单位" DisplayMemberBinding="{Binding Unit}" Width="50" />
-                                    <GridViewColumn Header="使能" DisplayMemberBinding="{Binding Enabled}" Width="60" />
-                                </GridView>
-                            </ListView.View>
-                        </ListView>
+            <!-- ===== 轴 ===== -->
+            <Border Grid.Column="0" Padding="12" Margin="0,0,12,0">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedTab}" Value="轴">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Style="{StaticResource AppleBtn}" Content="新增" Command="{Binding AddCmd}" />
+                        <Button Style="{StaticResource AppleBtnSecondary}" Content="删除" Command="{Binding DeleteCmd}" Margin="8,0,0,0" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding NewItemName, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="12,0,0,0" />
+                        <Button Style="{StaticResource AppleBtnSecondary}" Content="重命名" Command="{Binding RenameCmd}" Margin="8,0,0,0" />
                     </StackPanel>
-                </Border>
+                    <ListView Grid.Row="1" ItemsSource="{Binding Axes}" SelectedItem="{Binding SelectedAxis, Mode=TwoWay}" BorderThickness="0">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="名称" DisplayMemberBinding="{Binding Name}" Width="90" />
+                                <GridViewColumn Header="状态" DisplayMemberBinding="{Binding Status}" Width="70" />
+                                <GridViewColumn Header="当前位置" DisplayMemberBinding="{Binding Value, StringFormat={}{0:F2}}" Width="90" />
+                                <GridViewColumn Header="单位" DisplayMemberBinding="{Binding Unit}" Width="50" />
+                                <GridViewColumn Header="使能" DisplayMemberBinding="{Binding Enabled}" Width="60" />
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </Grid>
+            </Border>
 
-                <!-- IO -->
-                <Border x:Name="IoPage" Padding="14" Margin="0,0,0,12">
-                    <Border.Style>
-                        <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding SelectedTab}" Value="IO">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="IO" />
-                        <ListView ItemsSource="{Binding IoPoints}" Margin="0,6,0,0" BorderThickness="0">
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn Header="名称" DisplayMemberBinding="{Binding Name}" Width="100" />
-                                    <GridViewColumn Header="地址" DisplayMemberBinding="{Binding Address}" Width="70" />
-                                    <GridViewColumn Header="类型" DisplayMemberBinding="{Binding Type}" Width="70" />
-                                    <GridViewColumn Header="状态" DisplayMemberBinding="{Binding Status}" Width="70" />
-                                </GridView>
-                            </ListView.View>
-                        </ListView>
+            <Border Grid.Column="1" Padding="14">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedTab}" Value="轴">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel>
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="轴参数" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,8,0,4" Text="名称" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.Name, FallbackValue=''}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="速度" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.Speed, StringFormat={}{0:F2}, FallbackValue=0}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="加速度" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.Acceleration, StringFormat={}{0:F2}, FallbackValue=0}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="减速度" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.Deceleration, StringFormat={}{0:F2}, FallbackValue=0}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="回零偏移" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.HomeOffset, StringFormat={}{0:F2}, FallbackValue=0}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="正软限位" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.SoftLimitPos, StringFormat={}{0:F2}, FallbackValue=0}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="负软限位" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.SoftLimitNeg, StringFormat={}{0:F2}, FallbackValue=0}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="备注" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.Note, FallbackValue=''}" />
+                </StackPanel>
+            </Border>
+
+            <!-- ===== IO ===== -->
+            <Border Grid.Column="0" Padding="12" Margin="0,0,12,0">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedTab}" Value="IO">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Style="{StaticResource AppleBtn}" Content="新增" Command="{Binding AddCmd}" />
+                        <Button Style="{StaticResource AppleBtnSecondary}" Content="删除" Command="{Binding DeleteCmd}" Margin="8,0,0,0" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding NewItemName, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="12,0,0,0" />
+                        <Button Style="{StaticResource AppleBtnSecondary}" Content="重命名" Command="{Binding RenameCmd}" Margin="8,0,0,0" />
                     </StackPanel>
-                </Border>
+                    <ListView Grid.Row="1" ItemsSource="{Binding IoPoints}" SelectedItem="{Binding SelectedIo, Mode=TwoWay}" BorderThickness="0">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="名称" DisplayMemberBinding="{Binding Name}" Width="100" />
+                                <GridViewColumn Header="地址" DisplayMemberBinding="{Binding Address}" Width="70" />
+                                <GridViewColumn Header="类型" DisplayMemberBinding="{Binding Type}" Width="70" />
+                                <GridViewColumn Header="状态" DisplayMemberBinding="{Binding Status}" Width="70" />
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </Grid>
+            </Border>
 
-                <!-- 气缸 -->
-                <Border x:Name="CylinderPage" Padding="14" Margin="0,0,0,12">
-                    <Border.Style>
-                        <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding SelectedTab}" Value="气缸">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="气缸" />
-                        <ListView ItemsSource="{Binding Cylinders}" Margin="0,6,0,0" BorderThickness="0">
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn Header="名称" DisplayMemberBinding="{Binding Name}" Width="120" />
-                                    <GridViewColumn Header="状态" DisplayMemberBinding="{Binding Status}" Width="80" />
-                                    <GridViewColumn Header="动作" DisplayMemberBinding="{Binding Action}" Width="80" />
-                                </GridView>
-                            </ListView.View>
-                        </ListView>
+            <Border Grid.Column="1" Padding="14">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedTab}" Value="IO">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel>
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="IO 参数" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,8,0,4" Text="名称" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedIo.Name, FallbackValue=''}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="地址" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedIo.Address, FallbackValue=''}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="类型" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedIo.Type, FallbackValue=''}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="极性" />
+                    <CheckBox IsChecked="{Binding SelectedIo.Polarity}" Content="高电平有效" VerticalAlignment="Center" Margin="0,4" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="延迟 (ms)" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedIo.Delay, StringFormat={}{0:F1}, FallbackValue=0}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="说明" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedIo.Note, FallbackValue=''}" />
+                </StackPanel>
+            </Border>
+
+            <!-- ===== 气缸 ===== -->
+            <Border Grid.Column="0" Padding="12" Margin="0,0,12,0">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedTab}" Value="气缸">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Style="{StaticResource AppleBtn}" Content="新增" Command="{Binding AddCmd}" />
+                        <Button Style="{StaticResource AppleBtnSecondary}" Content="删除" Command="{Binding DeleteCmd}" Margin="8,0,0,0" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding NewItemName, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="12,0,0,0" />
+                        <Button Style="{StaticResource AppleBtnSecondary}" Content="重命名" Command="{Binding RenameCmd}" Margin="8,0,0,0" />
                     </StackPanel>
-                </Border>
+                    <ListView Grid.Row="1" ItemsSource="{Binding Cylinders}" SelectedItem="{Binding SelectedCylinder, Mode=TwoWay}" BorderThickness="0">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="名称" DisplayMemberBinding="{Binding Name}" Width="120" />
+                                <GridViewColumn Header="状态" DisplayMemberBinding="{Binding Status}" Width="80" />
+                                <GridViewColumn Header="动作" DisplayMemberBinding="{Binding Action}" Width="80" />
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </Grid>
+            </Border>
 
-                <!-- 轴点位表 -->
-                <Border x:Name="PointPage" Padding="14" Margin="0,0,0,12">
-                    <Border.Style>
-                        <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding SelectedTab}" Value="轴点位表">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="轴点位表" />
-                        <ListView ItemsSource="{Binding PointTable}" Margin="0,6,0,0" BorderThickness="0">
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn Header="点位名" DisplayMemberBinding="{Binding Name}" Width="100" />
-                                    <GridViewColumn Header="X" DisplayMemberBinding="{Binding X, StringFormat={}{0:F1}}" Width="70" />
-                                    <GridViewColumn Header="Y" DisplayMemberBinding="{Binding Y, StringFormat={}{0:F1}}" Width="70" />
-                                    <GridViewColumn Header="Z" DisplayMemberBinding="{Binding Z, StringFormat={}{0:F1}}" Width="70" />
-                                    <GridViewColumn Header="说明" DisplayMemberBinding="{Binding Desc}" Width="140" />
-                                </GridView>
-                            </ListView.View>
-                        </ListView>
+            <Border Grid.Column="1" Padding="14">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedTab}" Value="气缸">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel>
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="气缸参数" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,8,0,4" Text="名称" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedCylinder.Name, FallbackValue=''}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="状态" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedCylinder.Status, FallbackValue=''}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="动作" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedCylinder.Action, FallbackValue=''}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="伸出时间 (ms)" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedCylinder.ExtendTime, StringFormat={}{0:F1}, FallbackValue=0}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="缩回时间 (ms)" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedCylinder.RetractTime, StringFormat={}{0:F1}, FallbackValue=0}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="延迟 (ms)" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedCylinder.Delay, StringFormat={}{0:F1}, FallbackValue=0}" />
+                </StackPanel>
+            </Border>
+
+            <!-- ===== 轴点位表 ===== -->
+            <Border Grid.Column="0" Padding="12" Margin="0,0,12,0">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedTab}" Value="轴点位表">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Style="{StaticResource AppleBtn}" Content="新增" Command="{Binding AddCmd}" />
+                        <Button Style="{StaticResource AppleBtnSecondary}" Content="删除" Command="{Binding DeleteCmd}" Margin="8,0,0,0" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding NewItemName, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="12,0,0,0" />
+                        <Button Style="{StaticResource AppleBtnSecondary}" Content="重命名" Command="{Binding RenameCmd}" Margin="8,0,0,0" />
                     </StackPanel>
-                </Border>
+                    <ListView Grid.Row="1" ItemsSource="{Binding PointTable}" SelectedItem="{Binding SelectedPoint, Mode=TwoWay}" BorderThickness="0">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="点位名" DisplayMemberBinding="{Binding Name}" Width="100" />
+                                <GridViewColumn Header="X" DisplayMemberBinding="{Binding X, StringFormat={}{0:F1}}" Width="70" />
+                                <GridViewColumn Header="Y" DisplayMemberBinding="{Binding Y, StringFormat={}{0:F1}}" Width="70" />
+                                <GridViewColumn Header="Z" DisplayMemberBinding="{Binding Z, StringFormat={}{0:F1}}" Width="70" />
+                                <GridViewColumn Header="说明" DisplayMemberBinding="{Binding Desc}" Width="120" />
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </Grid>
+            </Border>
 
-                <!-- 料盘 -->
-                <Border x:Name="TrayPage" Padding="14">
-                    <Border.Style>
-                        <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding SelectedTab}" Value="料盘">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="料盘" />
-                        <ItemsControl ItemsSource="{Binding TrayCells}" Margin="0,8,0,0">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <UniformGrid Rows="{Binding TrayRows}" Columns="{Binding TrayCols}" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Margin="3" Height="46" CornerRadius="8" BorderThickness="1">
-                                        <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Setter Property="Background" Value="#F2F2F7" />
-                                                <Setter Property="BorderBrush" Value="#C7C7CC" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Occupied}" Value="True">
-                                                        <Setter Property="Background" Value="{StaticResource WarningSoftBrush}" />
-                                                        <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Border.Style>
-                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Label}" FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
-                                            <TextBlock Text="{Binding Product}" FontSize="10"
-                                                       Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" />
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+            <Border Grid.Column="1" Padding="14">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedTab}" Value="轴点位表">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel>
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="点位参数" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,8,0,4" Text="点位名" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Name, FallbackValue=''}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="X" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.X, StringFormat={}{0:F2}, FallbackValue=0}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="Y" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Y, StringFormat={}{0:F2}, FallbackValue=0}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="Z" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Z, StringFormat={}{0:F2}, FallbackValue=0}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="偏移 X" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.OffsetX, StringFormat={}{0:F2}, FallbackValue=0}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="偏移 Y" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.OffsetY, StringFormat={}{0:F2}, FallbackValue=0}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="偏移 Z" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.OffsetZ, StringFormat={}{0:F2}, FallbackValue=0}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="速度" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Speed, StringFormat={}{0:F2}, FallbackValue=0}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="说明" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Desc, FallbackValue=''}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="备注" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Note, FallbackValue=''}" />
+                </StackPanel>
+            </Border>
+
+            <!-- ===== 料盘 ===== -->
+            <Border Grid.Column="0" Padding="12" Margin="0,0,12,0">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedTab}" Value="料盘">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Style="{StaticResource AppleBtnSecondary}" Content="删除" Command="{Binding DeleteCmd}" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding NewItemName, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="12,0,0,0" />
+                        <Button Style="{StaticResource AppleBtnSecondary}" Content="重命名" Command="{Binding RenameCmd}" Margin="8,0,0,0" />
                     </StackPanel>
-                </Border>
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding TrayCells}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="{Binding TrayRows}" Columns="{Binding TrayCols}" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="3" Height="46" CornerRadius="8" BorderThickness="1"
+                                        MouseLeftButtonDown="TrayCell_Click">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#F2F2F7" />
+                                            <Setter Property="BorderBrush" Value="#C7C7CC" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Occupied}" Value="True">
+                                                    <Setter Property="Background" Value="{StaticResource WarningSoftBrush}" />
+                                                    <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Label}" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+                                        <TextBlock Text="{Binding Product}" FontSize="10"
+                                                   Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </Border>
 
-            </StackPanel>
-        </ScrollViewer>
+            <Border Grid.Column="1" Padding="14">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedTab}" Value="料盘">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel>
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="料盘参数" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,8,0,4" Text="标签" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedTrayCell.Label, FallbackValue=''}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="行" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedTrayCell.Row, FallbackValue=0}" IsReadOnly="True" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="列" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedTrayCell.Col, FallbackValue=0}" IsReadOnly="True" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="占用" />
+                    <CheckBox IsChecked="{Binding SelectedTrayCell.Occupied}" Content="已占用" VerticalAlignment="Center" Margin="0,4" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="料号" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedTrayCell.Product, FallbackValue=''}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="高度" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedTrayCell.Height, StringFormat={}{0:F2}, FallbackValue=0}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="状态" />
+                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedTrayCell.State, FallbackValue=''}" />
+                </StackPanel>
+            </Border>
+
+        </Grid>
     </Grid>
 </UserControl>

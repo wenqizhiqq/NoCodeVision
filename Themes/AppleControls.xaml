@@ -217,6 +217,31 @@
         </Setter>
     </Style>
 
+    <!-- 单个药丸标签（用于横向 tab 的 ListBoxItem） -->
+    <Style x:Key="ApplePillListItem" TargetType="ListBoxItem">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Padding" Value="14,6" />
+        <Setter Property="Margin" Value="0,0,8,0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="bd" Background="{StaticResource HoverBrush}" CornerRadius="9" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bd" Property="Background" Value="{StaticResource AccentSoftBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="bd" Property="Background" Value="{StaticResource AccentBrush}" />
+                            <Setter TargetName="bd" Property="TextBlock.Foreground" Value="White" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ===== 主按钮（iOS 蓝色填充） ===== -->
     <Style x:Key="AppleBtn" TargetType="Button">
         <Setter Property="Height" Value="34" />
