@@ -32,8 +32,8 @@
         <!-- 下方左右分栏：左列表，右属性 -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.6*" />
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="30*" />
+                <ColumnDefinition Width="70*" />
             </Grid.ColumnDefinitions>
 
             <!-- ===== 轴 ===== -->
