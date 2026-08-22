@@ -3,90 +3,97 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:ctrl="clr-namespace:NoCodeVision.Views.Controls"
              mc:Ignorable="d">
 
-    <UserControl.Resources>
-        <DataTemplate x:Key="VarItemTemplate">
-            <DockPanel LastChildFill="True">
-                <ctrl:AppleIconTile Glyph="🧮" TileSize="24" Margin="0,0,10,0" VerticalAlignment="Center" />
-                <TextBlock Style="{StaticResource AppleSubLabel}" DockPanel.Dock="Right"
-                           Text="{Binding Type}" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,0" />
-                <TextBlock Style="{StaticResource AppleSubLabel}" DockPanel.Dock="Right"
-                           Text="{Binding Value}" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,12,0" />
-                <TextBlock Style="{StaticResource AppleLabel}" Text="{Binding Name}" />
-            </DockPanel>
-        </DataTemplate>
-    </UserControl.Resources>
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="260" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
+        <TextBlock Grid.Row="0" Style="{StaticResource iOSTitle}" Text="变量" Margin="0,0,0,12" />
 
-        <ctrl:AppleMasterList Grid.Column="0" Header="变量列表" HeaderIcon="🧮"
-                              ItemsSource="{Binding Variables}"
-                              SelectedItem="{Binding Selected}"
-                              AddCommand="{Binding AddCmd}"
-                              DeleteCommand="{Binding RemoveCmd}"
-                              ItemTemplate="{StaticResource VarItemTemplate}" />
-
-        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Margin="0,2,0,8">
-
-                <TextBlock Style="{StaticResource iOSTitle}" Text="变量" />
-
-                <!-- 新建变量 -->
-                <Border Style="{StaticResource AppleGroupCard}">
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="新建变量" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="名称" />
-                            <TextBox Style="{StaticResource AppleTextField}" MinWidth="200"
-                                     Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="初始值" />
-                            <TextBox Style="{StaticResource AppleTextField}" MinWidth="200"
-                                     Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged}" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <TextBlock Style="{StaticResource AppleLabel}" Margin="14,8,14,6" Text="类型" />
-                        <ListBox ItemsSource="{Binding Types}" SelectedItem="{Binding NewType}"
-                                 Style="{StaticResource ApplePillList}" Margin="10,0,10,12" />
-                        <DockPanel Style="{StaticResource AppleRow}" LastChildFill="False">
-                            <Button Style="{StaticResource AppleBtn}" Content="添加变量" Command="{Binding AddCmd}"
-                                    DockPanel.Dock="Left" />
-                            <TextBlock Style="{StaticResource AppleSubLabel}" VerticalAlignment="Center"
-                                       Text="{Binding Variables.Count, StringFormat=当前共 {0} 个变量}" />
-                        </DockPanel>
-                    </StackPanel>
-                </Border>
-
-                <!-- 选中变量信息 -->
-                <Border Style="{StaticResource AppleGroupCard}">
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="选中变量" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="名称" />
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Right" Foreground="{StaticResource TextSecondaryBrush}" Text="{Binding Selected.Name}" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="类型" />
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Right" Foreground="{StaticResource TextSecondaryBrush}" Text="{Binding Selected.Type}" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="当前值" />
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Right" Foreground="{StaticResource TextSecondaryBrush}" Text="{Binding Selected.Value}" />
-                        </DockPanel>
-                    </StackPanel>
-                </Border>
-
+        <!-- 工具栏：搜索 + 添加 + 删除 -->
+        <DockPanel Grid.Row="1" Margin="0,0,0,12" LastChildFill="True">
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                <Button Style="{StaticResource AppleBtn}" Content="添加" Command="{Binding AddCmd}" Padding="16,6" />
+                <Button Style="{StaticResource AppleBtnSecondary}" Content="删除" Command="{Binding RemoveCmd}" Padding="16,6" Margin="8,0,0,0" />
             </StackPanel>
-        </ScrollViewer>
+            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Left"
+                     MinWidth="260" Margin="0,0,12,0"
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     ToolTip="按名称或值搜索" />
+        </DockPanel>
+
+        <!-- 变量表格：名称与值均可直接编辑 -->
+        <Border Grid.Row="2" Style="{StaticResource AppleGroupCard}">
+            <DataGrid ItemsSource="{Binding VariablesView}"
+                      SelectedItem="{Binding Selected, Mode=TwoWay}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserReorderColumns="False"
+                      CanUserResizeRows="False"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      HorizontalGridLinesBrush="{StaticResource LineBrush}"
+                      Background="Transparent"
+                      Foreground="{StaticResource TextPrimaryBrush}"
+                      RowBackground="Transparent"
+                      AlternationCount="2"
+                      AlternatingRowBackground="{StaticResource HoverBrush}"
+                      BorderThickness="0">
+                <DataGrid.ColumnHeaderStyle>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+                        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+                        <Setter Property="FontWeight" Value="SemiBold" />
+                        <Setter Property="Padding" Value="12,10" />
+                        <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
+                        <Setter Property="BorderThickness" Value="0,0,0,1" />
+                    </Style>
+                </DataGrid.ColumnHeaderStyle>
+                <DataGrid.CellStyle>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="VerticalContentAlignment" Value="Center" />
+                    </Style>
+                </DataGrid.CellStyle>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="变量名称" Width="*"
+                                        Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Padding" Value="12,8" />
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                        <DataGridTextColumn.EditingElementStyle>
+                            <Style TargetType="TextBox">
+                                <Setter Property="Padding" Value="12,8" />
+                                <Setter Property="BorderThickness" Value="0" />
+                            </Style>
+                        </DataGridTextColumn.EditingElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="变量值" Width="*"
+                                        Binding="{Binding Value, UpdateSourceTrigger=PropertyChanged}">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Padding" Value="12,8" />
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                        <DataGridTextColumn.EditingElementStyle>
+                            <Style TargetType="TextBox">
+                                <Setter Property="Padding" Value="12,8" />
+                                <Setter Property="BorderThickness" Value="0" />
+                            </Style>
+                        </DataGridTextColumn.EditingElementStyle>
+                    </DataGridTextColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
     </Grid>
 </UserControl>

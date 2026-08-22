@@ -872,28 +872,50 @@ public class VariablesViewModel : ViewModelBase
         new VarItem { Name = "bPass", Type = "布尔", Value = "True" },
     };
 
-    public string[] Types { get; } = { "整数", "浮点数", "字符串", "布尔" };
-    private string _newName = "";
-    public string NewName { get => _newName; set => SetField(ref _newName, value); }
-    private string _newType = "整数";
-    public string NewType { get => _newType; set => SetField(ref _newType, value); }
-    private string _newValue = "0";
-    public string NewValue { get => _newValue; set => SetField(ref _newValue, value); }
-
     private VarItem? _selected;
     public VarItem? Selected { get => _selected; set => SetField(ref _selected, value); }
 
     public ICommand AddCmd { get; }
     public ICommand RemoveCmd { get; }
 
+    private ICollectionView? _view;
+    public ICollectionView VariablesView
+    {
+        get
+        {
+            _view ??= System.Windows.Data.CollectionViewSource.GetDefaultView(Variables);
+            return _view;
+        }
+    }
+
+    private string _searchText = "";
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            if (!SetField(ref _searchText, value)) return;
+            _view ??= System.Windows.Data.CollectionViewSource.GetDefaultView(Variables);
+            _view.Filter = FilterRow;
+            _view.Refresh();
+        }
+    }
+
+    private bool FilterRow(object obj)
+    {
+        if (obj is not VarItem v) return false;
+        if (string.IsNullOrWhiteSpace(_searchText)) return true;
+        return v.Name.Contains(_searchText, StringComparison.OrdinalIgnoreCase)
+            || (v.Value != null && v.Value.Contains(_searchText, StringComparison.OrdinalIgnoreCase));
+    }
+
     public VariablesViewModel()
     {
         AddCmd = new RelayCommand(_ =>
         {
-            if (string.IsNullOrWhiteSpace(_newName)) return;
-            Variables.Add(new VarItem { Name = _newName, Type = _newType, Value = _newValue });
-            _newName = ""; OnPropertyChanged(nameof(NewName));
-            _newValue = "0"; OnPropertyChanged(nameof(NewValue));
+            var item = new VarItem { Name = "新变量" + (Variables.Count + 1), Type = "字符串", Value = "0" };
+            Variables.Add(item);
+            Selected = item;
         });
         RemoveCmd = new RelayCommand(_ =>
         {
