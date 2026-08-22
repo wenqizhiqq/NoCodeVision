@@ -75,6 +75,7 @@ public class VarItem
     public string Name { get; set; } = "";
     public string Type { get; set; } = "";
     public string Value { get; set; } = "";
+    public string Remark { get; set; } = "";
 }
 
 public class VisionFlowStep : ViewModelBase
@@ -906,7 +907,8 @@ public class VariablesViewModel : ViewModelBase
         if (obj is not VarItem v) return false;
         if (string.IsNullOrWhiteSpace(_searchText)) return true;
         return v.Name.Contains(_searchText, StringComparison.OrdinalIgnoreCase)
-            || (v.Value != null && v.Value.Contains(_searchText, StringComparison.OrdinalIgnoreCase));
+            || (v.Value != null && v.Value.Contains(_searchText, StringComparison.OrdinalIgnoreCase))
+            || (v.Remark != null && v.Remark.Contains(_searchText, StringComparison.OrdinalIgnoreCase));
     }
 
     public VariablesViewModel()

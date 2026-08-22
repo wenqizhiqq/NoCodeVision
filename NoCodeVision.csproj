@@ -18,15 +18,19 @@
     <Compile Remove="bin6\**" />
     <Compile Remove="obj6\**" />
     <Compile Remove="obj7\**" />
+    <Compile Remove="obj8\**" />
     <EmbeddedResource Remove="bin6\**" />
     <EmbeddedResource Remove="obj6\**" />
     <EmbeddedResource Remove="obj7\**" />
+    <EmbeddedResource Remove="obj8\**" />
     <None Remove="bin6\**" />
     <None Remove="obj6\**" />
     <None Remove="obj7\**" />
+    <None Remove="obj8\**" />
     <Page Remove="bin6\**" />
     <Page Remove="obj6\**" />
     <Page Remove="obj7\**" />
+    <Page Remove="obj8\**" />
   </ItemGroup>
 
   <ItemGroup>

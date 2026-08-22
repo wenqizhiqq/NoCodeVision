@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:sw="clr-namespace:System.Windows;assembly=PresentationFramework"
              mc:Ignorable="d">
 
     <Grid Margin="16">
@@ -23,10 +24,10 @@
             <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Left"
                      MinWidth="260" Margin="0,0,12,0"
                      Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                     ToolTip="按名称或值搜索" />
+                     ToolTip="按名称、值或备注搜索" />
         </DockPanel>
 
-        <!-- 变量表格：名称与值均可直接编辑 -->
+        <!-- 变量表格：名称 / 值 / 备注 均可直接编辑 -->
         <Border Grid.Row="2" Style="{StaticResource AppleGroupCard}">
             <DataGrid ItemsSource="{Binding VariablesView}"
                       SelectedItem="{Binding Selected, Mode=TwoWay}"
@@ -44,6 +45,13 @@
                       AlternationCount="2"
                       AlternatingRowBackground="{StaticResource HoverBrush}"
                       BorderThickness="0">
+                <!-- 苹果风选中样式：浅色强调底 + 深色字，避免选中后白字看不见 -->
+                <DataGrid.Resources>
+                    <SolidColorBrush x:Key="{x:Static sw:SystemColors.HighlightBrushKey}" Color="{Binding Source={StaticResource AccentSoftBrush}, Path=Color}" />
+                    <SolidColorBrush x:Key="{x:Static sw:SystemColors.HighlightTextBrushKey}" Color="{Binding Source={StaticResource TextPrimaryBrush}, Path=Color}" />
+                    <SolidColorBrush x:Key="{x:Static sw:SystemColors.InactiveSelectionHighlightBrushKey}" Color="{Binding Source={StaticResource AccentSoftBrush}, Path=Color}" />
+                    <SolidColorBrush x:Key="{x:Static sw:SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="{Binding Source={StaticResource TextPrimaryBrush}, Path=Color}" />
+                </DataGrid.Resources>
                 <DataGrid.ColumnHeaderStyle>
                     <Style TargetType="DataGridColumnHeader">
                         <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
@@ -59,6 +67,7 @@
                         <Setter Property="Background" Value="Transparent" />
                         <Setter Property="BorderThickness" Value="0" />
                         <Setter Property="VerticalContentAlignment" Value="Center" />
+                        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
                     </Style>
                 </DataGrid.CellStyle>
                 <DataGrid.Columns>
@@ -79,6 +88,21 @@
                     </DataGridTextColumn>
                     <DataGridTextColumn Header="变量值" Width="*"
                                         Binding="{Binding Value, UpdateSourceTrigger=PropertyChanged}">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Padding" Value="12,8" />
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                        <DataGridTextColumn.EditingElementStyle>
+                            <Style TargetType="TextBox">
+                                <Setter Property="Padding" Value="12,8" />
+                                <Setter Property="BorderThickness" Value="0" />
+                            </Style>
+                        </DataGridTextColumn.EditingElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="备注" Width="2*"
+                                        Binding="{Binding Remark, UpdateSourceTrigger=PropertyChanged}">
                         <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Padding" Value="12,8" />
