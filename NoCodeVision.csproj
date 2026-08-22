@@ -14,6 +14,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="bin6\**" />
+    <Compile Remove="obj6\**" />
+    <EmbeddedResource Remove="bin6\**" />
+    <EmbeddedResource Remove="obj6\**" />
+    <None Remove="bin6\**" />
+    <None Remove="obj6\**" />
+    <Page Remove="bin6\**" />
+    <Page Remove="obj6\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="OpenCvSharp4" Version="4.8.0.20230708" />
     <PackageReference Include="OpenCvSharp4.Extensions" Version="4.8.0.20230708" />
     <PackageReference Include="System.IO.Ports" Version="9.0.0" />
