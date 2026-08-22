@@ -254,15 +254,19 @@
                             <GridView>
                                 <GridViewColumn Header="名称" DisplayMemberBinding="{Binding Name}" Width="120" />
                                 <GridViewColumn Header="状态" DisplayMemberBinding="{Binding Status}" Width="80" />
-                                <GridViewColumn Header="动作" Width="120">
+                                <GridViewColumn Header="伸出" Width="120">
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>
-                                            <StackPanel Orientation="Horizontal">
-                                                <Button Style="{StaticResource AppleBtn}" Content="伸出" Padding="8,2" FontSize="12"
-                                                        Command="{x:Static helpers:CylinderCommandBridge.ExtendCmd}" CommandParameter="{Binding}" />
-                                                <Button Style="{StaticResource AppleBtnSecondary}" Content="缩回" Padding="8,2" FontSize="12" Margin="6,0,0,0"
-                                                        Command="{x:Static helpers:CylinderCommandBridge.RetractCmd}" CommandParameter="{Binding}" />
-                                            </StackPanel>
+                                            <Button Style="{StaticResource AppleBtn}" Content="伸出" Padding="10,2" FontSize="12"
+                                                    Command="{x:Static helpers:CylinderCommandBridge.ExtendCmd}" CommandParameter="{Binding}" />
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="缩回" Width="120">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Style="{StaticResource AppleBtnSecondary}" Content="缩回" Padding="10,2" FontSize="12"
+                                                    Command="{x:Static helpers:CylinderCommandBridge.RetractCmd}" CommandParameter="{Binding}" />
                                         </DataTemplate>
                                     </GridViewColumn.CellTemplate>
                                 </GridViewColumn>
