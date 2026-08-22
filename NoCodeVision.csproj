@@ -10,6 +10,7 @@
     <RootNamespace>NoCodeVision</RootNamespace>
     <LangVersion>latest</LangVersion>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <!-- 沙箱专属：排除 LuaHostTest 测试宿主目录；用户干净环境保留此条 -->
     <DefaultItemExcludes>$(DefaultItemExcludes);LuaHostTest\**</DefaultItemExcludes>
   </PropertyGroup>
 
