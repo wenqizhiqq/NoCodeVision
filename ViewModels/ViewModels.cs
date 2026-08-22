@@ -878,6 +878,7 @@ public class VariablesViewModel : ViewModelBase
 
     public ICommand AddCmd { get; }
     public ICommand RemoveCmd { get; }
+    public ICommand ClearSearchCmd { get; }
 
     private ICollectionView? _view;
     public ICollectionView VariablesView
@@ -896,11 +897,14 @@ public class VariablesViewModel : ViewModelBase
         set
         {
             if (!SetField(ref _searchText, value)) return;
+            OnPropertyChanged(nameof(HasSearchText));
             _view ??= System.Windows.Data.CollectionViewSource.GetDefaultView(Variables);
             _view.Filter = FilterRow;
             _view.Refresh();
         }
     }
+
+    public bool HasSearchText => !string.IsNullOrWhiteSpace(_searchText);
 
     private bool FilterRow(object obj)
     {
@@ -927,6 +931,8 @@ public class VariablesViewModel : ViewModelBase
                 Selected = Variables.Count > 0 ? Variables[0] : null;
             }
         }, _ => _selected != null);
+
+        ClearSearchCmd = new RelayCommand(_ => { SearchText = ""; });
     }
 }
 

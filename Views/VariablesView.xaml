@@ -6,6 +6,10 @@
              xmlns:sw="clr-namespace:System.Windows;assembly=PresentationFramework"
              mc:Ignorable="d">
 
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </UserControl.Resources>
+
     <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -15,16 +19,50 @@
 
         <TextBlock Grid.Row="0" Style="{StaticResource iOSTitle}" Text="变量" Margin="0,0,0,12" />
 
-        <!-- 工具栏：添加 / 删除（左）+ 搜索（右，自动填充） -->
+        <!-- 工具栏：添加 / 删除（左）+ 搜索（右） -->
         <DockPanel Grid.Row="1" Margin="0,0,0,12" LastChildFill="True">
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
                 <Button Style="{StaticResource AppleBtn}" Content="添加" Command="{Binding AddCmd}" Padding="16,6" />
                 <Button Style="{StaticResource AppleBtnSecondary}" Content="删除" Command="{Binding RemoveCmd}" Padding="16,6" Margin="8,0,0,0" />
             </StackPanel>
-            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right"
-                     MinWidth="260" Margin="12,0,0,0"
-                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                     ToolTip="按名称、值或备注搜索" />
+            <Border DockPanel.Dock="Right"
+                    Background="{StaticResource SurfaceBrush}"
+                    BorderBrush="{StaticResource LineBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="10,4"
+                    Width="200"
+                    Margin="12,0,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="🔍" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{StaticResource TextSecondaryBrush}" />
+                    <TextBox Grid.Column="1" Style="{StaticResource AppleTextField}"
+                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                             ToolTip="按名称、值或备注搜索"
+                             HorizontalAlignment="Stretch"
+                             TextAlignment="Left"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             VerticalAlignment="Center" />
+                    <Button Grid.Column="2"
+                            Command="{Binding ClearSearchCmd}"
+                            Visibility="{Binding HasSearchText, Converter={StaticResource BoolToVis}}"
+                            ToolTip="清除搜索"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="4,0"
+                            Margin="6,0,0,0"
+                            Cursor="Hand"
+                            Foreground="{StaticResource TextSecondaryBrush}"
+                            FontSize="14"
+                            Content="✕"
+                            VerticalAlignment="Center" />
+                </Grid>
+            </Border>
         </DockPanel>
 
         <!-- 变量表格：名称 / 值 / 备注 均可直接编辑 -->
