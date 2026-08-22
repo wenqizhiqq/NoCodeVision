@@ -15,14 +15,14 @@
 
         <TextBlock Grid.Row="0" Style="{StaticResource iOSTitle}" Text="变量" Margin="0,0,0,12" />
 
-        <!-- 工具栏：搜索 + 添加 + 删除 -->
+        <!-- 工具栏：添加 / 删除（左）+ 搜索（右，自动填充） -->
         <DockPanel Grid.Row="1" Margin="0,0,0,12" LastChildFill="True">
-            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
                 <Button Style="{StaticResource AppleBtn}" Content="添加" Command="{Binding AddCmd}" Padding="16,6" />
                 <Button Style="{StaticResource AppleBtnSecondary}" Content="删除" Command="{Binding RemoveCmd}" Padding="16,6" Margin="8,0,0,0" />
             </StackPanel>
-            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Left"
-                     MinWidth="260" Margin="0,0,12,0"
+            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right"
+                     MinWidth="260" Margin="12,0,0,0"
                      Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                      ToolTip="按名称、值或备注搜索" />
         </DockPanel>
