@@ -885,10 +885,11 @@ public class VariablesViewModel : ViewModelBase
 {
     public ObservableCollection<VarItem> Variables { get; } = new()
     {
-        new VarItem { Name = "nProductCount", Type = "整数", Value = "0" },
-        new VarItem { Name = "dThreshold", Type = "浮点数", Value = "0.85" },
-        new VarItem { Name = "sModelName", Type = "字符串", Value = "Bracket_A" },
-        new VarItem { Name = "bPass", Type = "布尔", Value = "True" },
+        new VarItem { Name = "产品数量", Type = "整数", Value = "0" },
+        new VarItem { Name = "合格阈值", Type = "浮点数", Value = "0.85" },
+        new VarItem { Name = "型号名称", Type = "字符串", Value = "支架A" },
+        new VarItem { Name = "是否合格", Type = "布尔", Value = "是" },
+        new VarItem { Name = "运动位置", Type = "浮点数", Value = "120.5" },
     };
 
     private VarItem? _selected;
@@ -929,8 +930,7 @@ public class VariablesViewModel : ViewModelBase
         if (obj is not VarItem v) return false;
         if (string.IsNullOrWhiteSpace(_searchText)) return true;
         return v.Name.Contains(_searchText, StringComparison.OrdinalIgnoreCase)
-            || (v.Value != null && v.Value.Contains(_searchText, StringComparison.OrdinalIgnoreCase))
-            || (v.Remark != null && v.Remark.Contains(_searchText, StringComparison.OrdinalIgnoreCase));
+            || (v.Value != null && v.Value.Contains(_searchText, StringComparison.OrdinalIgnoreCase));
     }
 
     public VariablesViewModel()

@@ -42,7 +42,7 @@
                     <TextBlock Grid.Column="0" Text="🔍" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{StaticResource TextSecondaryBrush}" />
                     <TextBox Grid.Column="1" Style="{StaticResource AppleTextField}"
                              Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                             ToolTip="按名称、值或备注搜索"
+                             ToolTip="按名称或值搜索"
                              HorizontalAlignment="Stretch"
                              TextAlignment="Left"
                              Background="Transparent"
@@ -65,7 +65,7 @@
             </Border>
         </DockPanel>
 
-        <!-- 变量表格：名称 / 值 / 备注 均可直接编辑 -->
+        <!-- 变量表格：名称 / 值 均可直接编辑 -->
         <Border Grid.Row="2" Style="{StaticResource AppleGroupCard}">
             <DataGrid ItemsSource="{Binding VariablesView}"
                       SelectedItem="{Binding Selected, Mode=TwoWay}"
@@ -126,21 +126,6 @@
                     </DataGridTextColumn>
                     <DataGridTextColumn Header="变量值" Width="*"
                                         Binding="{Binding Value, UpdateSourceTrigger=PropertyChanged}">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Padding" Value="12,8" />
-                                <Setter Property="VerticalAlignment" Value="Center" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                        <DataGridTextColumn.EditingElementStyle>
-                            <Style TargetType="TextBox">
-                                <Setter Property="Padding" Value="12,8" />
-                                <Setter Property="BorderThickness" Value="0" />
-                            </Style>
-                        </DataGridTextColumn.EditingElementStyle>
-                    </DataGridTextColumn>
-                    <DataGridTextColumn Header="备注" Width="2*"
-                                        Binding="{Binding Remark, UpdateSourceTrigger=PropertyChanged}">
                         <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Padding" Value="12,8" />
