@@ -78,6 +78,21 @@ namespace NoCodeVision.Views.Controls
             DependencyProperty.Register(nameof(Overlays), typeof(IEnumerable), typeof(RoiImageView),
                 new PropertyMetadata(null, OnOverlaysChanged));
 
+        public ImageSource? DefectOverlay
+        {
+            get => (ImageSource?)GetValue(DefectOverlayProperty);
+            set => SetValue(DefectOverlayProperty, value);
+        }
+        public static readonly DependencyProperty DefectOverlayProperty =
+            DependencyProperty.Register(nameof(DefectOverlay), typeof(ImageSource), typeof(RoiImageView),
+                new PropertyMetadata(null, OnDefectOverlayChanged));
+
+        private static void OnDefectOverlayChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is RoiImageView v)
+                v.DefectLayer.Source = v.DefectOverlay;
+        }
+
         #endregion
 
         #region 缩放 / 平移（LayoutTransform 统一处理）
@@ -117,6 +132,7 @@ namespace NoCodeVision.Views.Controls
             if (d is RoiImageView v)
             {
                 v.Img.Source = v.SourceImage;
+                v.DefectLayer.Source = null;
                 if (v.SourceImage is System.Windows.Media.Imaging.BitmapImage bmp)
                 {
                     v.ImagePixelWidth = bmp.PixelWidth;

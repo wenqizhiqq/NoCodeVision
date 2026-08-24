@@ -43,7 +43,8 @@
                                RoiY="{Binding RoiY, Mode=TwoWay}"
                                RoiW="{Binding RoiW, Mode=TwoWay}"
                                RoiH="{Binding RoiH, Mode=TwoWay}"
-                               Overlays="{Binding Overlays, Mode=OneWay}" />
+                               Overlays="{Binding Overlays, Mode=OneWay}"
+                               DefectOverlay="{Binding DefectOverlayImage, Mode=OneWay}" />
         </Grid>
 
         <!-- 右侧：参数 + 结果 -->

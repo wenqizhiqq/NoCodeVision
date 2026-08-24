@@ -20,6 +20,7 @@
                     <TranslateTransform x:Name="PixelPan" X="0" Y="0" />
                 </Canvas.RenderTransform>
                 <Image x:Name="Img" Stretch="None" />
+                <Image x:Name="DefectLayer" Stretch="None" IsHitTestVisible="False" />
                 <Canvas x:Name="Layer" IsHitTestVisible="False">
                     <Rectangle x:Name="RoiRect" Stroke="#007AFF" StrokeThickness="2" Fill="#007AFF22"
                                Visibility="Collapsed" RadiusX="2" RadiusY="2" />

@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using System.Runtime.InteropServices;
 using GrayMatch;
 
 namespace NoCodeVision
@@ -35,11 +36,32 @@ namespace NoCodeVision.ViewModels
         private readonly DispatcherTimer _defectTimer;
 
         public string[] ToolModes { get; } = { "模板匹配", "缺陷检测" };
-        public string SelectedTool { get => _selectedTool; set { if (SetField(ref _selectedTool, value)) ScheduleDefectRefresh(); } }
+        public string SelectedTool
+        {
+            get => _selectedTool;
+            set
+            {
+                if (!SetField(ref _selectedTool, value)) return;
+                if (value == "缺陷检测")
+                {
+                    if (HasImage && _lastResults != null && _lastResults.Count > 0)
+                        RedetectDefects();
+                }
+                else
+                {
+                    DefectOverlayImage = null;
+                    DefectResults.Clear();
+                    DefectSummaryText = "请先运行检测";
+                }
+            }
+        }
         private string _selectedTool = "模板匹配";
 
         public ImageSource? DisplayImage { get => _displayImage; set => SetField(ref _displayImage, value); }
         private ImageSource? _displayImage;
+
+        public ImageSource? DefectOverlayImage { get => _defectOverlayImage; set => SetField(ref _defectOverlayImage, value); }
+        private ImageSource? _defectOverlayImage;
 
         public bool HasImage { get => _hasImage; set => SetField(ref _hasImage, value); }
         private bool _hasImage;
@@ -137,6 +159,10 @@ namespace NoCodeVision.ViewModels
             try
             {
                 _matcher.LoadSource(dlg.FileName);
+                _lastResults = null;
+                DefectResults.Clear();
+                DefectOverlayImage = null;
+                DefectSummaryText = "请先运行检测";
                 DisplayImage = new BitmapImage(new Uri(dlg.FileName));
                 HasImage = true;
                 StatusText = $"已加载：{System.IO.Path.GetFileName(dlg.FileName)}";
@@ -211,10 +237,12 @@ namespace NoCodeVision.ViewModels
                     DefectSummaryText = defects.Count == 0
                         ? "未发现缺陷"
                         : $"发现 {defects.Count} 处缺陷（耗时 {LastDefectMs:F1} ms）";
+                    DefectOverlayImage = BuildDefectOverlay();
                     StatusText = $"匹配 {results.Count} 个，缺陷 {defects.Count} 个；匹配 {LastMatchMs:F1}ms，缺陷 {LastDefectMs:F1}ms";
                 }
                 else
                 {
+                    DefectOverlayImage = null;
                     StatusText = $"匹配 {results.Count} 个，耗时 {LastMatchMs:F1} ms";
                 }
             }
@@ -229,6 +257,7 @@ namespace NoCodeVision.ViewModels
             MatchResults.Clear();
             DefectResults.Clear();
             Overlays.Clear();
+            DefectOverlayImage = null;
             StatusText = "已清空结果";
         }
 
@@ -288,12 +317,63 @@ namespace NoCodeVision.ViewModels
                 DefectSummaryText = defects.Count == 0
                     ? "未发现缺陷"
                     : $"发现 {defects.Count} 处缺陷（耗时 {LastDefectMs:F1} ms）";
+                DefectOverlayImage = BuildDefectOverlay();
                 StatusText = $"参数刷新：匹配 {_lastResults.Count} 个，缺陷 {defects.Count} 个；缺陷 {LastDefectMs:F1}ms";
             }
             catch (Exception ex)
             {
                 StatusText = "重检失败：" + ex.Message;
             }
+        }
+
+        /// <summary>按 GrayMatch.Wpf 的方式，把每个缺陷的逐像素掩码（DefectResult.Pixels）映射回图像坐标并染红，生成一张透明叠加层。</summary>
+        private ImageSource? BuildDefectOverlay()
+        {
+            if (DefectResults.Count == 0) return null;
+            if (DisplayImage is not BitmapImage bmp) return null;
+            int w = bmp.PixelWidth, h = bmp.PixelHeight;
+            if (w <= 0 || h <= 0) return null;
+
+            var wb = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null);
+            wb.Lock();
+            try
+            {
+                int stride = wb.BackBufferStride;
+                var px = new byte[stride * h];
+                foreach (var d in DefectResults)
+                {
+                    if (d.Pixels == null || d.Pw <= 0 || d.Ph <= 0) continue;
+                    double phi = -d.Angle * System.Math.PI / 180.0;
+                    double cosv = System.Math.Cos(phi), sinv = System.Math.Sin(phi);
+                    double tw = d.Tw, th = d.Th;
+                    for (int ly = 0; ly < d.Ph; ly++)
+                    {
+                        int baseOff = ly * d.Pw;
+                        for (int lx = 0; lx < d.Pw; lx++)
+                        {
+                            if (d.Pixels[baseOff + lx] == 0) continue;
+                            double ux = lx - tw / 2.0;
+                            double uy = ly - th / 2.0;
+                            int ix = (int)System.Math.Round(d.CenterX + (ux * cosv - uy * sinv));
+                            int iy = (int)System.Math.Round(d.CenterY + (ux * sinv + uy * cosv));
+                            if (ix < 0 || iy < 0 || ix >= w || iy >= h) continue;
+                            int idx = iy * stride + ix * 4;
+                            px[idx] = 0;
+                            px[idx + 1] = 0;
+                            px[idx + 2] = 255;
+                            px[idx + 3] = 220;
+                        }
+                    }
+                }
+                Marshal.Copy(px, 0, wb.BackBuffer, px.Length);
+            }
+            finally
+            {
+                wb.AddDirtyRect(new Int32Rect(0, 0, w, h));
+                wb.Unlock();
+            }
+            wb.Freeze();
+            return wb;
         }
     }
 
