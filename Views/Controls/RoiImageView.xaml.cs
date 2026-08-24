@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -23,7 +25,12 @@ namespace NoCodeVision.Views.Controls
         {
             InitializeComponent();
             SizeChanged += (_, _) => UpdateScale();
-            Loaded += (_, _) => UpdateScale();
+            Loaded += (_, _) =>
+            {
+                if (Measures == null) Measures = new ObservableCollection<MeasureItem>();
+                UpdateModeButtons();
+                UpdateScale();
+            };
         }
 
         #region DependencyProperties
@@ -92,6 +99,53 @@ namespace NoCodeVision.Views.Controls
             if (d is RoiImageView v)
                 v.DefectLayer.Source = v.DefectOverlay;
         }
+
+        #endregion
+
+        #region 交互模式 / 测量
+
+        /// <summary>交互模式：Roi=框选 ROI；Line=绘制线段测距；Circle=绘制圆测半径。</summary>
+        public string MeasureMode
+        {
+            get => (string)GetValue(MeasureModeProperty);
+            set => SetValue(MeasureModeProperty, value);
+        }
+        public static readonly DependencyProperty MeasureModeProperty =
+            DependencyProperty.Register(nameof(MeasureMode), typeof(string), typeof(RoiImageView),
+                new PropertyMetadata("Roi", OnMeasureModeChanged));
+
+        private static void OnMeasureModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is RoiImageView v)
+            {
+                v._measureDragging = false;
+                v._roiDragging = false;
+                if (v.PixelCanvas.IsMouseCaptured) v.PixelCanvas.ReleaseMouseCapture();
+                v.UpdateModeButtons();
+            }
+        }
+
+        /// <summary>测量结果集合（MeasureItem）。由外部绑定（如 ViewModel）或控件内部自行维护。</summary>
+        public IEnumerable? Measures
+        {
+            get => (IEnumerable?)GetValue(MeasuresProperty);
+            set => SetValue(MeasuresProperty, value);
+        }
+        public static readonly DependencyProperty MeasuresProperty =
+            DependencyProperty.Register(nameof(Measures), typeof(IEnumerable), typeof(RoiImageView),
+                new PropertyMetadata(null, OnMeasuresChanged));
+
+        private static void OnMeasuresChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is RoiImageView v)
+            {
+                if (e.OldValue is INotifyCollectionChanged oldC) oldC.CollectionChanged -= v.OnMeasuresCollectionChanged;
+                if (e.NewValue is INotifyCollectionChanged newC) newC.CollectionChanged += v.OnMeasuresCollectionChanged;
+                v.RenderMeasures();
+            }
+        }
+
+        private void OnMeasuresCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) => RenderMeasures();
 
         #endregion
 
@@ -289,6 +343,11 @@ namespace NoCodeVision.Views.Controls
         private bool _roiDragging;
         private Point _roiStart;
 
+        private bool _measureDragging;
+        private Point _measureStart;
+        private Point _measureCurrent;
+        private MeasureItem? _previewMeasure;
+
         private bool _panDragging;
         private Point _panStart;
         private double _panStartX, _panStartY;
@@ -298,8 +357,18 @@ namespace NoCodeVision.Views.Controls
             if (ImagePixelWidth <= 0) return;
             if (e.ChangedButton == MouseButton.Left)
             {
+                var p = e.GetPosition(PixelCanvas); // PixelCanvas 局部坐标 = 图像像素坐标
+                if (MeasureMode == "Line" || MeasureMode == "Circle")
+                {
+                    _measureDragging = true;
+                    _measureStart = p;
+                    _measureCurrent = p;
+                    PixelCanvas.CaptureMouse();
+                    e.Handled = true;
+                    return;
+                }
                 _roiDragging = true;
-                _roiStart = e.GetPosition(PixelCanvas); // PixelCanvas 局部坐标 = 图像像素坐标
+                _roiStart = p;
                 PixelCanvas.CaptureMouse();
                 RoiTip.Visibility = Visibility.Visible;
                 UpdateRoiFromPoint(_roiStart, _roiStart);
@@ -318,7 +387,13 @@ namespace NoCodeVision.Views.Controls
 
         private void OnMouseMove(object sender, MouseEventArgs e)
         {
-            if (_roiDragging)
+            if (_measureDragging)
+            {
+                _measureCurrent = e.GetPosition(PixelCanvas);
+                _previewMeasure = BuildMeasure(_measureStart, _measureCurrent);
+                RenderMeasures();
+            }
+            else if (_roiDragging)
             {
                 UpdateRoiFromPoint(_roiStart, e.GetPosition(PixelCanvas));
             }
@@ -336,7 +411,16 @@ namespace NoCodeVision.Views.Controls
 
         private void OnMouseUp(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Left && _roiDragging)
+            if (e.ChangedButton == MouseButton.Left && _measureDragging)
+            {
+                _measureDragging = false;
+                PixelCanvas.ReleaseMouseCapture();
+                var item = BuildMeasure(_measureStart, _measureCurrent);
+                _previewMeasure = null;
+                AddMeasure(item);
+                RenderMeasures();
+            }
+            else if (e.ChangedButton == MouseButton.Left && _roiDragging)
             {
                 _roiDragging = false;
                 RoiTip.Visibility = Visibility.Collapsed;
@@ -348,6 +432,157 @@ namespace NoCodeVision.Views.Controls
                 PixelCanvas.ReleaseMouseCapture();
             }
         }
+
+        #region 测量：构建 / 添加 / 渲染
+
+        private MeasureItem BuildMeasure(Point a, Point b)
+        {
+            if (MeasureMode == "Circle")
+            {
+                double r = System.Math.Sqrt((b.X - a.X) * (b.X - a.X) + (b.Y - a.Y) * (b.Y - a.Y));
+                return new MeasureItem
+                {
+                    Tool = "Circle",
+                    X1 = a.X, Y1 = a.Y, X2 = b.X, Y2 = b.Y,
+                    Value = r,
+                    Label = $"半径 {r:F1}px",
+                    Color = "#FFD60A"
+                };
+            }
+            double d = System.Math.Sqrt((b.X - a.X) * (b.X - a.X) + (b.Y - a.Y) * (b.Y - a.Y));
+            return new MeasureItem
+            {
+                Tool = "Line",
+                X1 = a.X, Y1 = a.Y, X2 = b.X, Y2 = b.Y,
+                Value = d,
+                Label = $"距离 {d:F1}px",
+                Color = "#FFD60A"
+            };
+        }
+
+        private void AddMeasure(MeasureItem item)
+        {
+            if (Measures is ObservableCollection<MeasureItem> oc)
+            {
+                oc.Add(item);
+            }
+            else if (Measures is IList list)
+            {
+                list.Add(item);
+            }
+            else
+            {
+                // 未绑定外部集合时，内部自维护一份以便渲染
+                var internalList = new ObservableCollection<MeasureItem>();
+                internalList.Add(item);
+                Measures = internalList;
+            }
+            MeasurementCompleted?.Invoke(this, item);
+        }
+
+        /// <summary>完成一次测量时触发，便于宿主（如 ViewModel）读取结果。</summary>
+        public event EventHandler<MeasureItem>? MeasurementCompleted;
+
+        private void RenderMeasures()
+        {
+            MeasureLayer.Children.Clear();
+            if (Measures == null) return;
+            foreach (var m in Measures.OfType<MeasureItem>())
+                DrawMeasure(m);
+            if (_previewMeasure != null)
+                DrawMeasure(_previewMeasure);
+        }
+
+        private void DrawMeasure(MeasureItem m)
+        {
+            var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(m.Color)!);
+            if (m.Tool == "Circle")
+            {
+                var ellipse = new Ellipse
+                {
+                    Width = Math.Max(2, m.Value * 2),
+                    Height = Math.Max(2, m.Value * 2),
+                    Stroke = brush,
+                    StrokeThickness = 2,
+                };
+                Canvas.SetLeft(ellipse, m.X1 - m.Value);
+                Canvas.SetTop(ellipse, m.Y1 - m.Value);
+                MeasureLayer.Children.Add(ellipse);
+
+                var rline = new Line
+                {
+                    X1 = m.X1, Y1 = m.Y1, X2 = m.X2, Y2 = m.Y2,
+                    Stroke = brush, StrokeThickness = 1.5, StrokeDashArray = new DoubleCollection { 4, 3 }
+                };
+                MeasureLayer.Children.Add(rline);
+                AddDot(m.X1, m.Y1, brush);
+                AddLabel(m.X1, m.Y1 - m.Value - 16, m.Label, brush);
+            }
+            else
+            {
+                var line = new Line
+                {
+                    X1 = m.X1, Y1 = m.Y1, X2 = m.X2, Y2 = m.Y2,
+                    Stroke = brush, StrokeThickness = 2
+                };
+                MeasureLayer.Children.Add(line);
+                AddDot(m.X1, m.Y1, brush);
+                AddDot(m.X2, m.Y2, brush);
+                AddLabel((m.X1 + m.X2) / 2, (m.Y1 + m.Y2) / 2, m.Label, brush);
+            }
+        }
+
+        private void AddDot(double x, double y, Brush brush)
+        {
+            var dot = new Ellipse { Width = 6, Height = 6, Fill = brush };
+            Canvas.SetLeft(dot, x - 3);
+            Canvas.SetTop(dot, y - 3);
+            MeasureLayer.Children.Add(dot);
+        }
+
+        private void AddLabel(double x, double y, string text, Brush brush)
+        {
+            var tb = new TextBlock
+            {
+                Text = text,
+                Foreground = brush,
+                FontSize = 12,
+                Background = new SolidColorBrush(Color.FromArgb(180, 28, 28, 34)),
+                Padding = new Thickness(3, 1, 3, 1)
+            };
+            tb.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            Canvas.SetLeft(tb, x - tb.DesiredSize.Width / 2);
+            Canvas.SetTop(tb, y);
+            Panel.SetZIndex(tb, 3);
+            MeasureLayer.Children.Add(tb);
+        }
+
+        #endregion
+
+        #region 模式切换按钮
+
+        private void OnModeClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string mode)
+                MeasureMode = mode;
+        }
+
+        private void UpdateModeButtons()
+        {
+            if (BtnModeRoi == null) return;
+            SetBtnActive(BtnModeRoi, MeasureMode == "Roi");
+            SetBtnActive(BtnModeLine, MeasureMode == "Line");
+            SetBtnActive(BtnModeCircle, MeasureMode == "Circle");
+        }
+
+        private static void SetBtnActive(Button btn, bool active)
+        {
+            btn.Background = active
+                ? (Brush)new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0A84FF")!)
+                : (Brush)new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1C1C22")!);
+        }
+
+        #endregion
 
         private void UpdateRoiFromPoint(Point a, Point b)
         {

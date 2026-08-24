@@ -1466,6 +1466,10 @@ public class FlowViewModel : ViewModelBase
     public ObservableCollection<DefectResult> FlowDefectResults => _flowDefectResults;
     private readonly ObservableCollection<DefectResult> _flowDefectResults = new();
 
+    // 几何测量：交互式测量结果（线段距离 / 圆形半径），由 RoiImageView 绘制时回写
+    public ObservableCollection<Views.Controls.MeasureItem> MeasureAnnotations => _measureAnnotations;
+    private readonly ObservableCollection<Views.Controls.MeasureItem> _measureAnnotations = new();
+
     public string DefectSummaryText { get => _defectSummaryText; set => SetField(ref _defectSummaryText, value); }
     private string _defectSummaryText = "请先运行检测";
 
@@ -1549,6 +1553,7 @@ public class FlowViewModel : ViewModelBase
                 onRunState: (running, paused) => { ScriptIsRunning = running; ScriptIsPaused = paused; CommandManager.InvalidateRequerySuggested(); });
             SelectedFlow = Flows.FirstOrDefault();
             SelectedStep = SelectedFlow?.Steps.FirstOrDefault();
+            _measureAnnotations.CollectionChanged += OnMeasureAnnotationsChanged;
 
         AddFlowCmd = new RelayCommand(_ =>
         {
@@ -2009,6 +2014,18 @@ public class FlowViewModel : ViewModelBase
         {
             return $"错误:{ex.Message}";
         }
+    }
+
+    private void OnMeasureAnnotationsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (_selectedStep?.StepType != "Measure") return;
+        if (e.Action == NotifyCollectionChangedAction.Reset || _measureAnnotations.Count == 0)
+        {
+            _selectedStep.ActualValue = "未测量";
+            return;
+        }
+        var last = _measureAnnotations[^1];
+        _selectedStep.ActualValue = last.Label;
     }
 
     private Mat? LoadCaptureImage(VisionFlowStep step)

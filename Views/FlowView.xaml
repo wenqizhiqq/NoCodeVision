@@ -683,7 +683,9 @@
                                            RoiY="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=10}"
                                            RoiW="{Binding SelectedStep.RoiW, Mode=TwoWay, FallbackValue=120}"
                                            RoiH="{Binding SelectedStep.RoiH, Mode=TwoWay, FallbackValue=80}"
-                                           Overlays="{Binding MatchOverlays}" />
+                                           Overlays="{Binding MatchOverlays}"
+                                           Measures="{Binding MeasureAnnotations}" />
+                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="切换左上角工具：框选ROI / 线段测距 / 圆测半径；在图上拖拽绘制" Margin="16,0,16,8" />
                         <UniformGrid Columns="4" Margin="16,0,16,8">
                             <StackPanel Margin="0,0,4,0">
                                 <TextBlock Text="X" Style="{StaticResource AppleSubLabel}" FontSize="10" />
