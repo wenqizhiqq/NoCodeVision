@@ -39,6 +39,32 @@
             <!-- 占位提示 -->
             <TextBlock x:Name="Placeholder" Text="点击「加载图片」选择源图像" Foreground="#8E8E93" FontSize="14"
                        HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+            <!-- 右下角：自适应/复位视图图标按钮 -->
+            <Button x:Name="FitViewBtn" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="10"
+                    Width="30" Height="30" Cursor="Hand" ToolTip="复位视图（自适应）"
+                    Click="OnFitViewClick">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="bd" Background="#1C1C22" Opacity="0.82" CornerRadius="15">
+                                        <Path Data="M4,4 L4,10 M4,4 L10,4 M14,4 L20,4 M20,4 L20,10 M4,20 L4,14 M4,20 L10,20 M20,20 L20,14 M20,20 L14,20"
+                                              Stroke="White" StrokeThickness="2" Stretch="Uniform" Width="16" Height="16" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="bd" Property="Background" Value="{StaticResource AccentBrush}" />
+                                            <Setter TargetName="bd" Property="Opacity" Value="1" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Button.Style>
+            </Button>
         </Grid>
     </Border>
 </UserControl>

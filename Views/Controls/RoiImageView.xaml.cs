@@ -123,6 +123,15 @@ namespace NoCodeVision.Views.Controls
             e.Handled = true;
         }
 
+        /// <summary>复位视图：缩放回到适配比例、平移归零，即图片初始显示位置。</summary>
+        private void OnFitViewClick(object sender, RoutedEventArgs e)
+        {
+            _zoomFactor = 1.0;
+            PixelPan.X = 0;
+            PixelPan.Y = 0;
+            UpdateScale();
+        }
+
         #endregion
 
         #region Source / ROI / Overlays 变更
