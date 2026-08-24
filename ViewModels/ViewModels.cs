@@ -1229,6 +1229,7 @@ public class FlowViewModel : ViewModelBase
             DefectOverlayImage = null;
             FlowDefectResults.Clear();
             DefectSummaryText = "请先选择缺陷检测步骤";
+            Status = "缺陷检测：当前未选中缺陷检测步骤";
             return;
         }
         if (_lastMatchResults == null || _lastMatchResults.Count == 0)
@@ -1236,11 +1237,67 @@ public class FlowViewModel : ViewModelBase
             DefectOverlayImage = null;
             FlowDefectResults.Clear();
             DefectSummaryText = "请先运行模板匹配步骤";
+            Status = "缺陷检测：请先运行模板匹配步骤";
             return;
         }
+
+        // 缺陷检测需要 matcher 同时持有源图和模板； standalone 重检时必须重建这组状态。
+        var tmplStep = _lastTemplateMatchStep;
+        if (tmplStep == null && _selectedFlow != null)
+        {
+            int idx = _selectedFlow.Steps.IndexOf(step);
+            for (int i = idx - 1; i >= 0; i--)
+            {
+                if (_selectedFlow.Steps[i].StepType == "TemplateMatch")
+                {
+                    tmplStep = _selectedFlow.Steps[i];
+                    break;
+                }
+            }
+        }
+        if (tmplStep == null)
+        {
+            DefectOverlayImage = null;
+            FlowDefectResults.Clear();
+            DefectSummaryText = "未找到前置模板匹配步骤";
+            Status = "缺陷检测：未找到前置模板匹配步骤";
+            return;
+        }
+
+        Mat? srcMat = _sharedImage;
+        bool ownMat = false;
+        if (srcMat == null || srcMat.Empty())
+        {
+            string? srcPath = (!string.IsNullOrWhiteSpace(CurrentImagePath) && File.Exists(CurrentImagePath)) ? CurrentImagePath
+                : (!string.IsNullOrWhiteSpace(tmplStep.ImageSource) && File.Exists(tmplStep.ImageSource)) ? tmplStep.ImageSource
+                : null;
+            if (srcPath != null)
+            {
+                srcMat = Cv2.ImRead(srcPath, ImreadModes.Color);
+                ownMat = true;
+            }
+        }
+        if (srcMat == null || srcMat.Empty())
+        {
+            DefectOverlayImage = null;
+            FlowDefectResults.Clear();
+            DefectSummaryText = "无图像源，无法检测缺陷";
+            Status = "缺陷检测：无图像源";
+            return;
+        }
+
         try
         {
             using var matcher = new RotatedTemplateMatcher();
+            matcher.SetSource(srcMat);
+            var roi = new Rect((int)tmplStep.RoiX, (int)tmplStep.RoiY, Math.Max(4, (int)tmplStep.RoiW), Math.Max(4, (int)tmplStep.RoiH));
+            matcher.SetTemplateFromRoi(roi);
+            matcher.UseContour = tmplStep.MatchMode == "轮廓匹配";
+            if (matcher.UseContour)
+            {
+                matcher.ContourThreshold = tmplStep.ContourThreshold;
+                matcher.ContourBlur = tmplStep.ContourBlur;
+            }
             matcher.DefectOptions = new DefectOptions
             {
                 DiffThreshold = step.DiffThreshold,
@@ -1258,12 +1315,20 @@ public class FlowViewModel : ViewModelBase
                 ? "未发现缺陷"
                 : $"发现 {defects.Count} 处缺陷";
             DefectOverlayImage = BuildDefectOverlay(defects);
+            Status = defects.Count == 0
+                ? "缺陷检测完成：未发现缺陷"
+                : $"缺陷检测完成：发现 {defects.Count} 处缺陷";
         }
         catch (Exception ex)
         {
             FlowDefectResults.Clear();
             DefectSummaryText = "重检失败：" + ex.Message;
             DefectOverlayImage = null;
+            Status = "缺陷检测失败：" + ex.Message;
+        }
+        finally
+        {
+            if (ownMat && srcMat != null) srcMat.Dispose();
         }
     }
 
@@ -1380,6 +1445,7 @@ public class FlowViewModel : ViewModelBase
     // 流程级共享图像：图像采集得到的 Mat，直接传给后续的模板匹配/几何测量步骤
     private Mat? _sharedImage;
     private List<MatchResult>? _lastMatchResults;
+    private VisionFlowStep? _lastTemplateMatchStep; // 生成 _lastMatchResults 的模板匹配步骤，用于缺陷检测时重建 matcher 状态
     private string _currentImagePath = "";
     public string CurrentImagePath
     {
@@ -2175,6 +2241,7 @@ public class FlowViewModel : ViewModelBase
                         var results = matcher.Match(step.PyramidLevel, step.AngleStart, step.AngleStop, step.AngleStep,
                             step.ScoreThreshold, step.Overlap, step.TopN, step.DenseMode);
                         _lastMatchResults = results;
+                        _lastTemplateMatchStep = step;
                         _matchOverlays.Clear();
                         if (results.Count > 0)
                         {
