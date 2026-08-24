@@ -808,6 +808,78 @@
                     </StackPanel>
                 </Border>
 
+                <!-- ========== 缺陷检测 ========== -->
+                <Border>
+                    <Border.Style>
+                        <Style BasedOn="{StaticResource AppleGroupCard}" TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedStep.StepType}" Value="Defect">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="缺陷参数" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="差异阈值" />
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
+                                <Slider Minimum="1" Maximum="254" Value="{Binding SelectedStep.DiffThreshold, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
+                                <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding SelectedStep.DiffThreshold, StringFormat={}{0:F0}}" Width="50" />
+                            </StackPanel>
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="最小面积占比" />
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
+                                <Slider Minimum="0.001" Maximum="0.05" Value="{Binding SelectedStep.MinAreaFrac, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
+                                <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding SelectedStep.MinAreaFrac, StringFormat={}{0:F3}}" Width="50" />
+                            </StackPanel>
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="全局亮度阈值" />
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
+                                <Slider Minimum="1" Maximum="254" Value="{Binding SelectedStep.GlobalBrightnessThresh, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
+                                <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding SelectedStep.GlobalBrightnessThresh, StringFormat={}{0:F0}}" Width="50" />
+                            </StackPanel>
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="边缘容差" />
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
+                                <Slider Minimum="0" Maximum="30" Value="{Binding SelectedStep.EdgeTolerance, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
+                                <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding SelectedStep.EdgeTolerance, StringFormat={}{0:F0}}" Width="50" />
+                            </StackPanel>
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="边缘梯度" />
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
+                                <Slider Minimum="1" Maximum="254" Value="{Binding SelectedStep.EdgeGradThresh, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
+                                <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding SelectedStep.EdgeGradThresh, StringFormat={}{0:F0}}" Width="50" />
+                            </StackPanel>
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="腐蚀核" />
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
+                                <Slider Minimum="0" Maximum="15" Value="{Binding SelectedStep.ErodeSize, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
+                                <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding SelectedStep.ErodeSize, StringFormat={}{0:F0}}" Width="50" />
+                            </StackPanel>
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="膨胀核" />
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
+                                <Slider Minimum="0" Maximum="15" Value="{Binding SelectedStep.DilateSize, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
+                                <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding SelectedStep.DilateSize, StringFormat={}{0:F0}}" Width="50" />
+                            </StackPanel>
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+
                 <!-- ========== 轴运动 ========== -->
                 <Border>
                     <Border.Style>

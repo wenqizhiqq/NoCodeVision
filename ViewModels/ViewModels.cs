@@ -326,6 +326,22 @@ public class VisionFlowStep : ViewModelBase
     public string OnFail { get => _onFail; set => SetField(ref _onFail, value); }
     private string _onFail = "忽略";
 
+    // ===== 缺陷检测参数 =====
+    public double DiffThreshold { get => _diffThreshold; set => SetField(ref _diffThreshold, value); }
+    private double _diffThreshold = 45;
+    public double MinAreaFrac { get => _minAreaFrac; set => SetField(ref _minAreaFrac, value); }
+    private double _minAreaFrac = 0.004;
+    public double GlobalBrightnessThresh { get => _globalBrightnessThresh; set => SetField(ref _globalBrightnessThresh, value); }
+    private double _globalBrightnessThresh = 28;
+    public int EdgeTolerance { get => _edgeTolerance; set => SetField(ref _edgeTolerance, value); }
+    private int _edgeTolerance = 0;
+    public double EdgeGradThresh { get => _edgeGradThresh; set => SetField(ref _edgeGradThresh, value); }
+    private double _edgeGradThresh = 30;
+    public int ErodeSize { get => _erodeSize; set => SetField(ref _erodeSize, value); }
+    private int _erodeSize = 2;
+    public int DilateSize { get => _dilateSize; set => SetField(ref _dilateSize, value); }
+    private int _dilateSize = 3;
+
     public string AiHint
     {
         get => _aiHint;
@@ -987,7 +1003,7 @@ public class FlowViewModel : ViewModelBase
     }
 
 
-    public string[] StepFunctions { get; } = { "图像采集", "模板匹配", "几何测量", "逻辑判断", "结果输出", "Lua脚本", "轴运动", "IO控制", "气缸动作", "等待延时", "通讯指令" };
+    public string[] StepFunctions { get; } = { "图像采集", "模板匹配", "几何测量", "逻辑判断", "结果输出", "缺陷检测", "Lua脚本", "轴运动", "IO控制", "气缸动作", "等待延时", "通讯指令" };
     public string[] PreprocessTypes { get; } = { "灰度化", "二值化", "高斯模糊", "中值滤波", "边缘检测" };
     public string[] MeasureTypes { get; } = { "圆径", "边距", "角度", "面积", "中心距" };
     public string[] LogicRelations { get; } = { "如果", "并且", "或者", "否则", "循环", "跳出", "并行", "等待" };
@@ -1221,6 +1237,7 @@ public class FlowViewModel : ViewModelBase
 
     // 流程级共享图像：图像采集得到的 Mat，直接传给后续的模板匹配/几何测量步骤
     private Mat? _sharedImage;
+    private List<MatchResult>? _lastMatchResults;
     private string _currentImagePath = "";
     public string CurrentImagePath
     {
@@ -1341,6 +1358,7 @@ public class FlowViewModel : ViewModelBase
                 "几何测量" => ("📐", "Measure"),
                 "逻辑判断" => ("✅", "Logic"),
                 "结果输出" => ("📤", "Output"),
+                "缺陷检测" => ("🔍", "Defect"),
                 "Lua脚本" => ("📝", "Lua"),
                 "轴运动" => ("🦾", "AxisMove"),
                 "IO控制" => ("🔌", "IOControl"),
@@ -1983,6 +2001,7 @@ public class FlowViewModel : ViewModelBase
                         matcher.ScaleRange = step.ScaleRange;
                         var results = matcher.Match(step.PyramidLevel, step.AngleStart, step.AngleStop, step.AngleStep,
                             step.ScoreThreshold, step.Overlap, step.TopN, step.DenseMode);
+                        _lastMatchResults = results;
                         if (results.Count > 0)
                         {
                             var r = results[0];
@@ -1996,6 +2015,39 @@ public class FlowViewModel : ViewModelBase
                         }
                     }
                     if (ownMat && srcMat != null) srcMat.Dispose();
+                    break;
+                }
+                case "Defect":
+                {
+                    if (_lastMatchResults == null || _lastMatchResults.Count == 0)
+                    {
+                        step.ActualValue = "无匹配结果";
+                        step.StatusText = "错误";
+                    }
+                    else
+                    {
+                        matcher.DefectOptions = new DefectOptions
+                        {
+                            DiffThreshold = step.DiffThreshold,
+                            MinAreaFrac = step.MinAreaFrac,
+                            GlobalBrightnessThresh = step.GlobalBrightnessThresh,
+                            EdgeTolerance = step.EdgeTolerance,
+                            EdgeGradThresh = step.EdgeGradThresh,
+                            ErodeSize = step.ErodeSize,
+                            DilateSize = step.DilateSize,
+                        };
+                        var defects = matcher.DetectDefects(_lastMatchResults);
+                        if (defects.Count > 0)
+                        {
+                            step.ActualValue = $"缺陷 {defects.Count} 处";
+                            step.StatusText = "缺陷异常";
+                        }
+                        else
+                        {
+                            step.ActualValue = "无缺陷";
+                            step.StatusText = "缺陷通过";
+                        }
+                    }
                     break;
                 }
                 case "Measure":

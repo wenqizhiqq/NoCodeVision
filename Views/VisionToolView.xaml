@@ -136,7 +136,7 @@
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="差异阈值" />
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
-                                <Slider Minimum="1" Maximum="254" Value="{Binding DiffThreshold}" Width="130" VerticalAlignment="Center" />
+                                <Slider Minimum="1" Maximum="254" Value="{Binding DiffThreshold, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
                                 <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding DiffThreshold, StringFormat={}{0:F0}}" Width="50" />
                             </StackPanel>
                         </DockPanel>
@@ -144,7 +144,7 @@
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="最小面积占比" />
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
-                                <Slider Minimum="0.001" Maximum="0.05" Value="{Binding MinAreaFrac}" Width="130" VerticalAlignment="Center" />
+                                <Slider Minimum="0.001" Maximum="0.05" Value="{Binding MinAreaFrac, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
                                 <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding MinAreaFrac, StringFormat={}{0:F3}}" Width="50" />
                             </StackPanel>
                         </DockPanel>
@@ -152,7 +152,7 @@
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="全局亮度阈值" />
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
-                                <Slider Minimum="1" Maximum="100" Value="{Binding GlobalBrightnessThresh}" Width="130" VerticalAlignment="Center" />
+                                <Slider Minimum="1" Maximum="254" Value="{Binding GlobalBrightnessThresh, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
                                 <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding GlobalBrightnessThresh, StringFormat={}{0:F0}}" Width="50" />
                             </StackPanel>
                         </DockPanel>
@@ -160,7 +160,7 @@
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="边缘容差" />
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
-                                <Slider Minimum="0" Maximum="10" Value="{Binding EdgeTolerance}" Width="130" VerticalAlignment="Center" />
+                                <Slider Minimum="0" Maximum="30" Value="{Binding EdgeTolerance, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
                                 <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding EdgeTolerance, StringFormat={}{0:F0}}" Width="50" />
                             </StackPanel>
                         </DockPanel>
@@ -168,7 +168,7 @@
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="边缘梯度" />
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
-                                <Slider Minimum="1" Maximum="254" Value="{Binding EdgeGradThresh}" Width="130" VerticalAlignment="Center" />
+                                <Slider Minimum="1" Maximum="254" Value="{Binding EdgeGradThresh, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
                                 <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding EdgeGradThresh, StringFormat={}{0:F0}}" Width="50" />
                             </StackPanel>
                         </DockPanel>
@@ -176,7 +176,7 @@
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="腐蚀核" />
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
-                                <Slider Minimum="1" Maximum="10" Value="{Binding ErodeSize}" Width="130" VerticalAlignment="Center" />
+                                <Slider Minimum="0" Maximum="15" Value="{Binding ErodeSize, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
                                 <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding ErodeSize, StringFormat={}{0:F0}}" Width="50" />
                             </StackPanel>
                         </DockPanel>
@@ -184,10 +184,13 @@
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="膨胀核" />
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
-                                <Slider Minimum="1" Maximum="10" Value="{Binding DilateSize}" Width="130" VerticalAlignment="Center" />
+                                <Slider Minimum="0" Maximum="15" Value="{Binding DilateSize, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
                                 <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding DilateSize, StringFormat={}{0:F0}}" Width="50" />
                             </StackPanel>
                         </DockPanel>
+                        <Button Style="{StaticResource AppleBtnSecondary}" Content="重置参数"
+                                Command="{Binding ResetDefectCmd}" HorizontalAlignment="Left"
+                                Margin="0,10,0,0" Padding="16,6" />
                     </StackPanel>
                 </Border>
 
@@ -230,6 +233,7 @@
                     </Border.Style>
                     <StackPanel>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="缺陷结果" />
+                        <TextBlock Text="{Binding DefectSummaryText}" Margin="0,2,0,0" Foreground="#FF3B30" FontSize="12" />
                         <ListBox ItemsSource="{Binding DefectResults}" Style="{StaticResource AppleListBox}" MaxHeight="220" Margin="0,4,0,0">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
