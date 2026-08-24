@@ -4,67 +4,162 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
-             mc:Ignorable="d">
-    <Grid>
+             mc:Ignorable="d" Loaded="Partial_Loaded">
+
+    <UserControl.Resources>
+        <!-- 面板小标题（对齐 NoCodeMotion 的 LuaPanelHeaderText） -->
+        <Style x:Key="LuaPanelHeaderText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- 调试工具栏按钮：iOS 系统色底 + 白字；禁用时整体淡化（与 NoCodeMotion 一致） -->
+        <Style x:Key="LuaDbgButton" TargetType="Button">
+            <Setter Property="Background" Value="#7A8794"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Margin" Value="1,0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6"/>
+                            <Border x:Name="hover" Background="White" Opacity="0" CornerRadius="6"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="hover" Property="Opacity" Value="0.16"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="hover" Property="Opacity" Value="0.30"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- iOS 矢量图标（白色字形 + iOS 系统色底，替代 emoji） -->
+        <Geometry x:Key="LuaPlayIcon">M8 5v14l11-7z</Geometry>
+        <Geometry x:Key="LuaPauseIcon">M6 5h4v14H6zM14 5h4v14h-4z</Geometry>
+        <Geometry x:Key="LuaStopIcon">M6 6h12v12H6z</Geometry>
+        <Geometry x:Key="LuaStepOverIcon">M4 12h11M11 7l5 5-5 5</Geometry>
+        <Geometry x:Key="LuaStepInIcon">M4 12h6M10 6l5 6-5 6</Geometry>
+        <Geometry x:Key="LuaStepOutIcon">M4 12h6M10 18l5-6-5-6</Geometry>
+        <Geometry x:Key="LuaBreakpointIcon">M12 2a10 10 0 100 20 10 10 0 000-20z</Geometry>
+
+        <!-- 统一的卡片内“标题条” -->
+        <Style x:Key="LuaCardHeader" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource AccentSoftBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource LineBrush}"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="Padding" Value="10,7"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="10">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="180" />
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*" MinHeight="240"/>
+            <RowDefinition Height="6"/>
+            <RowDefinition Height="170"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="*" MinWidth="420"/>
+            <ColumnDefinition Width="6"/>
+            <ColumnDefinition Width="300" MinWidth="240"/>
         </Grid.ColumnDefinitions>
 
         <!-- 标题 -->
-        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Style="{StaticResource iOSTitle}"
-                   Text="{Binding SelectedFlow.Name, FallbackValue='脚本流程'}" Margin="0,0,0,8" />
+        <TextBlock Grid.Row="0" Grid.ColumnSpan="3" Style="{StaticResource iOSTitle}"
+                   Text="{Binding SelectedFlow.Name, FallbackValue='脚本流程'}" Margin="0,0,0,8"/>
 
-        <!-- 工具栏 -->
-        <Border Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource AppleGroupCard}" Padding="12" Margin="0,0,0,10">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Style="{StaticResource AppleBtn}" Content="▶ 运行" Command="{Binding RunScriptCmd}" />
-                <Button Style="{StaticResource AppleBtn}" Content="⏯ 单步" Command="{Binding StepScriptCmd}" Margin="8,0,0,0" />
-                <Button Style="{StaticResource AppleBtnSecondary}" Content="{Binding ScriptPauseResumeText}"
-                        Command="{Binding PauseResumeScriptCmd}" Margin="8,0,0,0" />
-                <Button Style="{StaticResource AppleBtnSecondary}" Content="⏹ 停止"
-                        Command="{Binding StopScriptCmd}" Margin="8,0,0,0" />
-                <Button Style="{StaticResource AppleBtnSecondary}" Content="🔴 断点"
-                        Click="BreakpointButton_Click" Margin="8,0,0,0" />
-                <Button Style="{StaticResource AppleBtnSecondary}" Content="🔍 查找"
-                        Click="FindButton_Click" Margin="8,0,0,0" />
-                <Button Style="{StaticResource AppleBtnSecondary}" Content="💡 提示"
-                        Click="CompleteButton_Click" Margin="8,0,0,0" ToolTip="Ctrl+Space 智能提示" />
-                <Rectangle Width="1" Height="24" Fill="{StaticResource LineBrush}" Margin="12,0" VerticalAlignment="Center" />
-                <Border Style="{StaticResource AppleStatusPill}" Background="{StaticResource AccentSoftBrush}" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding ScriptStateText}" FontSize="12" Foreground="{StaticResource AccentBrush}" />
+        <!-- ============ 编辑器 ============ -->
+        <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource AppleGroupCard}" Padding="0" SnapsToDevicePixels="True">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Border Grid.Row="0" Style="{StaticResource LuaCardHeader}">
+                    <DockPanel>
+                        <TextBlock Style="{StaticResource LuaPanelHeaderText}" Text="编辑器"/>
+                        <TextBlock DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                   Text="输入时自动提示 · 点击变量查看取值 · 左侧边栏打断点"/>
+                    </DockPanel>
                 </Border>
-                <TextBlock Text="{Binding ScriptElapsedText}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
-                           VerticalAlignment="Center" Margin="8,0,0,0" />
-                <TextBlock Text="· 点击变量名查看值" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
-                           VerticalAlignment="Center" Margin="12,0,0,0" />
-            </StackPanel>
+                <avalonEdit:TextEditor x:Name="Editor" Grid.Row="1" Margin="6"
+                                        FontFamily="Consolas, 'Courier New', monospace" FontSize="13"
+                                        ShowLineNumbers="True" Background="{StaticResource CanvasBrush}"
+                                        VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
+                <!-- 编辑器底部：单行 print 输出回显 -->
+                <Border Grid.Row="2" Background="{StaticResource CanvasBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" Padding="10,5">
+                    <DockPanel LastChildFill="True">
+                        <TextBlock DockPanel.Dock="Left" Text="print" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="TxtPrint" FontSize="11.5" FontFamily="Consolas, Cascadia Mono, Microsoft YaHei UI" Foreground="{StaticResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Text="{Binding LastPrint, Mode=OneWay}"/>
+                    </DockPanel>
+                </Border>
+            </Grid>
         </Border>
 
-        <!-- 编辑器 -->
-        <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource AppleGroupCard}" Padding="0">
-            <avalonEdit:TextEditor x:Name="Editor" Margin="6"
-                                    FontFamily="Consolas, 'Courier New', monospace" FontSize="13"
-                                    ShowLineNumbers="True"
-                                    VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" />
-        </Border>
-
-        <!-- 右侧检查面板 -->
-        <Grid Grid.Row="2" Grid.Column="1" Margin="12,0,0,0">
+        <!-- ============ 右侧：智能插入（API 参考）+ 变量 / 调用栈 / 断点 ============ -->
+        <Grid Grid.Row="1" Grid.Column="2">
             <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="变量监视" />
+                    <!-- 智能插入：左函数列表 · 右片段列表 · 点击插入 -->
+                    <Border Style="{StaticResource AppleGroupCard}" Padding="0" Margin="0,0,0,10">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*" MinHeight="120"/>
+                            </Grid.RowDefinitions>
+                            <Border Grid.Row="0" Style="{StaticResource LuaCardHeader}">
+                                <DockPanel>
+                                    <TextBlock Style="{StaticResource LuaPanelHeaderText}" Text="智能插入"/>
+                                    <TextBlock DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Text="左选函数 · 右选片段 · 点击插入"/>
+                                </DockPanel>
+                            </Border>
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" MinWidth="80"/>
+                                    <ColumnDefinition Width="6"/>
+                                    <ColumnDefinition Width="*" MinWidth="80"/>
+                                </Grid.ColumnDefinitions>
+                                <ListBox x:Name="FuncList" Grid.Column="0" BorderThickness="0"
+                                         FontFamily="Microsoft YaHei UI, Consolas" FontSize="12.5"
+                                         DisplayMemberPath="Name"
+                                         SelectionChanged="FuncList_SelectionChanged"/>
+                                <Rectangle Grid.Column="1" Fill="{StaticResource LineBrush}"/>
+                                <ListBox x:Name="NameList" Grid.Column="2" BorderThickness="0"
+                                         FontFamily="Consolas, Cascadia Mono, Microsoft YaHei UI" FontSize="12.5"
+                                         DisplayMemberPath="Name"
+                                         MouseLeftButtonUp="NameList_MouseLeftButtonUp"/>
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <!-- 变量监视 -->
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="变量监视" Margin="0,0,0,4"/>
                     <ItemsControl ItemsSource="{Binding Variables}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -82,54 +177,144 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="调用栈" Margin="0,12,0,4" />
+                    <!-- 调用栈 -->
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="调用栈" Margin="0,12,0,4"/>
                     <ItemsControl ItemsSource="{Binding CallStack}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding}" FontSize="11" FontFamily="Consolas, monospace"
-                                           Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,2" />
+                                           Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,2"/>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="断点列表" Margin="0,12,0,4" />
+                    <!-- 断点列表 -->
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="断点列表" Margin="0,12,0,4"/>
                     <ItemsControl ItemsSource="{Binding Breakpoints}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding StringFormat=第{0}行}" FontSize="11" FontFamily="Consolas, monospace"
-                                           Margin="0,0,0,2" />
+                                <TextBlock Text="{Binding StringFormat=第{0}行}" FontSize="11" FontFamily="Consolas, monospace" Margin="0,0,0,2"/>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
             </ScrollViewer>
 
-            <!-- 变量检查（点击变量显示名称+值） -->
+            <!-- 变量检查 -->
             <Border Grid.Row="1" Style="{StaticResource AppleGroupCard}" Padding="10" Margin="0,10,0,0">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="变量检查" />
+                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="变量检查"/>
                     <TextBlock FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap">
-                        <Run Text="{Binding SelectedVariable.Name, Mode=OneWay, TargetNullValue='—'}" />
-                        <Run Text="{Binding SelectedVariable.Type, Mode=OneWay, TargetNullValue=''}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10" />
+                        <Run Text="{Binding SelectedVariable.Name, Mode=OneWay, TargetNullValue='—'}"/>
+                        <Run Text="{Binding SelectedVariable.Type, Mode=OneWay, TargetNullValue=''}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
                     </TextBlock>
                     <TextBlock Text="{Binding SelectedVariable.Value, Mode=OneWay, TargetNullValue='点击编辑器中的变量名查看值（运行并在断点/单步暂停后可见）'}"
-                               FontSize="12" Foreground="{StaticResource AccentBrush}" TextWrapping="Wrap" />
+                               FontSize="12" Foreground="{StaticResource AccentBrush}" TextWrapping="Wrap"/>
                 </StackPanel>
             </Border>
         </Grid>
 
-        <!-- 输出控制台 -->
-        <Border Grid.Row="3" Grid.ColumnSpan="2" Style="{StaticResource AppleGroupCard}" Padding="10" Margin="0,10,0,0">
+        <!-- ============ 输出控制台 ============ -->
+        <Border Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource AppleGroupCard}" Padding="0" SnapsToDevicePixels="True">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <TextBlock Style="{StaticResource AppleSubLabel}" Text="输出控制台" />
+                <Border Grid.Row="0" Style="{StaticResource LuaCardHeader}">
+                    <DockPanel>
+                        <TextBlock Style="{StaticResource LuaPanelHeaderText}" Text="输出"/>
+                        <TextBlock DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Text="运行脚本以查看输出"/>
+                    </DockPanel>
+                </Border>
                 <TextBox Grid.Row="1" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
                          Text="{Binding ScriptOutput, Mode=OneWay}"
                          FontFamily="Consolas, monospace" FontSize="11" Background="{StaticResource CanvasBrush}"
-                         BorderThickness="0" AcceptsReturn="True" />
+                         BorderThickness="0" AcceptsReturn="True" Margin="6"/>
+            </Grid>
+        </Border>
+
+        <!-- ============ 诊断 ============ -->
+        <Border Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,8,0,0" Padding="12,8" CornerRadius="8"
+                Background="{StaticResource CanvasBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1">
+            <DockPanel LastChildFill="True">
+                <TextBlock DockPanel.Dock="Left" Text="诊断" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                <TextBlock x:Name="TxtDiagnostics" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Foreground="{StaticResource TextSecondaryBrush}" Text="运行脚本以查看诊断信息"/>
+            </DockPanel>
+        </Border>
+
+        <!-- ============ 调试工具栏（iOS 彩色按钮，与 NoCodeMotion 一致） ============ -->
+        <Border Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,8,0,0" Style="{StaticResource AppleGroupCard}" SnapsToDevicePixels="True">
+            <Grid Margin="10,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Style="{StaticResource LuaDbgButton}" Background="#34C759" Command="{Binding RunScriptCmd}" ToolTip="运行 (F5)">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource LuaPlayIcon}" Width="14" Height="14" Stretch="Uniform" Fill="White" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="运行" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource LuaDbgButton}" Background="#007AFF" Command="{Binding StepScriptCmd}" ToolTip="单步执行 (F10)" Margin="6,0,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource LuaStepOverIcon}" Width="14" Height="14" Stretch="Uniform" Fill="White" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="单步" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource LuaDbgButton}" Background="#FF9500" Command="{Binding PauseResumeScriptCmd}" ToolTip="中断 / 继续" Margin="6,0,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource LuaPauseIcon}" Width="13" Height="13" Stretch="Uniform" Fill="White" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding ScriptPauseResumeText}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource LuaDbgButton}" Background="#FF3B30" Command="{Binding StopScriptCmd}" ToolTip="停止 (Shift+F5)" Margin="6,0,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource LuaStopIcon}" Width="13" Height="13" Stretch="Uniform" Fill="White" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="停止" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource LuaDbgButton}" Background="#FF3B30" Click="BreakpointButton_Click" ToolTip="在光标所在行设置 / 取消断点 (F9)" Margin="6,0,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource LuaBreakpointIcon}" Width="13" Height="13" Stretch="Uniform" Fill="White" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="断点" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource LuaDbgButton}" Background="#8E8E93" Click="FindButton_Click" ToolTip="查找 (Ctrl+F)" Margin="6,0,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="查找" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource LuaDbgButton}" Background="#8E8E93" Click="CompleteButton_Click" ToolTip="智能提示 (Ctrl+Space)" Margin="6,0,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="提示" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource LuaDbgButton}" Background="#8E8E93" Command="{Binding ClearBreakpointsCmd}" ToolTip="清除全部断点" Margin="6,0,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="清除断点" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource LuaDbgButton}" Background="#5856D6" Click="Undo_Click" ToolTip="回撤编辑 (Ctrl+Z)" Margin="6,0,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="回撤" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource LuaDbgButton}" Background="#5AC8FA" Click="Redo_Click" ToolTip="重做编辑 (Ctrl+Y)" Margin="6,0,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="重做" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+                <!-- 状态信息右对齐 -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Ellipse Width="9" Height="9" Fill="#8E8E93" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding ScriptStateText}" Margin="6,0,0,0" FontSize="12" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding ScriptElapsedText}" Margin="12,0,0,0" FontSize="12" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center"/>
+                    <TextBlock Text="  |  " FontSize="12" Foreground="#C7C7CC"/>
+                    <TextBlock FontSize="12" Foreground="{StaticResource TextMutedBrush}" Text="Lua (NLua)" VerticalAlignment="Center"/>
+                </StackPanel>
             </Grid>
         </Border>
     </Grid>

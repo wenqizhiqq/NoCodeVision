@@ -364,7 +364,7 @@ public class VisionFlow : ViewModelBase
     public string Name { get => _name; set => SetField(ref _name, value); }
     public string Icon { get; set; } = "🔀";
     public string FlowKind { get; set; } = "Normal";
-    public string ScriptContent { get; set; } = "-- 脚本流程入口\nlocal score = vision.match(\"tpl_A.png\")\nif score >= 0.85 then\n    plc.write(200, 1)\nend";
+    public string ScriptContent { get; set; } = "-- 脚本流程示例：视觉 + 运控 + 计算\n-- 1) 视觉：采集图像并匹配模板\nlocal ok = vision.grab()                  -- 抓取一帧图像\nlocal score = vision.match(\"tpl_A.png\") -- 模板匹配，返回相似度 0~1\nprint(\"匹配分数: \" .. tostring(score))\n\n-- 2) 计算：判定是否合格，并换算位移量\nlocal threshold = 0.85\nlocal pass = score >= threshold\nlocal dx = (score - threshold) * 100     -- 分数差 → 位移量(px)\nlocal dist = math.sqrt(dx * dx)           -- 用 math 做计算\nprint(\"是否合格: \" .. tostring(pass) .. \"  位移量: \" .. tostring(dist))\n\n-- 3) 运控：合格则驱动 PLC/轴动作，不合格报警\nif pass then\n    plc.write(200, 1)                     -- 触发运动 / 输出\n    plc.write(201, math.floor(dist))      -- 下发放大后的位移量\n    print(\"运控：已发送到位指令\")\nelse\n    plc.write(200, 0)                     -- 复位 / 报警\n    print(\"运控：未达标，已停止\")\nend\n\nsleep(50)\n";
     public ObservableCollection<VisionFlowStep> Steps { get; set; } = new();
 }
 
@@ -1542,6 +1542,7 @@ public class FlowViewModel : ViewModelBase
         public ICommand StepScriptCmd { get; }
         public ICommand PauseResumeScriptCmd { get; }
         public ICommand ToggleBreakpointCmd { get; }
+        public ICommand ClearBreakpointsCmd { get; }
 
         // ---- 脚本流程调试状态 ----
         private LuaDebugHost? _luaHost;
@@ -1549,6 +1550,7 @@ public class FlowViewModel : ViewModelBase
         private bool _scriptIsPaused;
         private double _scriptElapsedMs;
         private string _scriptOutput = "";
+        private string _lastPrint = "";
         private int _currentLine = -1;
         private NoCodeVision.Scripting.VarItem? _selectedVariable;
 
@@ -1560,6 +1562,7 @@ public class FlowViewModel : ViewModelBase
         public string ScriptPauseResumeText => ScriptIsPaused ? "▶ 继续" : "⏸ 暂停";
         public double ScriptElapsedMs { get => _scriptElapsedMs; set { if (SetField(ref _scriptElapsedMs, value)) OnPropertyChanged(nameof(ScriptElapsedText)); } }
         public string ScriptOutput { get => _scriptOutput; set => SetField(ref _scriptOutput, value); }
+        public string LastPrint { get => _lastPrint; set => SetField(ref _lastPrint, value); }
         public int CurrentLine { get => _currentLine; set => SetField(ref _currentLine, value); }
         public NoCodeVision.Scripting.VarItem? SelectedVariable { get => _selectedVariable; set => SetField(ref _selectedVariable, value); }
         public string ScriptStateText => !ScriptIsRunning ? "就绪" : (ScriptIsPaused ? "⏸ 已暂停" : "▶ 运行中");
@@ -1573,7 +1576,7 @@ public class FlowViewModel : ViewModelBase
             var uiCtx = SynchronizationContext.Current;
             _luaHost = new LuaDebugHost(
                 uiCtx,
-                onOutput: s => { ScriptOutput = ScriptOutput.Length > 8000 ? s + "\n" : ScriptOutput + s + "\n"; },
+                onOutput: s => { var line = s == null ? "" : s.ToString(); LastPrint = line; ScriptOutput = ScriptOutput.Length > 8000 ? line + "\n" : ScriptOutput + line + "\n"; },
                 onVariables: vars => { Variables.Clear(); foreach (var v in vars) Variables.Add(v); },
                 onCallStack: st => { CallStack.Clear(); foreach (var l in st) CallStack.Add(l); },
                 onCurrentLine: ln => CurrentLine = ln,
@@ -1967,6 +1970,12 @@ public class FlowViewModel : ViewModelBase
                 else Breakpoints.Add(line);
                 _luaHost?.SetBreakpoints(Breakpoints);
             }
+        }, _ => _selectedFlow != null && _selectedFlow.FlowKind == "Script");
+
+        ClearBreakpointsCmd = new RelayCommand(_ =>
+        {
+            Breakpoints.Clear();
+            _luaHost?.SetBreakpoints(Breakpoints);
         }, _ => _selectedFlow != null && _selectedFlow.FlowKind == "Script");
     }
 
