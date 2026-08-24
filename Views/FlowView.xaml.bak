@@ -821,24 +821,6 @@
                         </Style>
                     </Border.Style>
                     <StackPanel>
-                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="缺陷检测预览" />
-                        <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="10" Background="{StaticResource SurfaceBrush}" Height="280" Margin="0,0,0,12">
-                            <Grid>
-                                <TextBlock Text="未加载流程图片" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding CurrentImageSource}" Value="{x:Null}">
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                                <ctrl:RoiImageView SourceImage="{Binding CurrentImageSource}" Overlays="{Binding MatchOverlays}" DefectOverlay="{Binding DefectOverlayImage}" />
-                            </Grid>
-                        </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="缺陷参数" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="差异阈值" />
@@ -895,36 +877,6 @@
                                 <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding SelectedStep.DilateSize, StringFormat={}{0:F0}}" Width="50" />
                             </StackPanel>
                         </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding DefectSummaryText}" Foreground="#DC2626" Margin="0,4,0,8" />
-                        <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="10" Background="{StaticResource SurfaceBrush}" MaxHeight="160">
-                            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                <ItemsControl ItemsSource="{Binding FlowDefectResults}" Margin="8">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Grid Margin="0,2">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <Ellipse Width="10" Height="10" Fill="#DC2626" Margin="0,0,8,0" VerticalAlignment="Center" />
-                                                <TextBlock Grid.Column="1" Style="{StaticResource AppleSubLabel}" TextWrapping="Wrap">
-                                                    <TextBlock.Text>
-                                                        <MultiBinding StringFormat="{}{0}: 面积{1:F0}px, 中心({2:F1},{3:F1}), 角度{4:F1}°">
-                                                            <Binding Path="Category" />
-                                                            <Binding Path="Area" />
-                                                            <Binding Path="CenterX" />
-                                                            <Binding Path="CenterY" />
-                                                            <Binding Path="Angle" />
-                                                        </MultiBinding>
-                                                    </TextBlock.Text>
-                                                </TextBlock>
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </ScrollViewer>
-                        </Border>
                     </StackPanel>
                 </Border>
 
