@@ -1078,7 +1078,8 @@ public class FlowViewModel : ViewModelBase
         {
             if (SetField(ref _selectedStep, value))
             {
-                _matchOverlays.Clear();
+                if (value?.StepType != "Defect")
+                    _matchOverlays.Clear();
                 if (_subscribedStep != null)
                 {
                     _subscribedStep.PropertyChanged -= SelectedStep_PropertyChanged;
@@ -1093,6 +1094,8 @@ public class FlowViewModel : ViewModelBase
                     {
                         if (_lastMatchResults != null && _lastMatchResults.Count > 0)
                             RedetectDefects();
+                        else
+                            DefectSummaryText = "请先运行模板匹配步骤";
                     }
                     else
                     {
@@ -1217,11 +1220,18 @@ public class FlowViewModel : ViewModelBase
     private void RedetectDefects()
     {
         var step = _selectedStep;
-        if (step == null || step.StepType != "Defect" || _lastMatchResults == null || _lastMatchResults.Count == 0)
+        if (step == null || step.StepType != "Defect")
         {
             DefectOverlayImage = null;
             FlowDefectResults.Clear();
-            DefectSummaryText = "无匹配结果";
+            DefectSummaryText = "请先选择缺陷检测步骤";
+            return;
+        }
+        if (_lastMatchResults == null || _lastMatchResults.Count == 0)
+        {
+            DefectOverlayImage = null;
+            FlowDefectResults.Clear();
+            DefectSummaryText = "请先运行模板匹配步骤";
             return;
         }
         try
@@ -1413,6 +1423,7 @@ public class FlowViewModel : ViewModelBase
     public ICommand SetPropTabCmd { get; }
     public ICommand RunCmd { get; }
     public ICommand StepRunCmd { get; }
+    public ICommand RunDefectCmd { get; }
     public ICommand PauseResumeCmd { get; }
     public ICommand StopCmd { get; }
     public ICommand AddScriptFlowCmd { get; }
@@ -1714,7 +1725,7 @@ public class FlowViewModel : ViewModelBase
                             H = r.TemplateHeight,
                             // 与 VisionMotion/GrayMatch 已验证路径一致：原生角度取负
                             AngleDeg = -r.Angle,
-                            Color = "#007AFF",
+                            Color = "#34C759",
                             Label = $"相似度 {r.Score:F2}"
                         });
                     }
@@ -1750,6 +1761,17 @@ public class FlowViewModel : ViewModelBase
             _stepCursor = NextStepIndex(_stepCursor);
             Status = "单步完成 · 第" + step.Index + "步 " + step.Name;
         }, _ => _selectedFlow != null && _selectedFlow.Steps.Count > 0 && !IsRunning);
+
+        RunDefectCmd = new RelayCommand(_ =>
+        {
+            if (_selectedStep?.StepType != "Defect") return;
+            if (_lastMatchResults == null || _lastMatchResults.Count == 0)
+            {
+                DefectSummaryText = "请先运行模板匹配步骤";
+                return;
+            }
+            RedetectDefects();
+        }, _ => _selectedStep?.StepType == "Defect");
 
         PauseResumeCmd = new RelayCommand(_ => { IsPaused = !IsPaused; }, _ => IsRunning);
 
@@ -2150,6 +2172,12 @@ public class FlowViewModel : ViewModelBase
                             step.ActualValue = "未匹配";
                             step.StatusText = "匹配失败";
                         }
+                        // 确保缺陷检测面板能加载到图（模板匹配源图即缺陷检测输入图）
+                        if (!string.IsNullOrWhiteSpace(step.ImageSource) && File.Exists(step.ImageSource))
+                            CurrentImagePath = step.ImageSource;
+                        // 若当前正停在缺陷检测步骤，自动刷新缺陷显示
+                        if (_selectedStep?.StepType == "Defect")
+                            RedetectDefects();
                     }
                     if (ownMat && srcMat != null) srcMat.Dispose();
                     break;

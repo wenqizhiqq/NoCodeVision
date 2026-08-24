@@ -8,10 +8,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows.Threading;
+using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using System.Windows.Media;
 using Microsoft.Win32;
 using GrayMatch;
 using OpenCvSharp;
@@ -1087,12 +1089,28 @@ public class FlowViewModel : ViewModelBase
                     _selectedStep.PropertyChanged += SelectedStep_PropertyChanged;
                     _subscribedStep = _selectedStep;
                     LoadTemplatePreview(value);
+                    if (_selectedStep.StepType == "Defect")
+                    {
+                        if (_lastMatchResults != null && _lastMatchResults.Count > 0)
+                            RedetectDefects();
+                        else
+                            DefectSummaryText = "请先运行模板匹配步骤";
+                    }
+                    else
+                    {
+                        DefectOverlayImage = null;
+                        FlowDefectResults.Clear();
+                        DefectSummaryText = "请先运行检测";
+                    }
                     if (_selectedStep.MatchMode == MatchModes[1]) ScheduleTemplateContourRefresh();
                     else TemplateContourOverlay = null;
                 }
                 else
                 {
                     TemplateContourOverlay = null;
+                    DefectOverlayImage = null;
+                    FlowDefectResults.Clear();
+                    DefectSummaryText = "请先运行检测";
                 }
             }
         }
@@ -1110,6 +1128,17 @@ public class FlowViewModel : ViewModelBase
         {
             if (_selectedStep?.MatchMode == MatchModes[1]) ScheduleTemplateContourRefresh();
             else TemplateContourOverlay = null;
+        }
+        if (e.PropertyName is nameof(VisionFlowStep.DiffThreshold)
+            or nameof(VisionFlowStep.MinAreaFrac)
+            or nameof(VisionFlowStep.GlobalBrightnessThresh)
+            or nameof(VisionFlowStep.EdgeTolerance)
+            or nameof(VisionFlowStep.EdgeGradThresh)
+            or nameof(VisionFlowStep.ErodeSize)
+            or nameof(VisionFlowStep.DilateSize))
+        {
+            if (_selectedStep?.StepType == "Defect" && _lastMatchResults != null && _lastMatchResults.Count > 0)
+                ScheduleDefectRefresh();
         }
     }
 
@@ -1172,6 +1201,114 @@ public class FlowViewModel : ViewModelBase
         {
             TemplateContourOverlay = null;
         }
+    }
+
+    private DispatcherTimer? _defectTimer;
+
+    private void ScheduleDefectRefresh()
+    {
+        if (_defectTimer == null)
+        {
+            _defectTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _defectTimer.Tick += (_, _) => { _defectTimer.Stop(); RedetectDefects(); };
+        }
+        _defectTimer.Stop();
+        _defectTimer.Start();
+    }
+
+    private void RedetectDefects()
+    {
+        var step = _selectedStep;
+        if (step == null || step.StepType != "Defect")
+        {
+            DefectOverlayImage = null;
+            FlowDefectResults.Clear();
+            DefectSummaryText = "请先选择缺陷检测步骤";
+            return;
+        }
+        if (_lastMatchResults == null || _lastMatchResults.Count == 0)
+        {
+            DefectOverlayImage = null;
+            FlowDefectResults.Clear();
+            DefectSummaryText = "请先运行模板匹配步骤";
+            return;
+        }
+        try
+        {
+            using var matcher = new RotatedTemplateMatcher();
+            matcher.DefectOptions = new DefectOptions
+            {
+                DiffThreshold = step.DiffThreshold,
+                MinAreaFrac = step.MinAreaFrac,
+                GlobalBrightnessThresh = step.GlobalBrightnessThresh,
+                EdgeTolerance = step.EdgeTolerance,
+                EdgeGradThresh = step.EdgeGradThresh,
+                ErodeSize = step.ErodeSize,
+                DilateSize = step.DilateSize,
+            };
+            var defects = matcher.DetectDefects(_lastMatchResults);
+            FlowDefectResults.Clear();
+            foreach (var d in defects) FlowDefectResults.Add(d);
+            DefectSummaryText = defects.Count == 0
+                ? "未发现缺陷"
+                : $"发现 {defects.Count} 处缺陷";
+            DefectOverlayImage = BuildDefectOverlay(defects);
+        }
+        catch (Exception ex)
+        {
+            FlowDefectResults.Clear();
+            DefectSummaryText = "重检失败：" + ex.Message;
+            DefectOverlayImage = null;
+        }
+    }
+
+    private ImageSource? BuildDefectOverlay(List<DefectResult> defects)
+    {
+        if (defects.Count == 0) return null;
+        if (CurrentImageSource == null) return null;
+        int w = CurrentImageSource.PixelWidth, h = CurrentImageSource.PixelHeight;
+        if (w <= 0 || h <= 0) return null;
+
+        var wb = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null);
+        wb.Lock();
+        try
+        {
+            int stride = wb.BackBufferStride;
+            var px = new byte[stride * h];
+            foreach (var d in defects)
+            {
+                if (d.Pixels == null || d.Pw <= 0 || d.Ph <= 0) continue;
+                double phi = -d.Angle * System.Math.PI / 180.0;
+                double cosv = System.Math.Cos(phi), sinv = System.Math.Sin(phi);
+                double tw = d.Tw, th = d.Th;
+                for (int ly = 0; ly < d.Ph; ly++)
+                {
+                    int baseOff = ly * d.Pw;
+                    for (int lx = 0; lx < d.Pw; lx++)
+                    {
+                        if (d.Pixels[baseOff + lx] == 0) continue;
+                        double ux = lx - tw / 2.0;
+                        double uy = ly - th / 2.0;
+                        int ix = (int)System.Math.Round(d.CenterX + (ux * cosv - uy * sinv));
+                        int iy = (int)System.Math.Round(d.CenterY + (ux * sinv + uy * cosv));
+                        if (ix < 0 || iy < 0 || ix >= w || iy >= h) continue;
+                        int idx = iy * stride + ix * 4;
+                        px[idx] = 0;
+                        px[idx + 1] = 0;
+                        px[idx + 2] = 255;
+                        px[idx + 3] = 220;
+                    }
+                }
+            }
+            Marshal.Copy(px, 0, wb.BackBuffer, px.Length);
+        }
+        finally
+        {
+            wb.AddDirtyRect(new System.Windows.Int32Rect(0, 0, w, h));
+            wb.Unlock();
+        }
+        wb.Freeze();
+        return wb;
     }
 
     private bool LoadContourFromSourceRoi(RotatedTemplateMatcher m, VisionFlowStep step)
@@ -1252,6 +1389,15 @@ public class FlowViewModel : ViewModelBase
     private BitmapImage? _currentImageSource;
     public BitmapImage? CurrentImageSource { get => _currentImageSource; set => SetField(ref _currentImageSource, value); }
 
+    public ImageSource? DefectOverlayImage { get => _defectOverlayImage; set => SetField(ref _defectOverlayImage, value); }
+    private ImageSource? _defectOverlayImage;
+
+    public ObservableCollection<DefectResult> FlowDefectResults => _flowDefectResults;
+    private readonly ObservableCollection<DefectResult> _flowDefectResults = new();
+
+    public string DefectSummaryText { get => _defectSummaryText; set => SetField(ref _defectSummaryText, value); }
+    private string _defectSummaryText = "请先运行检测";
+
     private ObservableCollection<OverlayItem> _matchOverlays = new();
     public ObservableCollection<OverlayItem> MatchOverlays => _matchOverlays;
 
@@ -1276,6 +1422,7 @@ public class FlowViewModel : ViewModelBase
     public ICommand SetPropTabCmd { get; }
     public ICommand RunCmd { get; }
     public ICommand StepRunCmd { get; }
+    public ICommand RunDefectCmd { get; }
     public ICommand PauseResumeCmd { get; }
     public ICommand StopCmd { get; }
     public ICommand AddScriptFlowCmd { get; }
@@ -1577,7 +1724,7 @@ public class FlowViewModel : ViewModelBase
                             H = r.TemplateHeight,
                             // 与 VisionMotion/GrayMatch 已验证路径一致：原生角度取负
                             AngleDeg = -r.Angle,
-                            Color = "#007AFF",
+                            Color = "#34C759",
                             Label = $"相似度 {r.Score:F2}"
                         });
                     }
@@ -1613,6 +1760,17 @@ public class FlowViewModel : ViewModelBase
             _stepCursor = NextStepIndex(_stepCursor);
             Status = "单步完成 · 第" + step.Index + "步 " + step.Name;
         }, _ => _selectedFlow != null && _selectedFlow.Steps.Count > 0 && !IsRunning);
+
+        RunDefectCmd = new RelayCommand(_ =>
+        {
+            if (_selectedStep?.StepType != "Defect") return;
+            if (_lastMatchResults == null || _lastMatchResults.Count == 0)
+            {
+                DefectSummaryText = "请先运行模板匹配步骤";
+                return;
+            }
+            RedetectDefects();
+        }, _ => _selectedStep?.StepType == "Defect" && _lastMatchResults != null && _lastMatchResults.Count > 0);
 
         PauseResumeCmd = new RelayCommand(_ => { IsPaused = !IsPaused; }, _ => IsRunning);
 
@@ -2013,6 +2171,9 @@ public class FlowViewModel : ViewModelBase
                             step.ActualValue = "未匹配";
                             step.StatusText = "匹配失败";
                         }
+                        // 若当前正停在缺陷检测步骤，自动刷新缺陷显示
+                        if (_selectedStep?.StepType == "Defect")
+                            RedetectDefects();
                     }
                     if (ownMat && srcMat != null) srcMat.Dispose();
                     break;
@@ -2046,6 +2207,13 @@ public class FlowViewModel : ViewModelBase
                         {
                             step.ActualValue = "无缺陷";
                             step.StatusText = "缺陷通过";
+                        }
+                        if (ReferenceEquals(step, _selectedStep))
+                        {
+                            FlowDefectResults.Clear();
+                            foreach (var d in defects) FlowDefectResults.Add(d);
+                            DefectSummaryText = defects.Count == 0 ? "未发现缺陷" : $"发现 {defects.Count} 处缺陷";
+                            DefectOverlayImage = BuildDefectOverlay(defects);
                         }
                     }
                     break;
