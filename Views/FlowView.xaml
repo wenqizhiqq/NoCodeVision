@@ -925,29 +925,9 @@
                                 </ItemsControl>
                             </ScrollViewer>
                         </Border>
-                        <Button Content="开始检测缺陷" Padding="12,6" FontSize="13" Margin="0,12,0,0"
-                                HorizontalAlignment="Stretch"
-                                Background="{StaticResource AccentBrush}" Foreground="White" BorderThickness="0"
-                                Command="{Binding RunDefectCmd}">
-                            <Button.Style>
-                                <Style TargetType="Button">
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
-                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                    <Style.Triggers>
-                                        <Trigger Property="IsEnabled" Value="False">
-                                            <Setter Property="Opacity" Value="0.5" />
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
+        <Button Content="开始检测缺陷" Style="{StaticResource AppleBtn}"
+                Margin="0,12,0,0" HorizontalAlignment="Stretch"
+                Command="{Binding RunDefectCmd}" />
                     </StackPanel>
                 </Border>
 

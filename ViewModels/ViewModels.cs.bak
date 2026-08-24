@@ -1078,7 +1078,8 @@ public class FlowViewModel : ViewModelBase
         {
             if (SetField(ref _selectedStep, value))
             {
-                _matchOverlays.Clear();
+                if (value?.StepType != "Defect")
+                    _matchOverlays.Clear();
                 if (_subscribedStep != null)
                 {
                     _subscribedStep.PropertyChanged -= SelectedStep_PropertyChanged;
@@ -1770,7 +1771,7 @@ public class FlowViewModel : ViewModelBase
                 return;
             }
             RedetectDefects();
-        }, _ => _selectedStep?.StepType == "Defect" && _lastMatchResults != null && _lastMatchResults.Count > 0);
+        }, _ => _selectedStep?.StepType == "Defect");
 
         PauseResumeCmd = new RelayCommand(_ => { IsPaused = !IsPaused; }, _ => IsRunning);
 
@@ -2171,6 +2172,9 @@ public class FlowViewModel : ViewModelBase
                             step.ActualValue = "未匹配";
                             step.StatusText = "匹配失败";
                         }
+                        // 确保缺陷检测面板能加载到图（模板匹配源图即缺陷检测输入图）
+                        if (!string.IsNullOrWhiteSpace(step.ImageSource) && File.Exists(step.ImageSource))
+                            CurrentImagePath = step.ImageSource;
                         // 若当前正停在缺陷检测步骤，自动刷新缺陷显示
                         if (_selectedStep?.StepType == "Defect")
                             RedetectDefects();

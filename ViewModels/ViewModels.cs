@@ -1071,6 +1071,8 @@ public class FlowViewModel : ViewModelBase
     }
 
     private VisionFlowStep? _selectedStep;
+    public bool IsDefectStepSelected => _selectedStep?.StepType == "Defect";
+
     public VisionFlowStep? SelectedStep
     {
         get => _selectedStep;
@@ -1113,6 +1115,8 @@ public class FlowViewModel : ViewModelBase
                     FlowDefectResults.Clear();
                     DefectSummaryText = "请先运行检测";
                 }
+                CommandManager.InvalidateRequerySuggested();
+                OnPropertyChanged(nameof(IsDefectStepSelected));
             }
         }
     }
@@ -1764,14 +1768,24 @@ public class FlowViewModel : ViewModelBase
 
         RunDefectCmd = new RelayCommand(_ =>
         {
-            if (_selectedStep?.StepType != "Defect") return;
+            if (_selectedStep?.StepType != "Defect")
+            {
+                DefectSummaryText = "请先选择缺陷检测步骤";
+                Status = "缺陷检测：当前未选中缺陷检测步骤";
+                return;
+            }
+            // 立即反馈，确认点击已生效
+            Status = "正在检测缺陷…";
+            DefectSummaryText = "检测中…";
             if (_lastMatchResults == null || _lastMatchResults.Count == 0)
             {
                 DefectSummaryText = "请先运行模板匹配步骤";
+                Status = "缺陷检测：请先运行模板匹配步骤";
                 return;
             }
             RedetectDefects();
-        }, _ => _selectedStep?.StepType == "Defect");
+            Status = FlowDefectResults.Count == 0 ? "缺陷检测完成：未发现缺陷" : $"缺陷检测完成：发现 {FlowDefectResults.Count} 处缺陷";
+        }, _ => true);
 
         PauseResumeCmd = new RelayCommand(_ => { IsPaused = !IsPaused; }, _ => IsRunning);
 
@@ -2161,11 +2175,25 @@ public class FlowViewModel : ViewModelBase
                         var results = matcher.Match(step.PyramidLevel, step.AngleStart, step.AngleStop, step.AngleStep,
                             step.ScoreThreshold, step.Overlap, step.TopN, step.DenseMode);
                         _lastMatchResults = results;
+                        _matchOverlays.Clear();
                         if (results.Count > 0)
                         {
-                            var r = results[0];
-                            step.ActualValue = $"({r.CenterX:F1},{r.CenterY:F1}) θ{r.Angle:F1} score{r.Score:F2}";
+                            var r0 = results[0];
+                            step.ActualValue = $"({r0.CenterX:F1},{r0.CenterY:F1}) θ{r0.Angle:F1} score{r0.Score:F2}";
                             step.StatusText = "匹配成功";
+                            foreach (var r in results)
+                            {
+                                _matchOverlays.Add(new OverlayItem
+                                {
+                                    X = r.CenterX,
+                                    Y = r.CenterY,
+                                    W = r.TemplateWidth,
+                                    H = r.TemplateHeight,
+                                    AngleDeg = -r.Angle,
+                                    Color = "#34C759",
+                                    Label = $"相似度 {r.Score:F2}"
+                                });
+                            }
                         }
                         else
                         {
