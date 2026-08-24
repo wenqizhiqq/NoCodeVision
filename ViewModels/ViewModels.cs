@@ -1004,6 +1004,34 @@ public class FlowViewModel : ViewModelBase
         };
     }
 
+    // 新建「流程 / 脚本流程」时预置的完整 5 步流水线：采集 → 模板匹配 → 缺陷检测 → 测量 → 通讯
+    private static ObservableCollection<VisionFlowStep> CreateStandardPipeline()
+    {
+        return new ObservableCollection<VisionFlowStep>
+        {
+            new VisionFlowStep
+            {
+                Index = 1, Function = "图像采集", Name = "采集图像", ParamSummary = "打开文件", Timeout = 5000, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始"
+            },
+            new VisionFlowStep
+            {
+                Index = 2, Function = "模板匹配", Name = "模板匹配", ParamSummary = "tpl / score≥0.85", Timeout = 3000, ActualValue = "未匹配", Icon = "🎯", StepType = "TemplateMatch", MatchMode = "灰度匹配", ScoreThreshold = 0.85, RoiX = 80, RoiY = 60, RoiW = 160, RoiH = 120, StatusText = "未开始"
+            },
+            new VisionFlowStep
+            {
+                Index = 3, Function = "缺陷检测", Name = "缺陷检测", ParamSummary = "差异比对 / 阈值45", Timeout = 3000, ActualValue = "未检测", Icon = "🔍", StepType = "Defect", StatusText = "未开始"
+            },
+            new VisionFlowStep
+            {
+                Index = 4, Function = "几何测量", Name = "几何测量", ParamSummary = "圆径 / 12.00±0.05", Timeout = 2000, ActualValue = "未测量", Icon = "📐", StepType = "Measure", MeasureType = "圆径", NominalValue = 12.0, Tolerance = 0.05, StatusText = "未开始"
+            },
+            new VisionFlowStep
+            {
+                Index = 5, Function = "通讯发送", Name = "通讯发送", ParamSummary = "PLC-串口 / M100=1", Timeout = 1000, ActualValue = "未发送", Icon = "📡", StepType = "Comm", CommChannel = "PLC-串口", CommCmd = "发送", CommContent = "M100=1", CommEncoding = "ASCII", StatusText = "未开始"
+            },
+        };
+    }
+
 
     public string[] StepFunctions { get; } = { "图像采集", "模板匹配", "几何测量", "逻辑判断", "结果输出", "缺陷检测", "Lua脚本", "轴运动", "IO控制", "气缸动作", "等待延时", "通讯指令" };
     public string[] PreprocessTypes { get; } = { "灰度化", "二值化", "高斯模糊", "中值滤波", "边缘检测" };
@@ -1558,7 +1586,15 @@ public class FlowViewModel : ViewModelBase
         AddFlowCmd = new RelayCommand(_ =>
         {
             var next = Flows.Count + 1;
-            Flows.Add(new VisionFlow { Name = $"新流程-{next}", Icon = "🔀" });
+            var flow = new VisionFlow
+            {
+                Name = $"新流程-{next}",
+                Icon = "🔀",
+                Steps = CreateStandardPipeline()
+            };
+            Flows.Add(flow);
+            SelectedFlow = flow;
+            SelectedStep = flow.Steps.FirstOrDefault();
         });
         DeleteFlowCmd = new RelayCommand(_ =>
         {
@@ -1615,7 +1651,8 @@ public class FlowViewModel : ViewModelBase
             {
                 Name = $"脚本流程-{next}",
                 Icon = "📝",
-                FlowKind = "Script"
+                FlowKind = "Script",
+                Steps = CreateStandardPipeline()
             };
             Flows.Add(flow);
             SelectedFlow = flow;
