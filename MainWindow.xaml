@@ -11,82 +11,82 @@
 
     <DockPanel>
         <!-- 顶部导航栏 -->
-        <Border DockPanel.Dock="Top" Height="56"
+        <Border DockPanel.Dock="Top" Height="74"
                 Background="{StaticResource SurfaceBrush}"
                 BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1">
             <Grid>
                 <!-- 左侧 Logo -->
-                <StackPanel Orientation="Horizontal" Margin="18,0,0,0" VerticalAlignment="Center">
-                    <Border Width="26" Height="26" CornerRadius="7" Background="{StaticResource AccentBrush}">
-                        <TextBlock Text="N" Foreground="White" FontWeight="Bold" FontSize="15"
+                <StackPanel Orientation="Horizontal" Margin="20,0,0,0" VerticalAlignment="Center">
+                    <Border Width="34" Height="34" CornerRadius="9" Background="{StaticResource AccentBrush}">
+                        <TextBlock Text="N" Foreground="White" FontWeight="Bold" FontSize="19"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
-                    <TextBlock Text="NoCodeVision" FontSize="15" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextPrimaryBrush}" Margin="10,0,0,0" />
-                    <TextBlock Text="无代码视觉" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="8,2,0,0" />
+                    <TextBlock Text="NoCodeVision" FontSize="17" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimaryBrush}" Margin="12,0,0,0" />
+                    <TextBlock Text="无代码视觉" FontSize="13" Foreground="{StaticResource TextMutedBrush}" Margin="10,2,0,0" />
                 </StackPanel>
 
                 <!-- 中间分段导航 -->
                 <Border HorizontalAlignment="Center" VerticalAlignment="Center"
-                        Background="{StaticResource SegTrackBrush}" CornerRadius="9" Padding="3">
+                        Background="{StaticResource SegTrackBrush}" CornerRadius="11" Padding="4">
                     <StackPanel Orientation="Horizontal" x:Name="SegPanel">
                         <Button x:Name="Nav0" Tag="0" Style="{StaticResource SegButton}" Click="Nav_Click">
                             <StackPanel Orientation="Horizontal">
-                                <ctrl:AppleIconTile Glyph="📁" TileSize="20" Margin="0,0,6,0" />
-                                <TextBlock Text="项目" VerticalAlignment="Center" />
+                                <ctrl:AppleIconTile Glyph="📁" TileSize="28" Margin="0,0,8,0" />
+                                <TextBlock Text="项目" FontSize="15" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
                         <Button x:Name="Nav1" Tag="1" Style="{StaticResource SegButton}" Click="Nav_Click">
                             <StackPanel Orientation="Horizontal">
-                                <ctrl:AppleIconTile Glyph="📷" TileSize="20" Margin="0,0,6,0" />
-                                <TextBlock Text="相机" VerticalAlignment="Center" />
+                                <ctrl:AppleIconTile Glyph="📷" TileSize="28" Margin="0,0,8,0" />
+                                <TextBlock Text="相机" FontSize="15" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
                         <Button x:Name="Nav2" Tag="2" Style="{StaticResource SegButton}" Click="Nav_Click">
                             <StackPanel Orientation="Horizontal">
-                                <ctrl:AppleIconTile Glyph="⚙️" TileSize="20" Margin="0,0,6,0" />
-                                <TextBlock Text="运控" VerticalAlignment="Center" />
+                                <ctrl:AppleIconTile Glyph="⚙️" TileSize="28" Margin="0,0,8,0" />
+                                <TextBlock Text="运控" FontSize="15" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
                         <Button x:Name="Nav3" Tag="3" Style="{StaticResource SegButton}" Click="Nav_Click">
                             <StackPanel Orientation="Horizontal">
-                                <ctrl:AppleIconTile Glyph="📡" TileSize="20" Margin="0,0,6,0" />
-                                <TextBlock Text="通讯" VerticalAlignment="Center" />
+                                <ctrl:AppleIconTile Glyph="📡" TileSize="28" Margin="0,0,8,0" />
+                                <TextBlock Text="通讯" FontSize="15" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
                         <Button x:Name="Nav4" Tag="4" Style="{StaticResource SegButton}" Click="Nav_Click">
                             <StackPanel Orientation="Horizontal">
-                                <ctrl:AppleIconTile Glyph="🧮" TileSize="20" Margin="0,0,6,0" />
-                                <TextBlock Text="变量" VerticalAlignment="Center" />
+                                <ctrl:AppleIconTile Glyph="🧮" TileSize="28" Margin="0,0,8,0" />
+                                <TextBlock Text="变量" FontSize="15" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
                         <Button x:Name="Nav5" Tag="5" Style="{StaticResource SegButton}" Click="Nav_Click">
                             <StackPanel Orientation="Horizontal">
-                                <ctrl:AppleIconTile Glyph="🔀" TileSize="20" Margin="0,0,6,0" />
-                                <TextBlock Text="流程" VerticalAlignment="Center" />
+                                <ctrl:AppleIconTile Glyph="🔀" TileSize="28" Margin="0,0,8,0" />
+                                <TextBlock Text="流程" FontSize="15" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
                         <Button x:Name="Nav6" Tag="6" Style="{StaticResource SegButton}" Click="Nav_Click">
                             <StackPanel Orientation="Horizontal">
-                                <ctrl:AppleIconTile Glyph="🛠" TileSize="20" Margin="0,0,6,0" />
-                                <TextBlock Text="工程师" VerticalAlignment="Center" />
+                                <ctrl:AppleIconTile Glyph="🛠" TileSize="28" Margin="0,0,8,0" />
+                                <TextBlock Text="工程师" FontSize="15" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
                         <Button x:Name="Nav7" Tag="7" Style="{StaticResource SegButton}" Click="Nav_Click">
                             <StackPanel Orientation="Horizontal">
-                                <ctrl:AppleIconTile Glyph="👤" TileSize="20" Margin="0,0,6,0" />
-                                <TextBlock Text="操作员" VerticalAlignment="Center" />
+                                <ctrl:AppleIconTile Glyph="👤" TileSize="28" Margin="0,0,8,0" />
+                                <TextBlock Text="操作员" FontSize="15" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
                     </StackPanel>
                 </Border>
 
                 <!-- 右侧状态 -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,18,0" VerticalAlignment="Center">
-                    <Border Style="{StaticResource AppleStatusPill}" Background="{StaticResource AccentSoftBrush}">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,20,0" VerticalAlignment="Center">
+                    <Border Style="{StaticResource AppleStatusPill}" Background="{StaticResource AccentSoftBrush}" Padding="12,7">
                         <StackPanel Orientation="Horizontal">
-                            <Ellipse Width="8" Height="8" Fill="{StaticResource SuccessBrush}" Margin="0,0,6,0" VerticalAlignment="Center" />
-                            <TextBlock Text="就绪" FontSize="12" Foreground="{StaticResource AccentBrush}" />
+                            <Ellipse Width="9" Height="9" Fill="{StaticResource SuccessBrush}" Margin="0,0,7,0" VerticalAlignment="Center" />
+                            <TextBlock Text="就绪" FontSize="13" Foreground="{StaticResource AccentBrush}" />
                         </StackPanel>
                     </Border>
                 </StackPanel>
