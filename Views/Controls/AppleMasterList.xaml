@@ -11,24 +11,17 @@
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <StackPanel Orientation="Horizontal" Margin="14,12,14,4">
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="14,12,14,4">
                 <ctrl:AppleIconTile Glyph="{Binding HeaderIcon, ElementName=Root}" TileSize="22" Margin="0,0,8,0" />
                 <TextBlock Style="{StaticResource AppleSectionHeader}" Text="{Binding Header, ElementName=Root}" Margin="0" VerticalAlignment="Center" />
             </StackPanel>
 
-            <ListBox Grid.Row="1"
-                     ItemsSource="{Binding ItemsSource, ElementName=Root}"
-                     SelectedItem="{Binding SelectedItem, ElementName=Root, UpdateSourceTrigger=PropertyChanged}"
-                     ItemTemplate="{Binding ItemTemplate, ElementName=Root}"
-                     Style="{StaticResource AppleListBox}"
-                     ItemContainerStyle="{StaticResource AppleListBoxItem}"
-                     Margin="0,0,0,8" />
-
-            <WrapPanel Grid.Row="2" Orientation="Horizontal" Margin="14,0,14,14">
+            <!-- 顶部工具栏：新增 / 删除（及页脚内容）放在最上面一行 -->
+            <WrapPanel Grid.Row="1" Orientation="Horizontal" Margin="14,0,14,8">
                 <Button Style="{StaticResource AppleBtn}" Command="{Binding AddCommand, ElementName=Root}" Margin="0,0,8,8">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="➕" FontSize="13" Margin="0,0,6,0" />
@@ -43,6 +36,14 @@
                 </Button>
                 <ContentPresenter Content="{Binding (ctrl:MasterListBehaviors.FooterContent), ElementName=Root}" />
             </WrapPanel>
+
+            <ListBox Grid.Row="2"
+                     ItemsSource="{Binding ItemsSource, ElementName=Root}"
+                     SelectedItem="{Binding SelectedItem, ElementName=Root, UpdateSourceTrigger=PropertyChanged}"
+                     ItemTemplate="{Binding ItemTemplate, ElementName=Root}"
+                     Style="{StaticResource AppleListBox}"
+                     ItemContainerStyle="{StaticResource AppleListBoxItem}"
+                     Margin="0,0,0,8" />
         </Grid>
     </Border>
 </UserControl>
