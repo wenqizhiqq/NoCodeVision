@@ -65,6 +65,16 @@
                     </Style>
                 </Button.Style>
             </Button>
+
+            <!-- 左下角：鼠标操作提示 -->
+            <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10"
+                    Background="#1C1C22" Opacity="0.82" CornerRadius="8" Padding="8,5">
+                <StackPanel>
+                    <TextBlock Text="左键拖拽：框选 ROI" Foreground="White" FontSize="11" />
+                    <TextBlock Text="右键/中键拖拽：平移" Foreground="White" FontSize="11" />
+                    <TextBlock Text="滚轮：缩放" Foreground="White" FontSize="11" />
+                </StackPanel>
+            </Border>
         </Grid>
     </Border>
 </UserControl>

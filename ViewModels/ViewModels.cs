@@ -1796,7 +1796,7 @@ public class FlowViewModel : ViewModelBase
                             // 与 VisionMotion/GrayMatch 已验证路径一致：原生角度取负
                             AngleDeg = -r.Angle,
                             Color = "#34C759",
-                            Label = $"相似度 {r.Score:F2}"
+                            Label = $"相似度 {r.Score:F2} · θ{r.Angle:F1}°"
                         });
                     }
                     var r0 = results[0];
@@ -2258,7 +2258,7 @@ public class FlowViewModel : ViewModelBase
                                     H = r.TemplateHeight,
                                     AngleDeg = -r.Angle,
                                     Color = "#34C759",
-                                    Label = $"相似度 {r.Score:F2}"
+                                    Label = $"相似度 {r.Score:F2} · θ{r.Angle:F1}°"
                                 });
                             }
                         }
