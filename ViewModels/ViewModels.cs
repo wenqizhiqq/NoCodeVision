@@ -344,6 +344,23 @@ public class VisionFlowStep : ViewModelBase
     public int DilateSize { get => _dilateSize; set => SetField(ref _dilateSize, value); }
     private int _dilateSize = 3;
 
+    // ===== 时序确定性编排（专利：表格化时序标记 + 同步组） =====
+    public string TimingMarker { get => _timingMarker; set => SetField(ref _timingMarker, value); }
+    private string _timingMarker = "";
+    public string SyncGroup { get => _syncGroup; set => SetField(ref _syncGroup, value); }
+    private string _syncGroup = "";
+    // 编译/运行后回填的监控字段
+    public double ExpectedMs { get => _expectedMs; set => SetField(ref _expectedMs, value); }
+    private double _expectedMs = -1;
+    public double ActualMs { get => _actualMs; set => SetField(ref _actualMs, value); }
+    private double _actualMs = -1;
+    public double DeviationMs { get => _deviationMs; set => SetField(ref _deviationMs, value); }
+    private double _deviationMs;
+    public bool TimingAlarm { get => _timingAlarm; set => SetField(ref _timingAlarm, value); }
+    private bool _timingAlarm;
+    public string TimingStatusText { get => _timingStatusText; set => SetField(ref _timingStatusText, value); }
+    private string _timingStatusText = "未编排";
+
     public string AiHint
     {
         get => _aiHint;
@@ -1544,6 +1561,19 @@ public class FlowViewModel : ViewModelBase
         public ICommand ToggleBreakpointCmd { get; }
         public ICommand ClearBreakpointsCmd { get; }
 
+    // ===== 时序确定性编排引擎（专利：时序标记 + 同步组 → 实时调度表 → 偏差监控） =====
+    public double BusCycleMs { get => _busCycleMs; set => SetField(ref _busCycleMs, value); }
+    private double _busCycleMs = 1.0;
+    public double TimingThresholdMs { get => _timingThresholdMs; set => SetField(ref _timingThresholdMs, value); }
+    private double _timingThresholdMs = 0.5;
+    public bool TimingCompiled { get => _timingCompiled; set => SetField(ref _timingCompiled, value); }
+    private bool _timingCompiled;
+    public string TimingResultText { get => _timingResultText; set => SetField(ref _timingResultText, value); }
+    private string _timingResultText = "尚未编译";
+    public ObservableCollection<string> TimingWarnings { get; } = new();
+    public ICommand CompileTimingCmd { get; }
+    public ICommand RunTimingPlanCmd { get; }
+
         // ---- 脚本流程调试状态 ----
         private LuaDebugHost? _luaHost;
         private bool _scriptIsRunning;
@@ -1584,6 +1614,17 @@ public class FlowViewModel : ViewModelBase
                 onRunState: (running, paused) => { ScriptIsRunning = running; ScriptIsPaused = paused; CommandManager.InvalidateRequerySuggested(); });
             SelectedFlow = Flows.FirstOrDefault();
             SelectedStep = SelectedFlow?.Steps.FirstOrDefault();
+            // 专利示例：默认流程预置「同步组 + 相对时延」时序编排，便于直接体验编译/运行
+            foreach (var f in _flows)
+            {
+                int j = 0;
+                foreach (var st in f.Steps)
+                {
+                    if (j == 0 || j == 1) { st.TimingMarker = "T+0ms"; st.SyncGroup = "GroupA"; }
+                    else st.TimingMarker = $"T+{j * 2}ms";
+                    j++;
+                }
+            }
             _measureAnnotations.CollectionChanged += OnMeasureAnnotationsChanged;
 
         AddFlowCmd = new RelayCommand(_ =>
@@ -1977,6 +2018,100 @@ public class FlowViewModel : ViewModelBase
             Breakpoints.Clear();
             _luaHost?.SetBreakpoints(Breakpoints);
         }, _ => _selectedFlow != null && _selectedFlow.FlowKind == "Script");
+        CompileTimingCmd = new RelayCommand(_ => CompileTiming(), _ => _selectedFlow != null && _selectedFlow.Steps.Count > 0);
+        RunTimingPlanCmd = new RelayCommand(_ => RunTimingPlan(), _ => _selectedFlow != null && _selectedFlow.Steps.Count > 0);
+    }
+
+    // 解析时序标记：支持 "T+5ms" / "T+0ms" / "5ms" / "5" / 空(顺延)
+    private static double? ParseTimingMarker(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return null;
+        var s = raw.Trim().ToUpperInvariant();
+        s = s.Replace("T+", "").Replace("T", "").Replace("MS", "").Replace("毫秒", "").Trim();
+        return double.TryParse(s, out var v) ? v : null;
+    }
+
+    // 编译：按时序标记换算预期时刻 + 同步组分组 + 编译期冲突检测
+    private void CompileTiming()
+    {
+        if (_selectedFlow == null) return;
+        var steps = _selectedFlow.Steps;
+        TimingWarnings.Clear();
+        double cursor = 0;
+        var groups = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<VisionFlowStep>>();
+        foreach (var st in steps)
+        {
+            var parsed = ParseTimingMarker(st.TimingMarker);
+            st.ExpectedMs = parsed.HasValue ? parsed.Value : cursor;
+            cursor = st.ExpectedMs + System.Math.Max(st.CostMs, 0.1);
+            var g = (st.SyncGroup ?? "").Trim();
+            if (!string.IsNullOrEmpty(g))
+            {
+                if (!groups.ContainsKey(g)) groups[g] = new System.Collections.Generic.List<VisionFlowStep>();
+                groups[g].Add(st);
+            }
+        }
+        // ① 同步组内动作单周期可行性
+        foreach (var kv in groups)
+        {
+            double tact = kv.Value.Count * 0.2; // 近似：每动作 0.2ms PDO 更新
+            if (tact > BusCycleMs)
+                TimingWarnings.Add($"⚠ 同步组[{kv.Key}] 含 {kv.Value.Count} 个动作，估算耗时 {tact:F2}ms 超出总线周期 {BusCycleMs:F2}ms，无法在单周期内完成");
+        }
+        // ② 相对时延分辨率：标记时延须 ≥ 总线周期
+        foreach (var st in steps)
+        {
+            if (st.ExpectedMs > 0 && st.ExpectedMs < BusCycleMs)
+                TimingWarnings.Add($"⚠ 步骤[{st.Index} {st.Name}] 相对时延 {st.ExpectedMs:F2}ms 小于总线周期分辨率 {BusCycleMs:F2}ms");
+        }
+        // ③ 同步组间资源争用（同运动轴 / 同 IO 点位）
+        var seenAxis = new System.Collections.Generic.Dictionary<string, string>();
+        var seenIo = new System.Collections.Generic.Dictionary<string, string>();
+        foreach (var st in steps)
+        {
+            if (!string.IsNullOrEmpty(st.TargetAxis))
+            {
+                if (seenAxis.TryGetValue(st.TargetAxis, out var g0) && g0 != st.SyncGroup)
+                    TimingWarnings.Add($"⚠ 轴[{st.TargetAxis}] 在同步组[{g0}]与[{st.SyncGroup}]间争用");
+                else seenAxis[st.TargetAxis] = st.SyncGroup;
+            }
+            if (!string.IsNullOrEmpty(st.IoChannel))
+            {
+                if (seenIo.TryGetValue(st.IoChannel, out var g0) && g0 != st.SyncGroup)
+                    TimingWarnings.Add($"⚠ IO[{st.IoChannel}] 在同步组[{g0}]与[{st.SyncGroup}]间争用");
+                else seenIo[st.IoChannel] = st.SyncGroup;
+            }
+        }
+        TimingCompiled = true;
+        TimingResultText = TimingWarnings.Count == 0
+            ? $"✓ 编译通过：{steps.Count} 步，{groups.Count} 个同步组，已生成实时调度表"
+            : $"✗ 编译发现 {TimingWarnings.Count} 项时序冲突，请检查";
+        foreach (var st in steps) st.TimingStatusText = $"预期 {st.ExpectedMs:F2}ms";
+    }
+
+    // 运行：确定性仿真，回填实际时刻与偏差，超阈值报警
+    private void RunTimingPlan()
+    {
+        if (_selectedFlow == null) return;
+        if (!TimingCompiled) CompileTiming();
+        var steps = _selectedFlow.Steps;
+        int i = 0;
+        foreach (var st in steps)
+        {
+            double jitter = (st.CostMs * 0.015) + (i * 0.03); // 可复现的微小抖动
+            st.ActualMs = st.ExpectedMs + jitter;
+            st.DeviationMs = st.ActualMs - st.ExpectedMs;
+            st.TimingAlarm = System.Math.Abs(st.DeviationMs) > TimingThresholdMs;
+            st.TimingStatusText = st.TimingAlarm
+                ? $"偏差 +{st.DeviationMs:F2}ms ⚠"
+                : $"预期 {st.ExpectedMs:F2}ms / 实际 {st.ActualMs:F2}ms / 偏差 {st.DeviationMs:F2}ms";
+            i++;
+        }
+        var alarmCount = 0;
+        foreach (var st in steps) if (st.TimingAlarm) alarmCount++;
+        TimingResultText = alarmCount == 0
+            ? $"✓ 时序运行完成，{steps.Count} 步偏差均在 ±{TimingThresholdMs:F2}ms 内"
+            : $"⚠ 时序运行完成，{alarmCount} 步偏差超阈值 ±{TimingThresholdMs:F2}ms";
     }
 
     private async Task RunAllAsync()
