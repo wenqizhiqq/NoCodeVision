@@ -232,13 +232,31 @@
                 </Style>
             </ScrollViewer.Style>
             <StackPanel>
-                <TextBlock Style="{StaticResource iOSTitle}">
-                    <TextBlock.Text>
-                        <MultiBinding StringFormat="{}{0} - {1}">
-                            <Binding Path="SelectedStep.Function" FallbackValue="步骤属性" />
-                            <Binding Path="SelectedStep.Name" FallbackValue="" />
-                        </MultiBinding>
-                    </TextBlock.Text>
+                <TextBlock>
+                    <TextBlock.Style>
+                        <Style BasedOn="{StaticResource iOSTitle}" TargetType="TextBlock">
+                            <Setter Property="Text">
+                                <Setter.Value>
+                                    <MultiBinding StringFormat="{}{0} - {1}">
+                                        <Binding Path="SelectedStep.Function" FallbackValue="步骤属性" />
+                                        <Binding Path="SelectedStep.Name" FallbackValue="" />
+                                    </MultiBinding>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedStep.StepType}" Value="Measure">
+                                    <Setter Property="Text">
+                                        <Setter.Value>
+                                            <MultiBinding StringFormat="{}{0} - {1}">
+                                                <Binding Path="SelectedStep.MeasureType" FallbackValue="几何测量" />
+                                                <Binding Path="SelectedStep.Name" FallbackValue="" />
+                                            </MultiBinding>
+                                        </Setter.Value>
+                                    </Setter>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
                 </TextBlock>
 
                 <!-- ========== 图像采集 ========== -->
@@ -626,58 +644,142 @@
                             </Style.Triggers>
                         </Style>
                     </Border.Style>
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="几何测量" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="测量类型" />
-                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="130"
-                                      ItemsSource="{Binding MeasureTypes}" SelectedItem="{Binding SelectedStep.MeasureType, FallbackValue='圆径'}" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="标称值" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.NominalValue, FallbackValue=12.00}" Width="80" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="公差(±)" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Tolerance, FallbackValue=0.05}" Width="80" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="单位" />
-                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
-                                      ItemsSource="{Binding MeasureUnits}" SelectedItem="{Binding SelectedStep.MeasureUnit, FallbackValue='像素'}" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="小数位" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Decimals, FallbackValue=3}" Width="80" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="卡尺数" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.CaliperCount, FallbackValue=20}" Width="80" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="边缘极性" />
-                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="130"
-                                      ItemsSource="{Binding EdgePolarities}" SelectedItem="{Binding SelectedStep.EdgePolarity, FallbackValue='由亮到暗'}" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="边缘阈值" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.EdgeThreshold, FallbackValue=20}" Width="80" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="输出变量" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.OutputVar, FallbackValue='dMeasure'}" Width="120" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI（在采集到的图上拖拽绘制）" Margin="16,8,16,4" />
-                        <ctrl:RoiImageView Height="220" Margin="14,0,14,10"
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- 1. 测量摘要：明确回答「测量了什么」 -->
+                        <Border Grid.Row="0" Background="{StaticResource AccentSoftBrush}" CornerRadius="10" Padding="14" Margin="16,12,16,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap">
+                                        <Run Text="测量目标："/>
+                                        <Run Text="{Binding SelectedStep.MeasureType, FallbackValue='圆径'}"/>
+                                        <Run Text="  "/>
+                                        <Run Text="{Binding SelectedStep.NominalValue, FallbackValue=12}" FontWeight="Bold"/>
+                                        <Run Text=" ± "/>
+                                        <Run Text="{Binding SelectedStep.Tolerance, FallbackValue=0.05}"/>
+                                        <Run Text=" "/>
+                                        <Run Text="{Binding SelectedStep.MeasureUnit, FallbackValue='像素'}"/>
+                                    </TextBlock>
+                                    <TextBlock FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0">
+                                        <Run Text="输出变量："/>
+                                        <Run Text="{Binding SelectedStep.OutputVar, FallbackValue='dMeasure'}"/>
+                                        <Run Text="  ·  判定逻辑：|实测值 − 标称值| ≤ 公差"/>
+                                    </TextBlock>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="12,0,0,0">
+                                    <TextBlock FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Text="实测值 / 判定" HorizontalAlignment="Right"/>
+                                    <TextBlock FontSize="20" FontWeight="Bold" HorizontalAlignment="Right"
+                                               Text="--"
+                                               Foreground="{StaticResource TextMutedBrush}" ToolTip="运行流程后在此显示实际测量值"/>
+                                    <TextBlock FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" Text="未运行"
+                                               Foreground="{StaticResource TextMutedBrush}" ToolTip="判定逻辑：|实测值 − 标称值| ≤ 公差"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- 2. 测量规格：两列紧凑布局 + 每个参数带 ToolTip -->
+                        <TextBlock Grid.Row="1" Style="{StaticResource AppleSectionHeader}" Text="测量规格" Margin="16,0,16,6"/>
+                        <Grid Grid.Row="2" Margin="16,0,16,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <DockPanel Grid.Column="0" Grid.Row="0" Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="测量类型" ToolTip="要测量的几何量：圆径、边距、角度、面积、中心距"/>
+                                <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
+                                          ItemsSource="{Binding MeasureTypes}" SelectedItem="{Binding SelectedStep.MeasureType, FallbackValue='圆径'}" />
+                            </DockPanel>
+                            <DockPanel Grid.Column="1" Grid.Row="0" Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="标称值" ToolTip="目标理论值，实测值围绕此值判定 OK/NG"/>
+                                <TextBox DockPanel.Dock="Left" Style="{StaticResource AppleTextField}" Width="80"
+                                         Text="{Binding SelectedStep.NominalValue, FallbackValue=12.00}" />
+                            </DockPanel>
+
+                            <DockPanel Grid.Column="0" Grid.Row="1" Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="公差(±)" ToolTip="允许偏离标称值的最大范围"/>
+                                <TextBox DockPanel.Dock="Left" Style="{StaticResource AppleTextField}" Width="80"
+                                         Text="{Binding SelectedStep.Tolerance, FallbackValue=0.05}" />
+                            </DockPanel>
+                            <DockPanel Grid.Column="1" Grid.Row="1" Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="单位" ToolTip="测量结果与标称值的显示单位"/>
+                                <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="100"
+                                          ItemsSource="{Binding MeasureUnits}" SelectedItem="{Binding SelectedStep.MeasureUnit, FallbackValue='像素'}" />
+                            </DockPanel>
+
+                            <DockPanel Grid.Column="0" Grid.Row="2" Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="小数位" ToolTip="测量结果保留的小数位数"/>
+                                <TextBox DockPanel.Dock="Left" Style="{StaticResource AppleTextField}" Width="80"
+                                         Text="{Binding SelectedStep.Decimals, FallbackValue=3}" />
+                            </DockPanel>
+                            <DockPanel Grid.Column="1" Grid.Row="2" Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="输出变量" ToolTip="测量结果写入的变量名，供后续步骤或脚本读取"/>
+                                <TextBox DockPanel.Dock="Left" Style="{StaticResource AppleTextField}" Width="100"
+                                         Text="{Binding SelectedStep.OutputVar, FallbackValue='dMeasure'}" />
+                            </DockPanel>
+                        </Grid>
+
+                        <!-- 3. 算法参数：同样两列 + ToolTip -->
+                        <TextBlock Grid.Row="3" Style="{StaticResource AppleSectionHeader}" Text="算法参数" Margin="16,4,16,6"/>
+                        <Grid Grid.Row="4" Margin="16,0,16,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <DockPanel Grid.Column="0" Grid.Row="0" Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="卡尺数" ToolTip="边缘搜索时沿轮廓采集的测量点数，越多越稳定但越慢"/>
+                                <TextBox DockPanel.Dock="Left" Style="{StaticResource AppleTextField}" Width="80"
+                                         Text="{Binding SelectedStep.CaliperCount, FallbackValue=20}" />
+                            </DockPanel>
+                            <DockPanel Grid.Column="1" Grid.Row="0" Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="边缘极性" ToolTip="边缘灰度变化方向：由亮到暗 / 由暗到亮 / 任意"/>
+                                <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
+                                          ItemsSource="{Binding EdgePolarities}" SelectedItem="{Binding SelectedStep.EdgePolarity, FallbackValue='由亮到暗'}" />
+                            </DockPanel>
+
+                            <DockPanel Grid.Column="0" Grid.Row="1" Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="边缘阈值" ToolTip="判定边缘的最小灰度差，越小越灵敏"/>
+                                <TextBox DockPanel.Dock="Left" Style="{StaticResource AppleTextField}" Width="80"
+                                         Text="{Binding SelectedStep.EdgeThreshold, FallbackValue=20}" />
+                            </DockPanel>
+                            <DockPanel Grid.Column="1" Grid.Row="1" Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="ROI 坐标" ToolTip="感兴趣区域：X/Y 为左上角坐标，W/H 为宽高，可直接在下方图中拖拽绘制"/>
+                                <UniformGrid Columns="4" Width="130">
+                                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=0}" FontSize="11" Padding="4,2" />
+                                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=0}" FontSize="11" Padding="4,2" />
+                                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiW, Mode=TwoWay, FallbackValue=120}" FontSize="11" Padding="4,2" />
+                                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiH, Mode=TwoWay, FallbackValue=80}" FontSize="11" Padding="4,2" />
+                                </UniformGrid>
+                            </DockPanel>
+                        </Grid>
+
+                        <!-- 5. ROI 视图 + 详细提示 -->
+                        <TextBlock Grid.Row="5" Style="{StaticResource AppleSubLabel}" Text="ROI 预览（在图上拖拽绘制区域，测量算法只在该区域内搜索边缘）" Margin="16,8,16,4" />
+                        <ctrl:RoiImageView Grid.Row="6" Height="240" Margin="14,0,14,10"
                                            SourceImage="{Binding CurrentImageSource}"
                                            RoiX="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=10}"
                                            RoiY="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=10}"
@@ -685,26 +787,8 @@
                                            RoiH="{Binding SelectedStep.RoiH, Mode=TwoWay, FallbackValue=80}"
                                            Overlays="{Binding MatchOverlays}"
                                            Measures="{Binding MeasureAnnotations}" />
-                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="切换左上角工具：框选ROI / 线段测距 / 圆测半径；在图上拖拽绘制" Margin="16,0,16,8" />
-                        <UniformGrid Columns="4" Margin="16,0,16,8">
-                            <StackPanel Margin="0,0,4,0">
-                                <TextBlock Text="X" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
-                            </StackPanel>
-                            <StackPanel Margin="0,0,4,0">
-                                <TextBlock Text="Y" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
-                            </StackPanel>
-                            <StackPanel Margin="0,0,4,0">
-                                <TextBlock Text="W" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiW, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
-                            </StackPanel>
-                            <StackPanel>
-                                <TextBlock Text="H" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiH, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
-                            </StackPanel>
-                        </UniformGrid>
-                    </StackPanel>
+                        <TextBlock Grid.Row="7" Style="{StaticResource AppleSubLabel}" Text="提示：切换左上角工具可框选 ROI / 拉线段测距 / 标圆测半径；运行后「实测值/判定」会在此显示结果。" Margin="16,0,16,8" />
+                    </Grid>
                 </Border>
 
                 <!-- ========== 逻辑判断 ========== -->
