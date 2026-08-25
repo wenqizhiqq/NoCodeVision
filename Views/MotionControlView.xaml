@@ -339,11 +339,20 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                        <Button Style="{StaticResource AppleBtn}" Content="新增" Command="{Binding AddCmd}" />
-                        <Button Style="{StaticResource AppleBtnSecondary}" Content="删除" Command="{Binding DeleteCmd}" Margin="8,0,0,0" />
-                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding NewItemName, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="12,0,0,0" />
-                        <Button Style="{StaticResource AppleBtnSecondary}" Content="重命名" Command="{Binding RenameCmd}" Margin="8,0,0,0" />
+                    <StackPanel Grid.Row="0">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <Button Style="{StaticResource AppleBtn}" Content="新增" Command="{Binding AddCmd}" />
+                            <Button Style="{StaticResource AppleBtnSecondary}" Content="删除" Command="{Binding DeleteCmd}" Margin="8,0,0,0" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding NewItemName, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="12,0,0,0" />
+                            <Button Style="{StaticResource AppleBtnSecondary}" Content="重命名" Command="{Binding RenameCmd}" Margin="8,0,0,0" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="Excel 路径" VerticalAlignment="Center" Style="{StaticResource AppleLabel}" Margin="0,0,6,0"/>
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding ExcelPath, UpdateSourceTrigger=PropertyChanged}" Width="220" />
+                            <Button Style="{StaticResource AppleBtn}" Content="导出Excel" Command="{Binding ExportPointsCmd}" Margin="8,0,0,0"/>
+                            <Button Style="{StaticResource AppleBtnSecondary}" Content="导入Excel" Command="{Binding ImportPointsCmd}" Margin="8,0,0,0"/>
+                            <TextBlock Text="{Binding ExcelStatus}" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+                        </StackPanel>
                     </StackPanel>
                     <ListView Grid.Row="1" ItemsSource="{Binding PointTables}" SelectedItem="{Binding SelectedPointTable, Mode=TwoWay}" BorderThickness="0">
                         <ListView.View>
@@ -389,9 +398,12 @@
                                 <ListView.View>
                                     <GridView>
                                         <GridViewColumn Header="点位名" DisplayMemberBinding="{Binding Name}" Width="90" />
-                                        <GridViewColumn Header="X" DisplayMemberBinding="{Binding X, StringFormat={}{0:F1}}" Width="56" />
-                                        <GridViewColumn Header="Y" DisplayMemberBinding="{Binding Y, StringFormat={}{0:F1}}" Width="56" />
-                                        <GridViewColumn Header="Z" DisplayMemberBinding="{Binding Z, StringFormat={}{0:F1}}" Width="56" />
+                                        <GridViewColumn Header="轴1位" DisplayMemberBinding="{Binding Axes[0].Position, StringFormat={}{0:F1}}" Width="56" />
+                                        <GridViewColumn Header="轴2位" DisplayMemberBinding="{Binding Axes[1].Position, StringFormat={}{0:F1}}" Width="56" />
+                                        <GridViewColumn Header="轴3位" DisplayMemberBinding="{Binding Axes[2].Position, StringFormat={}{0:F1}}" Width="56" />
+                                        <GridViewColumn Header="轴4位" DisplayMemberBinding="{Binding Axes[3].Position, StringFormat={}{0:F1}}" Width="56" />
+                                        <GridViewColumn Header="时序标记" DisplayMemberBinding="{Binding TimingMark}" Width="72" />
+                                        <GridViewColumn Header="同步组" DisplayMemberBinding="{Binding SyncGroup}" Width="64" />
                                     </GridView>
                                 </ListView.View>
                             </ListView>
@@ -402,20 +414,31 @@
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="点位参数" />
                         <TextBlock Style="{StaticResource AppleLabel}" Margin="0,8,0,4" Text="点位名" />
                         <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Name, FallbackValue=''}" />
-                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="X" />
-                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.X, StringFormat={}{0:F2}, FallbackValue=0}" />
-                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="Y" />
-                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Y, StringFormat={}{0:F2}, FallbackValue=0}" />
-                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="Z" />
-                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Z, StringFormat={}{0:F2}, FallbackValue=0}" />
-                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="偏移 X" />
-                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.OffsetX, StringFormat={}{0:F2}, FallbackValue=0}" />
-                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="偏移 Y" />
-                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.OffsetY, StringFormat={}{0:F2}, FallbackValue=0}" />
-                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="偏移 Z" />
-                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.OffsetZ, StringFormat={}{0:F2}, FallbackValue=0}" />
-                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="速度" />
-                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Speed, StringFormat={}{0:F2}, FallbackValue=0}" />
+
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="{Binding SelectedPointTable.AxisNames[0], StringFormat='{}{0} 位置'}" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Axes[0].Position, StringFormat={}{0:F2}, FallbackValue=0}" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,8,0,4" Text="{Binding SelectedPointTable.AxisNames[0], StringFormat='{}{0} 速度'}" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Axes[0].Speed, StringFormat={}{0:F1}, FallbackValue=0}" />
+
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="{Binding SelectedPointTable.AxisNames[1], StringFormat='{}{0} 位置'}" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Axes[1].Position, StringFormat={}{0:F2}, FallbackValue=0}" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,8,0,4" Text="{Binding SelectedPointTable.AxisNames[1], StringFormat='{}{0} 速度'}" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Axes[1].Speed, StringFormat={}{0:F1}, FallbackValue=0}" />
+
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="{Binding SelectedPointTable.AxisNames[2], StringFormat='{}{0} 位置'}" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Axes[2].Position, StringFormat={}{0:F2}, FallbackValue=0}" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,8,0,4" Text="{Binding SelectedPointTable.AxisNames[2], StringFormat='{}{0} 速度'}" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Axes[2].Speed, StringFormat={}{0:F1}, FallbackValue=0}" />
+
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="{Binding SelectedPointTable.AxisNames[3], StringFormat='{}{0} 位置'}" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Axes[3].Position, StringFormat={}{0:F2}, FallbackValue=0}" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,8,0,4" Text="{Binding SelectedPointTable.AxisNames[3], StringFormat='{}{0} 速度'}" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Axes[3].Speed, StringFormat={}{0:F1}, FallbackValue=0}" />
+
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="时序标记" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.TimingMark, FallbackValue=''}" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="同步组" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.SyncGroup, FallbackValue=''}" />
                         <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="说明" />
                         <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Desc, FallbackValue=''}" />
                         <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="备注" />

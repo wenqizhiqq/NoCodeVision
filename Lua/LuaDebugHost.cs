@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -391,6 +391,30 @@ plc = {
         if (_uiCtx != null) _uiCtx.Post(_ => a(), null);
         else a();
     }
+
+        /// <summary>语法校验：仅编译不执行，返回 null 表示通过，否则返回错误信息（行号已折算为用户脚本行）。</summary>
+        public static string? CheckSyntax(string script)
+        {
+            if (string.IsNullOrWhiteSpace(script)) return "脚本为空，无法校验";
+            try
+            {
+                using var lua = new Lua();
+                // 包成函数体仅做语法解析：编译但不执行用户代码；顶层 return / 局部声明均合法
+                lua.DoString("return function()\n" + script + "\nend");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                var msg = ex is NLua.Exceptions.LuaException ? ex.Message : (ex.GetType().Name + ": " + ex.Message);
+                // 去掉包函数引入的行偏移（前缀占 1 行），折算回用户脚本行号
+                msg = System.Text.RegularExpressions.Regex.Replace(msg, @":(\d+):", m =>
+                {
+                    int n = int.Parse(m.Groups[1].Value) - 1;
+                    return ":" + (n < 1 ? 1 : n) + ":";
+                });
+                return msg;
+            }
+        }
 
     public void Dispose()
     {

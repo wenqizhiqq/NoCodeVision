@@ -20,7 +20,8 @@
         <TextBlock Grid.Row="0" Style="{StaticResource iOSTitle}" Text="变量" Margin="0,0,0,12" />
 
         <!-- 工具栏：添加 / 删除（左）+ 搜索（右） -->
-        <DockPanel Grid.Row="1" Margin="0,0,0,12" LastChildFill="True">
+        <StackPanel Grid.Row="1" Margin="0,0,0,12">
+        <DockPanel Margin="0,0,0,12" LastChildFill="True">
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
                 <Button Style="{StaticResource AppleBtn}" Content="添加" Command="{Binding AddCmd}" Padding="16,6" />
                 <Button Style="{StaticResource AppleBtnSecondary}" Content="删除" Command="{Binding RemoveCmd}" Padding="16,6" Margin="8,0,0,0" />
@@ -64,6 +65,15 @@
                 </Grid>
             </Border>
         </DockPanel>
+        <!-- Excel 批量编辑：导出到 Excel 编辑后，按路径回读导入 -->
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Text="Excel 路径" VerticalAlignment="Center" Style="{StaticResource AppleLabel}" Margin="0,0,6,0"/>
+            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding ExcelPath, UpdateSourceTrigger=PropertyChanged}" Width="220" />
+            <Button Style="{StaticResource AppleBtn}" Content="导出Excel" Command="{Binding ExportVarsCmd}" Margin="8,0,0,0"/>
+            <Button Style="{StaticResource AppleBtnSecondary}" Content="导入Excel" Command="{Binding ImportVarsCmd}" Margin="8,0,0,0"/>
+            <TextBlock Text="{Binding ExcelStatus}" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+        </StackPanel>
+        </StackPanel>
 
         <!-- 变量表格：名称 / 值 均可直接编辑 -->
         <Border Grid.Row="2" Style="{StaticResource AppleGroupCard}">

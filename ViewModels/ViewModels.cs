@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using NoCodeVision.Hardware;
@@ -19,6 +19,7 @@ using GrayMatch;
 using OpenCvSharp;
 using NoCodeVision;
 using NoCodeVision.Scripting;
+using NoCodeVision.Services;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -916,6 +917,14 @@ public class VariablesViewModel : ViewModelBase
     public ICommand RemoveCmd { get; }
     public ICommand ClearSearchCmd { get; }
 
+    // Excel 批量编辑
+    public string ExcelPath { get => _excelPath; set => SetField(ref _excelPath, value); }
+    private string _excelPath = "";
+    public string ExcelStatus { get => _excelStatus; set => SetField(ref _excelStatus, value); }
+    private string _excelStatus = "";
+    public ICommand ExportVarsCmd { get; }
+    public ICommand ImportVarsCmd { get; }
+
     private ICollectionView? _view;
     public ICollectionView VariablesView
     {
@@ -968,6 +977,28 @@ public class VariablesViewModel : ViewModelBase
         }, _ => _selected != null);
 
         ClearSearchCmd = new RelayCommand(_ => { SearchText = ""; });
+
+        ExportVarsCmd = new RelayCommand(_ =>
+        {
+            var path = string.IsNullOrWhiteSpace(ExcelPath)
+                ? ExcelBatchEdit.Export(Variables)
+                : ExcelBatchEdit.Export(Variables, Path.GetFileNameWithoutExtension(ExcelPath));
+            if (string.IsNullOrWhiteSpace(ExcelPath)) ExcelBatchEdit.OpenInExcel(path);
+            ExcelStatus = "已导出 " + Variables.Count + " 个变量 → " + path;
+        });
+        ImportVarsCmd = new RelayCommand(_ =>
+        {
+            var path = ExcelPath;
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+            {
+                ExcelStatus = "请先在「Excel 路径」填写有效文件，或先点「导出Excel」生成文件。";
+                return;
+            }
+            var rows = ExcelBatchEdit.Import<VarItem>(path);
+            Variables.Clear();
+            foreach (var r in rows) Variables.Add(r);
+            ExcelStatus = "已导入 " + rows.Count + " 个变量（来自 " + path + "）";
+        }, _ => !string.IsNullOrWhiteSpace(ExcelPath) && File.Exists(ExcelPath));
     }
 }
 
@@ -1562,6 +1593,7 @@ public class FlowViewModel : ViewModelBase
         public ICommand ClearBreakpointsCmd { get; }
 
     // ===== 时序确定性编排引擎（专利：时序标记 + 同步组 → 实时调度表 → 偏差监控） =====
+        public ICommand CheckSyntaxCmd { get; }
     public double BusCycleMs { get => _busCycleMs; set => SetField(ref _busCycleMs, value); }
     private double _busCycleMs = 1.0;
     public double TimingThresholdMs { get => _timingThresholdMs; set => SetField(ref _timingThresholdMs, value); }
@@ -2018,6 +2050,15 @@ public class FlowViewModel : ViewModelBase
             Breakpoints.Clear();
             _luaHost?.SetBreakpoints(Breakpoints);
         }, _ => _selectedFlow != null && _selectedFlow.FlowKind == "Script");
+        CheckSyntaxCmd = new RelayCommand(_ =>
+        {
+            if (_selectedFlow == null || _selectedFlow.FlowKind != "Script") return;
+            var text = _selectedFlow.ScriptContent ?? "";
+            var err = NoCodeVision.Scripting.LuaDebugHost.CheckSyntax(text);
+            var line = err == null ? "[语法校验] 通过，无语法错误。" : ("[语法校验] 失败：" + err);
+            ScriptOutput = ScriptOutput.Length > 8000 ? line + "\n" : ScriptOutput + line + "\n";
+        }, _ => _selectedFlow != null && _selectedFlow.FlowKind == "Script");
+
         CompileTimingCmd = new RelayCommand(_ => CompileTiming(), _ => _selectedFlow != null && _selectedFlow.Steps.Count > 0);
         RunTimingPlanCmd = new RelayCommand(_ => RunTimingPlan(), _ => _selectedFlow != null && _selectedFlow.Steps.Count > 0);
     }

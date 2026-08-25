@@ -7,6 +7,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using System.Runtime.InteropServices;
+using System.IO;
+using NoCodeVision.Services;
 using GrayMatch;
 
 namespace NoCodeVision
@@ -406,20 +408,47 @@ namespace NoCodeVision.ViewModels
         public double RetractTime { get; set; }
     }
 
+    /// <summary>点位中单个轴槽的目标值：位置 + 速度（对齐 NoCodeMotion PointAxis）。</summary>
+    public class AxisPos : ViewModelBase
+    {
+        private double _position;
+        public double Position { get => _position; set => SetField(ref _position, value); }
+        private double _speed;
+        public double Speed { get => _speed; set => SetField(ref _speed, value); }
+    }
+
+    /// <summary>单个点位：含 4 个轴槽的目标位置/速度，以及专利所需的时序标记/同步组（对齐 NoCodeMotion PointItem）。</summary>
     public class PointRow : ViewModelBase
     {
         private string _name = "";
         public string Name { get => _name; set => SetField(ref _name, value); }
-        public double X { get; set; }
-        public double Y { get; set; }
-        public double Z { get; set; }
         public string Desc { get; set; } = "";
-        // 扩展参数
-        public double OffsetX { get; set; }
-        public double OffsetY { get; set; }
-        public double OffsetZ { get; set; }
-        public double Speed { get; set; }
         public string Note { get; set; } = "";
+        // 专利：时序标记（如 "T+0ms"）与同步组（如 "GroupA"）
+        private string _timingMark = "";
+        public string TimingMark { get => _timingMark; set => SetField(ref _timingMark, value); }
+        private string _syncGroup = "";
+        public string SyncGroup { get => _syncGroup; set => SetField(ref _syncGroup, value); }
+        // 4 个轴槽（位置 + 速度），与所属点位表的 AxisNames 一一对应
+        public ObservableCollection<AxisPos> Axes { get; } = new();
+        public PointRow()
+        {
+            while (Axes.Count < 4) Axes.Add(new AxisPos());
+        }
+        /// <summary>点位位置摘要（用于列表紧凑展示，如 "轴1:12.3 轴2:20.0"）。</summary>
+        public string AxisSummary
+        {
+            get
+            {
+                var sb = new System.Text.StringBuilder();
+                for (int i = 0; i < Axes.Count; i++)
+                {
+                    if (i > 0) sb.Append(' ');
+                    sb.Append("轴").Append(i + 1).Append(':').Append(Axes[i].Position.ToString("F1"));
+                }
+                return sb.ToString();
+            }
+        }
     }
 
     public class TrayCell : ViewModelBase
@@ -440,6 +469,8 @@ namespace NoCodeVision.ViewModels
     {
         private string _name = "";
         public string Name { get => _name; set => SetField(ref _name, value); }
+        // 该工位所选的 4 个轴名（按槽位 0..3），决定轴列 / 属性面板的轴标签
+        public ObservableCollection<string> AxisNames { get; } = new() { "X", "Y", "Z", "A" };
         public ObservableCollection<PointRow> Points { get; } = new();
     }
 
@@ -485,12 +516,20 @@ namespace NoCodeVision.ViewModels
         public string NewItemName { get => _newItemName; set => SetField(ref _newItemName, value); }
         private string _newItemName = "";
 
+        // Excel 批量编辑：导出到 Excel 编辑后，按路径回读导入
+        public string ExcelPath { get => _excelPath; set => SetField(ref _excelPath, value); }
+        private string _excelPath = "";
+        public string ExcelStatus { get => _excelStatus; set => SetField(ref _excelStatus, value); }
+        private string _excelStatus = "";
+
         public ICommand AddCmd { get; }
         public ICommand DeleteCmd { get; }
         public ICommand RenameCmd { get; }
         public ICommand AddPointCmd { get; }
         public ICommand DeletePointCmd { get; }
         public ICommand RenamePointCmd { get; }
+        public ICommand ExportPointsCmd { get; }
+        public ICommand ImportPointsCmd { get; }
 
         public int TrayRows { get; } = 6;
         public int TrayCols { get; } = 8;
@@ -533,11 +572,11 @@ namespace NoCodeVision.ViewModels
                     Name = "默认点位表",
                     Points =
                     {
-                        new() { Name = "取料点", X = 10.0, Y = 20.0, Z = -5.0, Desc = "从料盘抓取" },
-                        new() { Name = "放料点", X = 120.0, Y = 80.0, Z = 0.0, Desc = "放入工位" },
-                        new() { Name = "安全点", X = 0.0, Y = 0.0, Z = 50.0, Desc = "抬高处过渡" },
-                        new() { Name = "拍照点", X = 60.0, Y = 40.0, Z = 10.0, Desc = "视觉定位" },
-                        new() { Name = "待机点", X = 0.0, Y = 100.0, Z = 30.0, Desc = "回零上方" },
+                        new() { Name = "取料点", Desc = "从料盘抓取", Axes = { new AxisPos { Position = 10.0, Speed = 50 }, new AxisPos { Position = 20.0, Speed = 50 }, new AxisPos { Position = -5.0, Speed = 30 }, new AxisPos { Position = 0 } } },
+                        new() { Name = "放料点", Desc = "放入工位", Axes = { new AxisPos { Position = 120.0, Speed = 50 }, new AxisPos { Position = 80.0, Speed = 50 }, new AxisPos { Position = 0, Speed = 30 }, new AxisPos { Position = 0 } } },
+                        new() { Name = "安全点", Desc = "抬高处过渡", Axes = { new AxisPos { Position = 0, Speed = 50 }, new AxisPos { Position = 0, Speed = 50 }, new AxisPos { Position = 50.0, Speed = 30 }, new AxisPos { Position = 0 } } },
+                        new() { Name = "拍照点", Desc = "视觉定位", Axes = { new AxisPos { Position = 60.0, Speed = 40 }, new AxisPos { Position = 40.0, Speed = 40 }, new AxisPos { Position = 10.0, Speed = 20 }, new AxisPos { Position = 0 } } },
+                        new() { Name = "待机点", Desc = "回零上方", Axes = { new AxisPos { Position = 0, Speed = 50 }, new AxisPos { Position = 100.0, Speed = 50 }, new AxisPos { Position = 30.0, Speed = 30 }, new AxisPos { Position = 0 } } },
                     }
                 }
             };
@@ -625,6 +664,32 @@ namespace NoCodeVision.ViewModels
                 NewItemName = "";
                 OnPropertyChanged(nameof(NewItemName));
             }, _ => !string.IsNullOrWhiteSpace(NewItemName) && SelectedPointTable != null && SelectedPoint != null);
+
+            ExportPointsCmd = new RelayCommand(_ =>
+            {
+                if (SelectedPointTable == null) return;
+                var path = string.IsNullOrWhiteSpace(ExcelPath)
+                    ? ExcelBatchEdit.ExportPoints(SelectedPointTable.Points)
+                    : ExcelBatchEdit.ExportPoints(SelectedPointTable.Points, Path.GetFileNameWithoutExtension(ExcelPath));
+                if (string.IsNullOrWhiteSpace(ExcelPath)) ExcelBatchEdit.OpenInExcel(path);
+                ExcelStatus = "已导出 " + SelectedPointTable.Points.Count + " 个点位 → " + path;
+            }, _ => SelectedPointTable != null);
+            ImportPointsCmd = new RelayCommand(_ =>
+            {
+                var path = ExcelPath;
+                if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+                {
+                    ExcelStatus = "请先在「Excel 路径」填写有效文件，或先点「导出Excel」生成文件。";
+                    return;
+                }
+                var rows = ExcelBatchEdit.ImportPoints(path);
+                if (SelectedPointTable != null)
+                {
+                    SelectedPointTable.Points.Clear();
+                    foreach (var r in rows) SelectedPointTable.Points.Add(r);
+                }
+                ExcelStatus = "已导入 " + rows.Count + " 个点位（来自 " + path + "）";
+            }, _ => !string.IsNullOrWhiteSpace(ExcelPath) && File.Exists(ExcelPath));
 
             // Connect real motion controller (simulated for now); refresh axis positions on a timer
             HardwareManager.Instance.Motion.Connect();

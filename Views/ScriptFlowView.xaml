@@ -296,6 +296,11 @@
                             <TextBlock Text="清除断点" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
+                    <Button Style="{StaticResource LuaDbgButton}" Background="#AF52DE" Command="{Binding CheckSyntaxCmd}" ToolTip="语法校验（编译不执行）" Margin="6,0,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="语法校验" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
                     <Button Style="{StaticResource LuaDbgButton}" Background="#5856D6" Click="Undo_Click" ToolTip="回撤编辑 (Ctrl+Z)" Margin="6,0,0,0">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="回撤" VerticalAlignment="Center"/>
