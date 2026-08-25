@@ -76,6 +76,11 @@ namespace NoCodeVision.Views.Controls
         public static readonly DependencyProperty RoiHProperty =
             DependencyProperty.Register(nameof(RoiH), typeof(double), typeof(RoiImageView), new PropertyMetadata(80.0, OnRoiChanged));
 
+        /// <summary>旋转矩形工具的角度（度），仅 RotatedRect 模式使用。</summary>
+        public double RoiAngle { get => (double)GetValue(RoiAngleProperty); set => SetValue(RoiAngleProperty, value); }
+        public static readonly DependencyProperty RoiAngleProperty =
+            DependencyProperty.Register(nameof(RoiAngle), typeof(double), typeof(RoiImageView), new PropertyMetadata(0.0, OnRoiChanged));
+
         public IEnumerable? Overlays
         {
             get => (IEnumerable?)GetValue(OverlaysProperty);
@@ -120,6 +125,7 @@ namespace NoCodeVision.Views.Controls
             {
                 v._measureDragging = false;
                 v._roiDragging = false;
+                v._rotating = false;
                 if (v.PixelCanvas.IsMouseCaptured) v.PixelCanvas.ReleaseMouseCapture();
                 v.UpdateModeButtons();
             }
@@ -251,20 +257,44 @@ namespace NoCodeVision.Views.Controls
 
         private void RenderRoi()
         {
-            if (ImagePixelWidth <= 0) { RoiRect.Visibility = Visibility.Collapsed; HideHandles(); return; }
+            if (ImagePixelWidth <= 0) { RoiRect.Visibility = Visibility.Collapsed; HideHandles(); Hrot.Visibility = Visibility.Collapsed; return; }
 
             double x = RoiX, y = RoiY, w = Math.Max(RoiW, 4), h = Math.Max(RoiH, 4);
+            bool isRot = MeasureMode == "RotatedRect";
+            bool isPoint = MeasureMode == "Point";
 
             RoiRect.Width = w; RoiRect.Height = h;
             Canvas.SetLeft(RoiRect, x); Canvas.SetTop(RoiRect, y);
-            RoiRect.Visibility = Visibility.Visible;
+            RoiRect.RenderTransform = isRot ? new RotateTransform(RoiAngle, w / 2, h / 2) : null;
+            RoiRect.Visibility = isPoint ? Visibility.Collapsed : Visibility.Visible;
 
-            PlaceHandle(Htl, x, y);
-            PlaceHandle(Htr, x + w - 9, y);
-            PlaceHandle(Hbl, x, y + h - 9);
-            PlaceHandle(Hbr, x + w - 9, y + h - 9);
+            if (isRot)
+            {
+                HideHandles();
+                double cx = x + w / 2, cy = y + h / 2;
+                double rad = RoiAngle * Math.PI / 180.0;
+                double hx = cx + (h / 2) * Math.Sin(rad);
+                double hy = cy - (h / 2) * Math.Cos(rad);
+                Canvas.SetLeft(Hrot, hx - 6); Canvas.SetTop(Hrot, hy - 6);
+                Hrot.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                Hrot.Visibility = Visibility.Collapsed;
+                if (!isPoint)
+                {
+                    PlaceHandle(Htl, x, y);
+                    PlaceHandle(Htr, x + w - 9, y);
+                    PlaceHandle(Hbl, x, y + h - 9);
+                    PlaceHandle(Hbr, x + w - 9, y + h - 9);
+                }
+                else
+                {
+                    HideHandles();
+                }
+            }
 
-            RoiTipText.Text = $"X:{RoiX:F0}  Y:{RoiY:F0}  W:{RoiW:F0}  H:{RoiH:F0}";
+            RoiTipText.Text = $"X:{RoiX:F0}  Y:{RoiY:F0}  W:{RoiW:F0}  H:{RoiH:F0}" + (isRot ? $"  ∠:{RoiAngle:F0}°" : "");
         }
 
         private void PlaceHandle(Rectangle h, double x, double y)
@@ -341,6 +371,7 @@ namespace NoCodeVision.Views.Controls
         #region 鼠标交互：左键画 ROI，右键/中键平移，滚轮缩放
 
         private bool _roiDragging;
+        private bool _rotating;
         private Point _roiStart;
 
         private bool _measureDragging;
@@ -355,6 +386,30 @@ namespace NoCodeVision.Views.Controls
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (ImagePixelWidth <= 0) return;
+            if (e.ChangedButton == MouseButton.Left && MeasureMode == "Point")
+            {
+                var p = e.GetPosition(PixelCanvas);
+                AddMeasure(new MeasureItem
+                {
+                    Tool = "Point",
+                    X1 = p.X, Y1 = p.Y, X2 = p.X, Y2 = p.Y,
+                    Value = 0,
+                    Label = $"点 ({p.X:F0},{p.Y:F0})",
+                    Color = "#30D158"
+                });
+                e.Handled = true;
+                return;
+            }
+            if (e.ChangedButton == MouseButton.Left && MeasureMode == "RotatedRect")
+            {
+                _roiDragging = true;
+                _roiStart = e.GetPosition(PixelCanvas);
+                PixelCanvas.CaptureMouse();
+                RoiTip.Visibility = Visibility.Visible;
+                UpdateRoiFromPoint(_roiStart, _roiStart);
+                e.Handled = true;
+                return;
+            }
             if (e.ChangedButton == MouseButton.Left)
             {
                 var p = e.GetPosition(PixelCanvas); // PixelCanvas 局部坐标 = 图像像素坐标
@@ -397,6 +452,13 @@ namespace NoCodeVision.Views.Controls
             {
                 UpdateRoiFromPoint(_roiStart, e.GetPosition(PixelCanvas));
             }
+            else if (_rotating)
+            {
+                var c = e.GetPosition(PixelCanvas);
+                double cx = RoiX + RoiW / 2, cy = RoiY + RoiH / 2;
+                double ang = Math.Atan2(c.X - cx, -(c.Y - cy)) * 180.0 / Math.PI;
+                RoiAngle = ang;
+            }
             else if (_panDragging)
             {
                 var cur = e.GetPosition(Root);
@@ -419,6 +481,11 @@ namespace NoCodeVision.Views.Controls
                 _previewMeasure = null;
                 AddMeasure(item);
                 RenderMeasures();
+            }
+            else if (e.ChangedButton == MouseButton.Left && _rotating)
+            {
+                _rotating = false;
+                PixelCanvas.ReleaseMouseCapture();
             }
             else if (e.ChangedButton == MouseButton.Left && _roiDragging)
             {
@@ -496,6 +563,14 @@ namespace NoCodeVision.Views.Controls
         private void DrawMeasure(MeasureItem m)
         {
             var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(m.Color)!);
+            if (m.Tool == "Point")
+            {
+                var dot = new Ellipse { Width = 10, Height = 10, Stroke = brush, StrokeThickness = 2, Fill = Brushes.Transparent };
+                Canvas.SetLeft(dot, m.X1 - 5); Canvas.SetTop(dot, m.Y1 - 5);
+                MeasureLayer.Children.Add(dot);
+                AddLabel(m.X1, m.Y1 - 18, m.Label, brush);
+                return;
+            }
             if (m.Tool == "Circle")
             {
                 var ellipse = new Ellipse
@@ -573,6 +648,16 @@ namespace NoCodeVision.Views.Controls
             SetBtnActive(BtnModeRoi, MeasureMode == "Roi");
             SetBtnActive(BtnModeLine, MeasureMode == "Line");
             SetBtnActive(BtnModeCircle, MeasureMode == "Circle");
+            SetBtnActive(BtnModePoint, MeasureMode == "Point");
+            SetBtnActive(BtnModeRot, MeasureMode == "RotatedRect");
+        }
+
+        private void OnRotateHandleDown(object sender, MouseButtonEventArgs e)
+        {
+            if (ImagePixelWidth <= 0) return;
+            _rotating = true;
+            PixelCanvas.CaptureMouse();
+            e.Handled = true;
         }
 
         private static void SetBtnActive(Button btn, bool active)

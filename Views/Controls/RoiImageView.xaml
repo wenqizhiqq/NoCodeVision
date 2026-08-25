@@ -49,6 +49,7 @@
                     <Rectangle x:Name="Htr" Width="9" Height="9" Fill="White" Stroke="#007AFF" StrokeThickness="2" Visibility="Collapsed" RadiusX="2" RadiusY="2" />
                     <Rectangle x:Name="Hbl" Width="9" Height="9" Fill="White" Stroke="#007AFF" StrokeThickness="2" Visibility="Collapsed" RadiusX="2" RadiusY="2" />
                     <Rectangle x:Name="Hbr" Width="9" Height="9" Fill="White" Stroke="#007AFF" StrokeThickness="2" Visibility="Collapsed" RadiusX="2" RadiusY="2" />
+                    <Ellipse x:Name="Hrot" Width="12" Height="12" Fill="#30D158" Stroke="White" StrokeThickness="2" Visibility="Collapsed" Cursor="Cross" MouseDown="OnRotateHandleDown" />
                 </Canvas>
                 <Canvas x:Name="MeasureLayer" IsHitTestVisible="False" />
             </Canvas>
@@ -63,6 +64,8 @@
                 <Button x:Name="BtnModeRoi" Content="框选" Tag="Roi" Style="{StaticResource MeasureModeBtn}" Background="#1C1C22" Click="OnModeClick" />
                 <Button x:Name="BtnModeLine" Content="线段" Tag="Line" Style="{StaticResource MeasureModeBtn}" Background="#1C1C22" Click="OnModeClick" />
                 <Button x:Name="BtnModeCircle" Content="圆" Tag="Circle" Style="{StaticResource MeasureModeBtn}" Background="#1C1C22" Click="OnModeClick" />
+                <Button x:Name="BtnModePoint" Content="点" Tag="Point" Style="{StaticResource MeasureModeBtn}" Background="#1C1C22" Click="OnModeClick" />
+                <Button x:Name="BtnModeRot" Content="旋转矩形" Tag="RotatedRect" Style="{StaticResource MeasureModeBtn}" Background="#1C1C22" Click="OnModeClick" />
             </StackPanel>
 
             <!-- 占位提示 -->
@@ -99,7 +102,8 @@
             <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10"
                     Background="#1C1C22" Opacity="0.82" CornerRadius="8" Padding="8,5">
                 <StackPanel>
-                    <TextBlock Text="左键：绘制（框选 / 线段 / 圆）" Foreground="White" FontSize="11" />
+                    <TextBlock Text="左键：绘制（框选 / 线段 / 圆 / 点 / 旋转矩形）" Foreground="White" FontSize="11" />
+                    <TextBlock Text="旋转矩形：先拖出矩形，再拖绿色手柄旋转" Foreground="White" FontSize="11" />
                     <TextBlock Text="右键/中键拖拽：平移" Foreground="White" FontSize="11" />
                     <TextBlock Text="滚轮：缩放" Foreground="White" FontSize="11" />
                 </StackPanel>

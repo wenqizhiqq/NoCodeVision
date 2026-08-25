@@ -330,6 +330,73 @@ public class VisionFlowStep : ViewModelBase
     public string OnFail { get => _onFail; set => SetField(ref _onFail, value); }
     private string _onFail = "忽略";
 
+    // ===== 新增步骤类型参数（视觉增强 / 逻辑控制 / 数据运算） =====
+    public string ColorChannel { get => _colorChannel; set => SetField(ref _colorChannel, value); }
+    private string _colorChannel = "灰度";
+    public string TargetColor { get => _targetColor; set => SetField(ref _targetColor, value); }
+    private string _targetColor = "#FF0000";
+    public double ColorTolerance { get => _colorTolerance; set => SetField(ref _colorTolerance, value); }
+    private double _colorTolerance = 30;
+
+    public string CountSource { get => _countSource; set => SetField(ref _countSource, value); }
+    private string _countSource = "上一步结果";
+    public double CountMinArea { get => _countMinArea; set => SetField(ref _countMinArea, value); }
+    private double _countMinArea = 50;
+    public string CountOutputVar { get => _countOutputVar; set => SetField(ref _countOutputVar, value); }
+    private string _countOutputVar = "nCount";
+
+    public string CodeType { get => _codeType; set => SetField(ref _codeType, value); }
+    private string _codeType = "QR";
+    public string CodeOutputVar { get => _codeOutputVar; set => SetField(ref _codeOutputVar, value); }
+    private string _codeOutputVar = "sCode";
+
+    public string OcrLang { get => _ocrLang; set => SetField(ref _ocrLang, value); }
+    private string _ocrLang = "数字";
+    public string OcrOutputVar { get => _ocrOutputVar; set => SetField(ref _ocrOutputVar, value); }
+    private string _ocrOutputVar = "sText";
+
+    public string BranchCondition { get => _branchCondition; set => SetField(ref _branchCondition, value); }
+    private string _branchCondition = "score >= 0.85";
+    public string BranchTrue { get => _branchTrue; set => SetField(ref _branchTrue, value); }
+    private string _branchTrue = "合格分支";
+    public string BranchFalse { get => _branchFalse; set => SetField(ref _branchFalse, value); }
+    private string _branchFalse = "不合格分支";
+
+    public string LoopType { get => _loopType; set => SetField(ref _loopType, value); }
+    private string _loopType = "次数";
+    public int LoopCount { get => _loopCount; set => SetField(ref _loopCount, value); }
+    private int _loopCount = 3;
+    public string LoopCondition { get => _loopCondition; set => SetField(ref _loopCondition, value); }
+    private string _loopCondition = "i < 10";
+    public string LoopVar { get => _loopVar; set => SetField(ref _loopVar, value); }
+    private string _loopVar = "i";
+
+    public string SubFlowName { get => _subFlowName; set => SetField(ref _subFlowName, value); }
+    private string _subFlowName = "";
+
+    public string CalcExpression { get => _calcExpression; set => SetField(ref _calcExpression, value); }
+    private string _calcExpression = "a + b * 2";
+    public string CalcOutputVar { get => _calcOutputVar; set => SetField(ref _calcOutputVar, value); }
+    private string _calcOutputVar = "result";
+
+    public string SaveFormat { get => _saveFormat; set => SetField(ref _saveFormat, value); }
+    private string _saveFormat = "CSV";
+    public string SavePath { get => _savePath; set => SetField(ref _savePath, value); }
+    private string _savePath = @"D:\Data\result.csv";
+    public string SaveFields { get => _saveFields; set => SetField(ref _saveFields, value); }
+    private string _saveFields = "time,score,result";
+
+    public string NotifyMessage { get => _notifyMessage; set => SetField(ref _notifyMessage, value); }
+    private string _notifyMessage = "检测完成";
+    public string NotifyType { get => _notifyType; set => SetField(ref _notifyType, value); }
+    private string _notifyType = "弹窗";
+    public string NotifyLevel { get => _notifyLevel; set => SetField(ref _notifyLevel, value); }
+    private string _notifyLevel = "信息";
+
+    // ===== ROI 旋转矩形工具参数 =====
+    public double RoiAngle { get => _roiAngle; set => SetField(ref _roiAngle, value); }
+    private double _roiAngle = 0;
+
     // ===== 缺陷检测参数 =====
     public double DiffThreshold { get => _diffThreshold; set => SetField(ref _diffThreshold, value); }
     private double _diffThreshold = 45;
@@ -1103,7 +1170,7 @@ public class FlowViewModel : ViewModelBase
     }
 
 
-    public string[] StepFunctions { get; } = { "图像采集", "模板匹配", "几何测量", "逻辑判断", "结果输出", "缺陷检测", "Lua脚本", "轴运动", "IO控制", "气缸动作", "等待延时", "通讯指令" };
+    public string[] StepFunctions { get; } = { "图像采集", "模板匹配", "几何测量", "逻辑判断", "结果输出", "缺陷检测", "Lua脚本", "轴运动", "IO控制", "气缸动作", "等待延时", "通讯指令", "颜色检测", "目标计数", "条码识别", "字符识别", "条件分支", "循环", "子流程", "变量计算", "数据保存", "消息提示" };
     public string[] PreprocessTypes { get; } = { "灰度化", "二值化", "高斯模糊", "中值滤波", "边缘检测" };
     public string[] MeasureTypes { get; } = { "圆径", "边距", "角度", "面积", "中心距" };
     public string[] LogicRelations { get; } = { "如果", "并且", "或者", "否则", "循环", "跳出", "并行", "等待" };
@@ -1145,6 +1212,15 @@ public class FlowViewModel : ViewModelBase
     public string[] DataTypes { get; } = { "整数", "浮点", "字符串", "布尔" };
     public string[] OutputTriggers { get; } = { "立即", "到位后", "条件满足" };
     public string[] OnFails { get; } = { "忽略", "报警", "停机" };
+    // 新增步骤类型选项
+    public string[] ColorChannels { get; } = { "灰度", "R", "G", "B", "HSV" };
+    public string[] CountSources { get; } = { "上一步结果", "ROI区域" };
+    public string[] CodeTypes { get; } = { "QR", "Code128", "Code39", "DataMatrix", "EAN13" };
+    public string[] OcrLangs { get; } = { "数字", "英文", "中文", "中英文" };
+    public string[] LoopTypes { get; } = { "次数", "条件" };
+    public string[] SaveFormats { get; } = { "CSV", "JSON", "Excel" };
+    public string[] NotifyTypes { get; } = { "弹窗", "声音", "日志" };
+    public string[] NotifyLevels { get; } = { "信息", "警告", "错误" };
 
     private VisionFlow? _selectedFlow;
     private int _stepCursor = 0;
@@ -1722,6 +1798,16 @@ public class FlowViewModel : ViewModelBase
                 "气缸动作" => ("🟢", "Cylinder"),
                 "等待延时" => ("⏱", "Wait"),
                 "通讯指令" => ("📡", "Comm"),
+                "颜色检测" => ("🎨", "Color"),
+                "目标计数" => ("🔢", "Count"),
+                "条码识别" => ("🔖", "Code"),
+                "字符识别" => ("🔤", "Ocr"),
+                "条件分支" => ("🔀", "Branch"),
+                "循环" => ("🔁", "Loop"),
+                "子流程" => ("📑", "SubFlow"),
+                "变量计算" => ("🧮", "Calc"),
+                "数据保存" => ("💾", "Save"),
+                "消息提示" => ("💬", "Notify"),
                 _ => ("➕", "Other")
             };
             var step = new VisionFlowStep
