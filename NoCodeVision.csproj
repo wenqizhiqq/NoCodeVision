@@ -21,6 +21,7 @@
     <PackageReference Include="AvalonEdit" Version="6.3.1.120" />
     <PackageReference Include="NLua" Version="1.6.3" />
     <PackageReference Include="ClosedXML" Version="0.104.2" />
+    <PackageReference Include="MQTTnet" Version="4.3.7.1207" />
   </ItemGroup>
 
   <ItemGroup>

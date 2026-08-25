@@ -20,6 +20,7 @@ using OpenCvSharp;
 using NoCodeVision;
 using NoCodeVision.Scripting;
 using NoCodeVision.Services;
+using NoCodeVision.Comm;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -799,11 +800,32 @@ public class CommConfigItem
     public string NetIp { get; set; } = "192.168.1.100";
     public string NetPort { get; set; } = "5000";
     public bool AutoReconnect { get; set; } = true;
+
+    // 新增通讯方式（UDP / Modbus-TCP / MQTT / HTTP / WebSocket / PLC）所需字段
+    public string Url { get; set; } = "";
+    public string Topic { get; set; } = "";
+    public string SubTopics { get; set; } = "";
+    public string UnitId { get; set; } = "1";
+    public string RegAddress { get; set; } = "0";
+    public string RegCount { get; set; } = "1";
+    public string LocalPort { get; set; } = "0";
+    public bool Broadcast { get; set; }
+    public string Method { get; set; } = "GET";
+    public string ClientId { get; set; } = "";
+    public string Username { get; set; } = "";
+    public string Password { get; set; } = "";
+    public string Rack { get; set; } = "0";
+    public string Slot { get; set; } = "1";
+    public string Db { get; set; } = "1";
+    public string Element { get; set; } = "D";
+    public string Station { get; set; } = "0";
+    public string FinsDna { get; set; } = "1";
+    public string FinsSna { get; set; } = "0";
 }
 
 public class CommunicationViewModel : ViewModelBase
 {
-    public string[] CommTypes { get; } = { "串口", "网口" };
+    public string[] CommTypes { get; } = { "串口", "网口", "UDP", "Modbus-TCP", "MQTT", "HTTP/REST", "WebSocket", "西门子S7", "三菱MC", "欧姆龙FINS" };
 
     public string[] PortOptions { get; } = { "COM1", "COM2", "COM3", "COM4" };
     public string[] BaudOptions { get; } = { "9600", "19200", "38400", "57600", "115200" };
@@ -812,11 +834,17 @@ public class CommunicationViewModel : ViewModelBase
     public string[] StopBitsOptions { get; } = { "1", "1.5", "2" };
     public string[] FlowOptions { get; } = { "无", "RTS/CTS", "XON/XOFF" };
 
-    public ObservableCollection<CommConfigItem> Configs { get; } = new()
-    {
-        new CommConfigItem { Name = "PLC-串口", CommType = "串口", Port = "COM3", Baud = "115200" },
-        new CommConfigItem { Name = "上位机-网口", CommType = "网口", NetIp = "192.168.1.100", NetPort = "5000" },
-    };
+        public ObservableCollection<CommConfigItem> Configs { get; } = new()
+        {
+            new CommConfigItem { Name = "PLC-串口", CommType = "串口", Port = "COM3", Baud = "115200" },
+            new CommConfigItem { Name = "上位机-网口", CommType = "网口", NetIp = "192.168.1.100", NetPort = "5000" },
+            new CommConfigItem { Name = "设备-UDP", CommType = "UDP", NetIp = "192.168.1.50", NetPort = "6000" },
+            new CommConfigItem { Name = "从站-Modbus", CommType = "Modbus-TCP", NetIp = "192.168.1.60", NetPort = "502", UnitId = "1" },
+            new CommConfigItem { Name = "Broker-MQTT", CommType = "MQTT", NetIp = "192.168.1.10", NetPort = "1883", SubTopics = "test/in" },
+            new CommConfigItem { Name = "S7-1200", CommType = "西门子S7", NetIp = "192.168.1.20", NetPort = "102", Rack = "0", Slot = "1", Db = "1" },
+            new CommConfigItem { Name = "FX-MC", CommType = "三菱MC", NetIp = "192.168.1.30", NetPort = "5007", Element = "D" },
+            new CommConfigItem { Name = "CP-FINS", CommType = "欧姆龙FINS", NetIp = "192.168.1.40", NetPort = "9600", FinsDna = "1", FinsSna = "0" },
+        };
 
     private CommConfigItem? _selectedConfig;
     public CommConfigItem? SelectedConfig { get => _selectedConfig; set => SetField(ref _selectedConfig, value); }
@@ -841,8 +869,9 @@ public class CommunicationViewModel : ViewModelBase
     public CommunicationViewModel()
     {
         SelectedConfig = Configs[0];
-        HardwareManager.Instance.Comm.Log += msg => PushLog(msg);
-        HardwareManager.Instance.Comm.DataReceived += msg => PushLog($"[接收] " + msg.TrimEnd());
+        CommHub.Instance.Log += msg => PushLog(msg);
+        CommHub.Instance.DataReceived += msg => PushLog($"[接收] " + msg.TrimEnd());
+        CommHub.Instance.StateChanged += open => IsConnected = open;
 
         AddCmd = new RelayCommand(_ =>
         {
@@ -861,26 +890,19 @@ public class CommunicationViewModel : ViewModelBase
                 ConnectCmd = new RelayCommand(async _ =>
         {
             if (_selectedConfig == null) return;
-            try
-            {
-                await HardwareManager.Instance.Comm.ConnectAsync(
-                    _selectedConfig.CommType, _selectedConfig.Port, _selectedConfig.Baud,
-                    _selectedConfig.DataBits, _selectedConfig.Parity, _selectedConfig.StopBits, _selectedConfig.Flow,
-                    _selectedConfig.NetIp, _selectedConfig.NetPort);
-                IsConnected = HardwareManager.Instance.Comm.IsOpen;
-            }
-            catch { IsConnected = false; }
+            await CommHub.Instance.ConnectAsync(_selectedConfig);
+            IsConnected = CommHub.Instance.IsOpen;
         });
                 DisconnectCmd = new RelayCommand(async _ =>
         {
-            await HardwareManager.Instance.Comm.DisconnectAsync();
+            await CommHub.Instance.DisconnectAsync();
             IsConnected = false;
         }, _ => IsConnected);
                 SendCmd = new RelayCommand(async _ =>
         {
             if (string.IsNullOrWhiteSpace(_sendText)) return;
             var t = _sendText;
-            await HardwareManager.Instance.Comm.SendAsync(t);
+            await CommHub.Instance.SendAsync(t);
             _sendText = "";
             OnPropertyChanged(nameof(SendText));
         });
