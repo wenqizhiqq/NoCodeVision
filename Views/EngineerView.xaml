@@ -33,6 +33,88 @@
                 <TextBlock Style="{StaticResource AppleLabel}" Text="{Binding Name}" />
             </DockPanel>
         </DataTemplate>
+
+        <DataTemplate x:Key="DebugAxisTemplate">
+            <Grid Margin="12,7">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Name}" Style="{StaticResource AppleLabel}" />
+                    <TextBlock Style="{StaticResource AppleSubLabel}">
+                        <Run Text="{Binding Value, StringFormat={}{0:F2}}" />
+                        <Run Text=" " />
+                        <Run Text="{Binding Unit}" />
+                    </TextBlock>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button Style="{StaticResource AppleIconBtn}" Content="使能" Margin="0,0,4,0"
+                            Command="{Binding DataContext.EnableAxisCmd, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}" />
+                    <Button Style="{StaticResource AppleIconBtn}" Content="回原" Margin="0,0,4,0"
+                            Command="{Binding DataContext.HomeAxisCmd, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}" />
+                    <Button Style="{StaticResource AppleIconBtn}" Content="−JOG" Margin="0,0,4,0"
+                            Command="{Binding DataContext.JogMinusCmd, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}" />
+                    <Button Style="{StaticResource AppleIconBtn}" Content="+JOG" Margin="0,0,4,0"
+                            Command="{Binding DataContext.JogPlusCmd, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}" />
+                    <Button Style="{StaticResource AppleIconBtn}" Content="−寸动" Margin="0,0,4,0"
+                            Command="{Binding DataContext.InchMinusCmd, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}" />
+                    <Button Style="{StaticResource AppleIconBtn}" Content="+寸动"
+                            Command="{Binding DataContext.InchPlusCmd, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}" />
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate x:Key="DebugIoTemplate">
+            <Grid Margin="12,7">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120" />
+                    <ColumnDefinition Width="80" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{Binding Name}" Style="{StaticResource AppleLabel}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{Binding Type}" Style="{StaticResource AppleSubLabel}" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <TextBlock Text="{Binding Status}" Style="{StaticResource AppleLabel}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <Button Content="切换"
+                            Command="{Binding DataContext.ToggleOutputCmd, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource AppleIconBtn}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Type}" Value="输入">
+                                        <Setter Property="IsEnabled" Value="False" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate x:Key="DebugCylinderTemplate">
+            <Grid Margin="12,7">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{Binding Name}" Style="{StaticResource AppleLabel}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{Binding Status}" Style="{StaticResource AppleSubLabel}" VerticalAlignment="Center" />
+                <Button Grid.Column="2" Style="{StaticResource AppleIconBtn}" Content="切换"
+                        Command="{Binding DataContext.ToggleCylinderCmd, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        CommandParameter="{Binding}" />
+            </Grid>
+        </DataTemplate>
+
     </UserControl.Resources>
 
     <Grid>
@@ -107,6 +189,40 @@
                             <Button Style="{StaticResource AppleBtn}" Content="导出日志" Command="{Binding ExportCmd}" DockPanel.Dock="Left" />
                             <Button Style="{StaticResource AppleBtnSecondary}" Content="清空" Command="{Binding ClearCmd}" DockPanel.Dock="Left" />
                         </DockPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- 轴调试 -->
+                <Border Style="{StaticResource AppleGroupCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="轴调试（真实驱动硬件）" />
+                        <DockPanel LastChildFill="False" Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleSubLabel}" DockPanel.Dock="Left" Text="寸动步长" />
+                            <TextBox Style="{StaticResource AppleTextField}" Width="80" Text="{Binding InchStep}" />
+                            <TextBlock Style="{StaticResource AppleSubLabel}" DockPanel.Dock="Left" Text="  JOG 步长" Margin="14,0,0,0" />
+                            <TextBox Style="{StaticResource AppleTextField}" Width="80" Text="{Binding JogStep}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <ListBox ItemsSource="{Binding DebugAxes}" ItemTemplate="{StaticResource DebugAxisTemplate}"
+                                 Style="{StaticResource AppleListBox}" BorderThickness="0" />
+                    </StackPanel>
+                </Border>
+
+                <!-- IO 调试 -->
+                <Border Style="{StaticResource AppleGroupCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="IO 调试（输入只读 · 输出可切换）" />
+                        <ListBox ItemsSource="{Binding DebugIo}" ItemTemplate="{StaticResource DebugIoTemplate}"
+                                 Style="{StaticResource AppleListBox}" BorderThickness="0" />
+                    </StackPanel>
+                </Border>
+
+                <!-- 气缸调试 -->
+                <Border Style="{StaticResource AppleGroupCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="气缸调试（伸出 / 缩回）" />
+                        <ListBox ItemsSource="{Binding DebugCylinders}" ItemTemplate="{StaticResource DebugCylinderTemplate}"
+                                 Style="{StaticResource AppleListBox}" BorderThickness="0" />
                     </StackPanel>
                 </Border>
 

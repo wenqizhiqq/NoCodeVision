@@ -2685,7 +2685,79 @@ public class EngineerViewModel : ViewModelBase
 
         ExportCmd = new RelayCommand(_ => LogEntries.Insert(0, $"[信息] 已导出日志 {DateTime.Now:HH:mm:ss}"));
         ClearCmd = new RelayCommand(_ => LogEntries.Clear());
-    }
+            // ===== 工程师调试：轴 / IO / 气缸 =====
+            var _mcm = MotionControlViewModel.Instance;
+            DebugAxes = _mcm?.Axes ?? new ObservableCollection<MotionRow>();
+            DebugIo = _mcm?.IoPoints ?? new ObservableCollection<MotionRow>();
+            DebugCylinders = _mcm?.Cylinders ?? new ObservableCollection<MotionRow>();
+
+            EnableAxisCmd = new RelayCommand(p => ToggleEnableAxis((MotionRow)p!));
+            HomeAxisCmd = new RelayCommand(p => HomeAxis((MotionRow)p!));
+            JogPlusCmd = new RelayCommand(p => MoveAxis((MotionRow)p!, +1, true));
+            JogMinusCmd = new RelayCommand(p => MoveAxis((MotionRow)p!, -1, true));
+            InchPlusCmd = new RelayCommand(p => MoveAxis((MotionRow)p!, +1, false));
+            InchMinusCmd = new RelayCommand(p => MoveAxis((MotionRow)p!, -1, false));
+            ToggleOutputCmd = new RelayCommand(p => ToggleOutput((MotionRow)p!));
+            ToggleCylinderCmd = new RelayCommand(p => ToggleCylinder((MotionRow)p!));
+        }
+
+        // ===== 工程师调试面板：轴 / IO / 气缸（真实驱动硬件，HardwareManager.Instance.Motion）=====
+        private readonly HardwareManager _hw = HardwareManager.Instance;
+
+        /// <summary>轴列表（与运控页同一份数据，可就地使能/回原/寸动/JOG）。</summary>
+        public ObservableCollection<MotionRow> DebugAxes { get; }
+        /// <summary>IO 列表（输入只读、输出可开关）。</summary>
+        public ObservableCollection<MotionRow> DebugIo { get; }
+        /// <summary>气缸列表（伸出/缩回切换）。</summary>
+        public ObservableCollection<MotionRow> DebugCylinders { get; }
+
+        private double _inchStep = 1.0;
+        /// <summary>寸动步长（每次寸动移动的单位）。</summary>
+        public double InchStep { get => _inchStep; set => SetField(ref _inchStep, value); }
+        private double _jogStep = 10.0;
+        /// <summary>JOG 步长（每次 JOG 移动的单位，通常大于寸动）。</summary>
+        public double JogStep { get => _jogStep; set => SetField(ref _jogStep, value); }
+
+        public ICommand EnableAxisCmd { get; }
+        public ICommand HomeAxisCmd { get; }
+        public ICommand JogPlusCmd { get; }
+        public ICommand JogMinusCmd { get; }
+        public ICommand InchPlusCmd { get; }
+        public ICommand InchMinusCmd { get; }
+        public ICommand ToggleOutputCmd { get; }
+        public ICommand ToggleCylinderCmd { get; }
+
+        // ===== 工程师调试命令实现 =====
+        private void ToggleEnableAxis(MotionRow row)
+        {
+            row.Enabled = !row.Enabled;
+            row.Status = row.Enabled ? "使能" : "禁用";
+            _hw.Motion.EnableAxis(row.Name, row.Enabled);
+        }
+
+        private void HomeAxis(MotionRow row) => row.Value = 0;
+
+        private void MoveAxis(MotionRow row, int dir, bool jog)
+        {
+            double step = jog ? JogStep : InchStep;
+            _hw.Motion.Jog(row.Name, dir * step);
+            row.Value += dir * step;
+        }
+
+        private void ToggleOutput(MotionRow row)
+        {
+            bool on = row.Status != "ON";
+            row.Status = on ? "ON" : "OFF";
+            _hw.Motion.SetIo(row.Name, on);
+        }
+
+        private void ToggleCylinder(MotionRow row)
+        {
+            bool extended = row.Status == "伸出";
+            row.Status = extended ? "缩回" : "伸出";
+            row.Action = extended ? "伸出" : "缩回";
+        }
+
 }
 
 #endregion
