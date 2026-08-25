@@ -78,6 +78,12 @@
                                 <TextBlock Text="操作员" FontSize="15" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
+                        <Button x:Name="Nav8" Tag="8" Style="{StaticResource SegButton}" Click="Nav_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="{StaticResource IcoManual}" Width="24" Height="24" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                <TextBlock Text="说明书" FontSize="15" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </Border>
 

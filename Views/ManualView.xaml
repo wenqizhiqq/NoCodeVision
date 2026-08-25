@@ -1,0 +1,205 @@
+<UserControl x:Class="NoCodeVision.Views.ManualView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <!-- 模块条目：名称 + 说明 -->
+        <Style x:Key="ManualItem" TargetType="StackPanel">
+            <Setter Property="Margin" Value="16,4,16,12" />
+        </Style>
+        <Style x:Key="ManualItemTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        </Style>
+        <Style x:Key="ManualItemBody" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,2,0,0" />
+        </Style>
+        <Style x:Key="ManualStep" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="16,2,16,8" />
+        </Style>
+        <Style x:Key="ManualStepIndex" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource AccentSoftBrush}" />
+            <Setter Property="CornerRadius" Value="11" />
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="0,2,0,8">
+
+            <!-- 标题 -->
+            <TextBlock Style="{StaticResource iOSTitle}" Text="软件说明书" />
+
+            <!-- 简介 -->
+            <Border Style="{StaticResource AppleHintBubble}">
+                <TextBlock FontSize="12.5" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap">
+                    <Run Text="NoCodeVision 是一款" /><Run Text="无代码视觉软件" FontWeight="Bold" /><Run Text="，采用 Apple / iOS 风格界面（圆角、半透明、淡蓝主色、紧凑布局）。无需编写代码，即可通过表格化配置完成 相机采集、视觉检测、运控联动、通讯交互与流程编排，面向工业自动化视觉检测场景。" />
+                </TextBlock>
+            </Border>
+
+            <!-- 顶部导航与功能模块 -->
+            <Border Style="{StaticResource AppleGroupCard}" Padding="0,8,0,12">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="一、顶部导航与功能模块" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="项目" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="管理检测工程（新建 / 打开 / 删除），每个工程包含相机、运控、通讯、变量、流程等配置。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="相机" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="配置相机参数、采集图像、ROI 与测量工具（如几何测量、缺陷检测）。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="运控" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="配置轴 / IO / 气缸等运动控制硬件与动作，经 HardwareManager 真实驱动。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="通讯" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="配置通讯方式（Modbus TCP/RTU、Socket、串口、OPC UA、PLC 等），实现与外部设备真实连通。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="变量" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="以表格维护流程中使用的变量（名称 + 可编辑值），可在脚本中读写。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="流程" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="可视化编排检测流水线（步骤表），支持脚本流程（Lua 编辑器）。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="工程师" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="工程参数与高级配置入口（含表格化时序确定性编排）。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="操作员" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="面向产线操作员的一键运行界面（Run / Pause / Stop / E-Stop / Reset）。" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 快速上手 -->
+            <Border Style="{StaticResource AppleGroupCard}" Padding="0,8,0,12">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="二、快速上手（5 步）" />
+                    <DockPanel LastChildFill="False" Margin="16,4,16,2">
+                        <Border Style="{StaticResource ManualStepIndex}" DockPanel.Dock="Left">
+                            <TextBlock Text="1" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock Style="{StaticResource ManualStep}" Text="在「项目」页新建工程并打开。" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <DockPanel LastChildFill="False" Margin="16,4,16,2">
+                        <Border Style="{StaticResource ManualStepIndex}" DockPanel.Dock="Left">
+                            <TextBlock Text="2" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock Style="{StaticResource ManualStep}" Text="在「相机」页连接相机、采集一张样图、框选 ROI。" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <DockPanel LastChildFill="False" Margin="16,4,16,2">
+                        <Border Style="{StaticResource ManualStepIndex}" DockPanel.Dock="Left">
+                            <TextBlock Text="3" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock Style="{StaticResource ManualStep}" Text="在「运控」「通讯」页配置硬件与通讯方式。" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <DockPanel LastChildFill="False" Margin="16,4,16,2">
+                        <Border Style="{StaticResource ManualStepIndex}" DockPanel.Dock="Left">
+                            <TextBlock Text="4" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock Style="{StaticResource ManualStep}" Text="在「变量」页定义流程所需变量。" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <DockPanel LastChildFill="False" Margin="16,4,16,2">
+                        <Border Style="{StaticResource ManualStepIndex}" DockPanel.Dock="Left">
+                            <TextBlock Text="5" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock Style="{StaticResource ManualStep}" Text="在「流程」页添加检测 / 运动 / 通讯步骤，或编写 Lua 脚本，最后到「操作员」页运行。" VerticalAlignment="Center" />
+                    </DockPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 表格化时序确定性编排 -->
+            <Border Style="{StaticResource AppleGroupCard}" Padding="0,8,0,12">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="三、表格化时序确定性编排（核心功能）" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="为达到确定性同步，流程步骤表提供两列关键配置：" />
+                    </StackPanel>
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="时序标记（Timing Marker）" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="如 T+0ms / T+5ms / 5 / 留空（顺延上一步）。表示相对启动时刻的预期触发时间。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="同步组（Sync Group）" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="如 GroupA。同组多步将在同一总线周期原子触发，用于多轴同步、IO 与运动对齐。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="⏱ 时序编译" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="执行编译期冲突检测：① 同步组内动作单周期可行性；② 相对时延 ≥ 总线周期分辨率；③ 同步组间资源争用（轴/IO 冲突）。结果在右侧编排卡片与状态栏提示。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="▶ 时序运行" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="确定性仿真，回填每步实际时刻、偏差与超阈报警（偏差 = 实际 − 预期，超过「偏差报警阈值」即报警）。可在右侧编排卡片编辑时序标记 / 同步组 / 总线周期 / 偏差阈值。" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 运行面板按钮颜色约定 -->
+            <Border Style="{StaticResource AppleGroupCard}" Padding="0,8,0,12">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="四、运行面板按钮颜色约定" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemBody}">
+                            <Run Text="● 运行 Run：" Foreground="#34C759" FontWeight="Bold" /><Run Text="绿色，启动流程。" />
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ManualItemBody}" Margin="0,4,0,0">
+                            <Run Text="● 暂停 Pause：" Foreground="#FF9500" FontWeight="Bold" /><Run Text="橙色，暂停流程。" />
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ManualItemBody}" Margin="0,4,0,0">
+                            <Run Text="● 停止 Stop：" Foreground="#FF3B30" FontWeight="Bold" /><Run Text="红色，停止流程。" />
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ManualItemBody}" Margin="0,4,0,0">
+                            <Run Text="● 急停 E-Stop：" Foreground="#FF3B30" FontWeight="Bold" /><Run Text="红色，紧急停止（最高优先）。" />
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ManualItemBody}" Margin="0,4,0,0">
+                            <Run Text="● 复位 Reset：" Foreground="#007AFF" FontWeight="Bold" /><Run Text="蓝色，复位状态。" />
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ManualItemBody}" Margin="0,6,0,0" Foreground="{StaticResource TextPrimaryBrush}">
+                            说明：运行面板的按钮真实驱动硬件，非伪造状态切换。
+                        </TextBlock>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 通讯能力 -->
+            <Border Style="{StaticResource AppleGroupCard}" Padding="0,8,0,12">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="五、通讯能力" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemBody}" TextWrapping="Wrap">
+                            支持 Modbus TCP / Modbus RTU、TCP / UDP Socket、串口（RS232 / RS485）、OPC UA、PLC（S7 / 三菱 / 欧姆龙 / 台达等）等主流工业通讯方式。可在「通讯」页与「流程 · 通讯指令」步骤中配置并使用，通过原生传输实现真实连通。
+                        </TextBlock>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

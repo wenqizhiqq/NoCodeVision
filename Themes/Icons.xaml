@@ -202,4 +202,37 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <!-- 说明书：蓝色书本 -->
+    <DrawingImage x:Key="IcoManual">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="#2563EB">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="5,3,13,18" RadiusX="1.6" RadiusY="1.6" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#1D4ED8">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="5,3,3,18" RadiusX="1.6" RadiusY="1.6" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#DBEAFE">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="9.5,7 7,1.3" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#DBEAFE">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="9.5,10 7,1.3" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#DBEAFE">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="9.5,13 5,1.3" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
 </ResourceDictionary>

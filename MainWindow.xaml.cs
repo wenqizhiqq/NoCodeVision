@@ -22,8 +22,9 @@ public partial class MainWindow : Window
             new FlowView(),
             new EngineerView(),
             new OperatorView(),
+            new ManualView(),
         };
-        _navButtons = new[] { Nav0, Nav1, Nav2, Nav3, Nav4, Nav5, Nav6, Nav7 };
+        _navButtons = new[] { Nav0, Nav1, Nav2, Nav3, Nav4, Nav5, Nav6, Nav7, Nav8 };
         Navigate(0);
     }
 
