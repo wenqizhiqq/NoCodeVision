@@ -8,7 +8,7 @@
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
-        <!-- 行内字段：圆角描边容器，用于搜索框 / Excel 路径框，统一视觉 -->
+        <!-- 行内字段：圆角描边容器，用于搜索框，统一视觉 -->
         <Style x:Key="FieldBox" TargetType="Border">
             <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
@@ -28,7 +28,7 @@
 
         <TextBlock Grid.Row="0" Style="{StaticResource iOSTitle}" Text="变量" Margin="0,0,0,12" />
 
-        <!-- 操作卡片：添加/删除 + 搜索 + Excel 批量编辑，统一在同一张 iOS 分组卡内 -->
+        <!-- 操作卡片：添加/删除 + 搜索，统一在同一张 iOS 分组卡内 -->
         <Border Grid.Row="1" Style="{StaticResource AppleGroupCard}" Padding="14,12" Margin="0,0,0,12">
             <StackPanel>
                 <!-- 第一行：添加/删除（左） + 搜索（右） -->
@@ -70,30 +70,6 @@
                     </Border>
                 </DockPanel>
 
-                <!-- 分隔线 -->
-                <Border Height="1" Background="{StaticResource LineBrush}" Margin="0,12" />
-
-                <!-- 第二行：Excel 批量编辑（左：路径框 右：导出/导入 + 状态） -->
-                <DockPanel LastChildFill="True">
-                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
-                        <TextBlock Text="Excel 路径" Style="{StaticResource AppleLabel}" Margin="0,0,8,0" />
-                        <Border Style="{StaticResource FieldBox}" Width="240">
-                            <TextBox Style="{StaticResource AppleTextField}"
-                                     Text="{Binding ExcelPath, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="填写 .xlsx 路径（自动避开系统文件对话框拦截）"
-                                     HorizontalAlignment="Stretch"
-                                     TextAlignment="Left"
-                                     Background="Transparent"
-                                     BorderThickness="0"
-                                     VerticalAlignment="Center" />
-                        </Border>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
-                        <Button Style="{StaticResource AppleBtn}" Content="导出Excel" Command="{Binding ExportVarsCmd}" Padding="14,7" />
-                        <Button Style="{StaticResource AppleBtnSecondary}" Content="导入Excel" Command="{Binding ImportVarsCmd}" Padding="14,7" Margin="8,0,0,0" />
-                        <TextBlock Text="{Binding ExcelStatus}" VerticalAlignment="Center" Margin="12,0,0,0" Foreground="{StaticResource TextMutedBrush}" FontSize="11" />
-                    </StackPanel>
-                </DockPanel>
             </StackPanel>
         </Border>
 
