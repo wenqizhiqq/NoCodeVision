@@ -8,6 +8,15 @@
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <!-- 行内字段：圆角描边容器，用于搜索框 / Excel 路径框，统一视觉 -->
+        <Style x:Key="FieldBox" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
     </UserControl.Resources>
 
     <Grid Margin="16">
@@ -19,63 +28,76 @@
 
         <TextBlock Grid.Row="0" Style="{StaticResource iOSTitle}" Text="变量" Margin="0,0,0,12" />
 
-        <!-- 工具栏：添加 / 删除（左）+ 搜索（右） -->
-        <StackPanel Grid.Row="1" Margin="0,0,0,12">
-        <DockPanel Margin="0,0,0,12" LastChildFill="True">
-            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
-                <Button Style="{StaticResource AppleBtn}" Content="添加" Command="{Binding AddCmd}" Padding="16,6" />
-                <Button Style="{StaticResource AppleBtnSecondary}" Content="删除" Command="{Binding RemoveCmd}" Padding="16,6" Margin="8,0,0,0" />
-            </StackPanel>
-            <Border DockPanel.Dock="Right"
-                    Background="{StaticResource SurfaceBrush}"
-                    BorderBrush="{StaticResource LineBrush}"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Padding="10,4"
-                    Width="200"
-                    Margin="12,0,0,0">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="🔍" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{StaticResource TextSecondaryBrush}" />
-                    <TextBox Grid.Column="1" Style="{StaticResource AppleTextField}"
-                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                             ToolTip="按名称或值搜索"
-                             HorizontalAlignment="Stretch"
-                             TextAlignment="Left"
-                             Background="Transparent"
-                             BorderThickness="0"
-                             VerticalAlignment="Center" />
-                    <Button Grid.Column="2"
-                            Command="{Binding ClearSearchCmd}"
-                            Visibility="{Binding HasSearchText, Converter={StaticResource BoolToVis}}"
-                            ToolTip="清除搜索"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Padding="4,0"
-                            Margin="6,0,0,0"
-                            Cursor="Hand"
-                            Foreground="{StaticResource TextSecondaryBrush}"
-                            FontSize="14"
-                            Content="✕"
-                            VerticalAlignment="Center" />
-                </Grid>
-            </Border>
-        </DockPanel>
-        <!-- Excel 批量编辑：导出到 Excel 编辑后，按路径回读导入 -->
-        <StackPanel Orientation="Horizontal">
-            <TextBlock Text="Excel 路径" VerticalAlignment="Center" Style="{StaticResource AppleLabel}" Margin="0,0,6,0"/>
-            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding ExcelPath, UpdateSourceTrigger=PropertyChanged}" Width="220" />
-            <Button Style="{StaticResource AppleBtn}" Content="导出Excel" Command="{Binding ExportVarsCmd}" Margin="8,0,0,0"/>
-            <Button Style="{StaticResource AppleBtnSecondary}" Content="导入Excel" Command="{Binding ImportVarsCmd}" Margin="8,0,0,0"/>
-            <TextBlock Text="{Binding ExcelStatus}" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
-        </StackPanel>
-        </StackPanel>
+        <!-- 操作卡片：添加/删除 + 搜索 + Excel 批量编辑，统一在同一张 iOS 分组卡内 -->
+        <Border Grid.Row="1" Style="{StaticResource AppleGroupCard}" Padding="14,12" Margin="0,0,0,12">
+            <StackPanel>
+                <!-- 第一行：添加/删除（左） + 搜索（右） -->
+                <DockPanel LastChildFill="True">
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                        <Button Style="{StaticResource AppleBtn}" Content="添加" Command="{Binding AddCmd}" Padding="16,7" />
+                        <Button Style="{StaticResource AppleBtnSecondary}" Content="删除" Command="{Binding RemoveCmd}" Padding="16,7" Margin="8,0,0,0" />
+                    </StackPanel>
+                    <Border DockPanel.Dock="Right" Style="{StaticResource FieldBox}" Width="240" Margin="12,0,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="🔍" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{StaticResource TextSecondaryBrush}" />
+                            <TextBox Grid.Column="1" Style="{StaticResource AppleTextField}"
+                                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="按名称、类型或值搜索"
+                                     HorizontalAlignment="Stretch"
+                                     TextAlignment="Left"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     VerticalAlignment="Center" />
+                            <Button Grid.Column="2"
+                                    Command="{Binding ClearSearchCmd}"
+                                    Visibility="{Binding HasSearchText, Converter={StaticResource BoolToVis}}"
+                                    ToolTip="清除搜索"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Padding="4,0"
+                                    Margin="6,0,0,0"
+                                    Cursor="Hand"
+                                    Foreground="{StaticResource TextSecondaryBrush}"
+                                    FontSize="14"
+                                    Content="✕"
+                                    VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+                </DockPanel>
 
-        <!-- 变量表格：名称 / 值 均可直接编辑 -->
+                <!-- 分隔线 -->
+                <Border Height="1" Background="{StaticResource LineBrush}" Margin="0,12" />
+
+                <!-- 第二行：Excel 批量编辑（左：路径框 右：导出/导入 + 状态） -->
+                <DockPanel LastChildFill="True">
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                        <TextBlock Text="Excel 路径" Style="{StaticResource AppleLabel}" Margin="0,0,8,0" />
+                        <Border Style="{StaticResource FieldBox}" Width="240">
+                            <TextBox Style="{StaticResource AppleTextField}"
+                                     Text="{Binding ExcelPath, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="填写 .xlsx 路径（自动避开系统文件对话框拦截）"
+                                     HorizontalAlignment="Stretch"
+                                     TextAlignment="Left"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     VerticalAlignment="Center" />
+                        </Border>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                        <Button Style="{StaticResource AppleBtn}" Content="导出Excel" Command="{Binding ExportVarsCmd}" Padding="14,7" />
+                        <Button Style="{StaticResource AppleBtnSecondary}" Content="导入Excel" Command="{Binding ImportVarsCmd}" Padding="14,7" Margin="8,0,0,0" />
+                        <TextBlock Text="{Binding ExcelStatus}" VerticalAlignment="Center" Margin="12,0,0,0" Foreground="{StaticResource TextMutedBrush}" FontSize="11" />
+                    </StackPanel>
+                </DockPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- 变量表格：名称 / 类型 / 值 / 备注 均可直接编辑 -->
         <Border Grid.Row="2" Style="{StaticResource AppleGroupCard}">
             <DataGrid ItemsSource="{Binding VariablesView}"
                       SelectedItem="{Binding Selected, Mode=TwoWay}"
@@ -134,12 +156,44 @@
                             </Style>
                         </DataGridTextColumn.EditingElementStyle>
                     </DataGridTextColumn>
+                    <DataGridTextColumn Header="类型" Width="100"
+                                        Binding="{Binding Type, UpdateSourceTrigger=PropertyChanged}">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Padding" Value="12,8" />
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                                <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                        <DataGridTextColumn.EditingElementStyle>
+                            <Style TargetType="TextBox">
+                                <Setter Property="Padding" Value="12,8" />
+                                <Setter Property="BorderThickness" Value="0" />
+                            </Style>
+                        </DataGridTextColumn.EditingElementStyle>
+                    </DataGridTextColumn>
                     <DataGridTextColumn Header="变量值" Width="*"
                                         Binding="{Binding Value, UpdateSourceTrigger=PropertyChanged}">
                         <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Padding" Value="12,8" />
                                 <Setter Property="VerticalAlignment" Value="Center" />
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                        <DataGridTextColumn.EditingElementStyle>
+                            <Style TargetType="TextBox">
+                                <Setter Property="Padding" Value="12,8" />
+                                <Setter Property="BorderThickness" Value="0" />
+                            </Style>
+                        </DataGridTextColumn.EditingElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="备注" Width="*"
+                                        Binding="{Binding Remark, UpdateSourceTrigger=PropertyChanged}">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Padding" Value="12,8" />
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                                <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
                             </Style>
                         </DataGridTextColumn.ElementStyle>
                         <DataGridTextColumn.EditingElementStyle>
