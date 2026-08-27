@@ -1699,7 +1699,7 @@
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="保存路径" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.SavePath, FallbackValue='D:\Data\result.csv'}" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.SavePath, FallbackValue='Data/result.csv'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">

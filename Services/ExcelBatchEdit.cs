@@ -57,7 +57,7 @@ namespace NoCodeVision.Services
 
         private static string MakePath(string? fileNameHint)
         {
-            var dir = Path.Combine(Path.GetTempPath(), "NoCodeVision");
+            var dir = NoCodeVision.Helpers.AppPaths.DataDirectory;
             Directory.CreateDirectory(dir);
             var safe = string.IsNullOrWhiteSpace(fileNameHint) ? "导出" : fileNameHint!;
             foreach (var c in Path.GetInvalidFileNameChars()) safe = safe.Replace(c, '_');

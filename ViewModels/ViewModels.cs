@@ -382,7 +382,7 @@ public class VisionFlowStep : ViewModelBase
     public string SaveFormat { get => _saveFormat; set => SetField(ref _saveFormat, value); }
     private string _saveFormat = "CSV";
     public string SavePath { get => _savePath; set => SetField(ref _savePath, value); }
-    private string _savePath = @"D:\Data\result.csv";
+    private string _savePath = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "result.csv");
     public string SaveFields { get => _saveFields; set => SetField(ref _saveFields, value); }
     private string _saveFields = "time,score,result";
 
@@ -482,9 +482,9 @@ public class ProjectItem
     public bool AutoStart { get; set; } = false;
     public bool AutoRunAfterStart { get; set; } = false;
     public bool EmergencyStopOnError { get; set; } = true;
-    public string ImageSavePath { get; set; } = @"D:\Images";
-    public string DataSavePath { get; set; } = @"D:\Data";
-    public string BackupPath { get; set; } = @"D:\Backup";
+    public string ImageSavePath { get; set; } = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Images");
+    public string DataSavePath { get; set; } = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Data");
+    public string BackupPath { get; set; } = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Backup");
     public int MaxBackupCount { get; set; } = 10;
     public bool PasswordEnabled { get; set; } = false;
     public int AutoLockMinutes { get; set; } = 5;
@@ -509,7 +509,7 @@ public class ProjectViewModel : ViewModelBase
             Description = "演示项目：电机支架视觉检测",
             Tags = "检测,电机,支架",
             ProjectVersion = "1.0.0",
-            ProjectPath = @"D:\Projects\DemoVision-01.ncv",
+            ProjectPath = Path.Combine(NoCodeVision.Helpers.AppPaths.ProjectsDirectory, "DemoVision-01.ncv"),
             CreateTime = DateTime.Now.ToString("yyyy-MM-dd"),
             ModifyTime = DateTime.Now.ToString("yyyy-MM-dd"),
             AutoSave = true,
@@ -522,9 +522,9 @@ public class ProjectViewModel : ViewModelBase
             AutoStart = false,
             AutoRunAfterStart = false,
             EmergencyStopOnError = true,
-            ImageSavePath = @"D:\Images",
-            DataSavePath = @"D:\Data",
-            BackupPath = @"D:\Backup",
+            ImageSavePath = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Images"),
+            DataSavePath = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Data"),
+            BackupPath = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Backup"),
             MaxBackupCount = 10,
             PasswordEnabled = false,
             AutoLockMinutes = 5,
@@ -541,7 +541,7 @@ public class ProjectViewModel : ViewModelBase
             Description = "电机支架外观检测",
             Tags = "外观,支架",
             ProjectVersion = "1.2.0",
-            ProjectPath = @"D:\Projects\MotorBracket-A.ncv",
+            ProjectPath = Path.Combine(NoCodeVision.Helpers.AppPaths.ProjectsDirectory, "MotorBracket-A.ncv"),
             CreateTime = "2026-08-10",
             ModifyTime = "2026-08-18",
             AutoSave = true,
@@ -554,9 +554,9 @@ public class ProjectViewModel : ViewModelBase
             AutoStart = false,
             AutoRunAfterStart = true,
             EmergencyStopOnError = true,
-            ImageSavePath = @"D:\Images",
-            DataSavePath = @"D:\Data",
-            BackupPath = @"D:\Backup",
+            ImageSavePath = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Images"),
+            DataSavePath = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Data"),
+            BackupPath = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Backup"),
             MaxBackupCount = 10,
             PasswordEnabled = false,
             AutoLockMinutes = 5,
@@ -573,7 +573,7 @@ public class ProjectViewModel : ViewModelBase
             Description = "PCB 焊点与元件检测",
             Tags = "PCB,焊点,SMT",
             ProjectVersion = "2.0.1",
-            ProjectPath = @"D:\Projects\PCB-Inspection.ncv",
+            ProjectPath = Path.Combine(NoCodeVision.Helpers.AppPaths.ProjectsDirectory, "PCB-Inspection.ncv"),
             CreateTime = "2026-07-22",
             ModifyTime = "2026-08-15",
             AutoSave = false,
@@ -586,9 +586,9 @@ public class ProjectViewModel : ViewModelBase
             AutoStart = true,
             AutoRunAfterStart = false,
             EmergencyStopOnError = true,
-            ImageSavePath = @"D:\Images",
-            DataSavePath = @"D:\Data",
-            BackupPath = @"D:\Backup",
+            ImageSavePath = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Images"),
+            DataSavePath = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Data"),
+            BackupPath = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Backup"),
             MaxBackupCount = 5,
             PasswordEnabled = true,
             AutoLockMinutes = 10,
@@ -620,7 +620,7 @@ public class ProjectViewModel : ViewModelBase
         AddCmd = new RelayCommand(_ =>
         {
             var next = Projects.Count + 1;
-            Projects.Add(new ProjectItem
+            var item = new ProjectItem
             {
                 ProjectName = $"新建项目-{next}",
                 Author = "admin",
@@ -628,7 +628,7 @@ public class ProjectViewModel : ViewModelBase
                 Description = "",
                 Tags = "",
                 ProjectVersion = "1.0.0",
-                ProjectPath = $"D:\\Projects\\NewProject-{next}.ncv",
+                ProjectPath = Path.Combine(NoCodeVision.Helpers.AppPaths.ProjectsDirectory, $"NewProject-{next}.ncv"),
                 CreateTime = DateTime.Now.ToString("yyyy-MM-dd"),
                 ModifyTime = DateTime.Now.ToString("yyyy-MM-dd"),
                 AutoSave = true,
@@ -641,9 +641,9 @@ public class ProjectViewModel : ViewModelBase
                 AutoStart = false,
                 AutoRunAfterStart = false,
                 EmergencyStopOnError = true,
-                ImageSavePath = @"D:\Images",
-                DataSavePath = @"D:\Data",
-                BackupPath = @"D:\Backup",
+                ImageSavePath = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Images"),
+                DataSavePath = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Data"),
+                BackupPath = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Backup"),
                 MaxBackupCount = 10,
                 PasswordEnabled = false,
                 AutoLockMinutes = 5,
@@ -651,35 +651,115 @@ public class ProjectViewModel : ViewModelBase
                 MaxUndoSteps = 50,
                 ResultRetainDays = 90,
                 DebugMode = false
-            });
+            };
+            Projects.Add(item);
+            SelectedProject = item;
+            try { SaveProject(item); } catch { }
         });
+
         DeleteCmd = new RelayCommand(_ =>
         {
             if (_selectedProject != null)
             {
-                Projects.Remove(_selectedProject);
-                SelectedProject = Projects.Count > 0 ? Projects[0] : null;
+                try
+                {
+                    var path = _selectedProject.ProjectPath;
+                    Projects.Remove(_selectedProject);
+                    if (File.Exists(path)) File.Delete(path);
+                    SelectedProject = Projects.Count > 0 ? Projects[0] : null;
+                }
+                catch { }
             }
         }, _ => _selectedProject != null);
+
         NewCmd = new RelayCommand(_ =>
         {
             if (_selectedProject != null)
                 _selectedProject.Status = $"已新建项目 · {DateTime.Now:HH:mm:ss}";
             OnPropertyChanged(nameof(SelectedProject));
         });
+
         OpenCmd = new RelayCommand(_ =>
         {
-            if (_selectedProject != null)
-                _selectedProject.Status = $"已打开 {_selectedProject.ProjectPath} · {DateTime.Now:HH:mm:ss}";
+            if (_selectedProject == null) return;
+            try
+            {
+                if (File.Exists(_selectedProject.ProjectPath))
+                {
+                    var json = File.ReadAllText(_selectedProject.ProjectPath);
+                    var loaded = JsonSerializer.Deserialize<ProjectItem>(json);
+                    if (loaded != null)
+                    {
+                        loaded.ProjectPath = _selectedProject.ProjectPath;
+                        var idx = Projects.IndexOf(_selectedProject);
+                        if (idx >= 0) Projects[idx] = loaded;
+                        SelectedProject = loaded;
+                    }
+                }
+                if (_selectedProject != null)
+                    _selectedProject.Status = $"已打开 {_selectedProject.ProjectPath} · {DateTime.Now:HH:mm:ss}";
+            }
+            catch (Exception ex) { if (_selectedProject != null) _selectedProject.Status = $"打开失败: {ex.Message}"; }
             OnPropertyChanged(nameof(SelectedProject));
         });
+
         SaveCmd = new RelayCommand(_ =>
         {
-            if (_selectedProject != null)
+            if (_selectedProject == null) return;
+            try
+            {
+                SaveProject(_selectedProject);
                 _selectedProject.Status = $"已保存 · {DateTime.Now:HH:mm:ss}";
+                _selectedProject.ModifyTime = DateTime.Now.ToString("yyyy-MM-dd");
+            }
+            catch (Exception ex) { _selectedProject.Status = $"保存失败: {ex.Message}"; }
             OnPropertyChanged(nameof(SelectedProject));
         });
+
+        SyncProjectsWithDisk();
+        if (Projects.Count > 0) SelectedProject = Projects[0];
     }
+
+    private void SaveProject(ProjectItem item)
+    {
+        var dir = Path.GetDirectoryName(item.ProjectPath);
+        if (!string.IsNullOrWhiteSpace(dir)) Directory.CreateDirectory(dir);
+        var json = JsonSerializer.Serialize(item, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(item.ProjectPath, json);
+    }
+
+    private void SyncProjectsWithDisk()
+    {
+        try
+        {
+            var dir = NoCodeVision.Helpers.AppPaths.ProjectsDirectory;
+            var files = Directory.EnumerateFiles(dir, "*.ncv").ToList();
+            if (files.Count > 0)
+            {
+                Projects.Clear();
+                foreach (var f in files)
+                {
+                    try
+                    {
+                        var json = File.ReadAllText(f);
+                        var item = JsonSerializer.Deserialize<ProjectItem>(json);
+                        if (item != null)
+                        {
+                            item.ProjectPath = f;
+                            Projects.Add(item);
+                        }
+                    }
+                    catch { /* 单个文件损坏跳过 */ }
+                }
+            }
+            else
+            {
+                foreach (var p in Projects.ToList()) SaveProject(p);
+            }
+        }
+        catch { /* 忽略 */ }
+    }
+
 }
 
 #endregion
@@ -811,7 +891,7 @@ public class CameraViewModel : ViewModelBase
     private string _imageFormat = "PNG";
     public string ImageFormat { get => _imageFormat; set => SetField(ref _imageFormat, value); }
 
-    private string _saveImagePath = @"D:\Images";
+    private string _saveImagePath = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Images");
     public string SaveImagePath { get => _saveImagePath; set => SetField(ref _saveImagePath, value); }
 
     private bool _isConnected;
@@ -1660,7 +1740,7 @@ public class FlowViewModel : ViewModelBase
     public string TemplatePreviewInfo { get => _templatePreviewInfo; set => SetField(ref _templatePreviewInfo, value); }
 
     private static string StateFilePath
-        => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NoCodeVision", "flows.json");
+        => Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "flows.json");
 
     public ICommand AddFlowCmd { get; }
     public ICommand DeleteFlowCmd { get; }
@@ -1910,7 +1990,7 @@ public class FlowViewModel : ViewModelBase
                     using var frame = new Mat();
                     cap.Read(frame);
                     if (frame.Empty()) { _selectedStep.StatusText = "采集失败"; _selectedStep.ActualValue = "采集失败"; return; }
-                    var tmp = Path.Combine(Path.GetTempPath(), $"ncv_cam_{DateTime.Now:yyyyMMddHHmmssfff}.png");
+                    var tmp = Path.Combine(NoCodeVision.Helpers.AppPaths.TempDirectory, $"ncv_cam_{DateTime.Now:yyyyMMddHHmmssfff}.png");
                     Cv2.ImWrite(tmp, frame);
                     path = tmp;
                 }
@@ -1960,7 +2040,7 @@ public class FlowViewModel : ViewModelBase
                 return;
             }
             using var tpl = new Mat(src, roi);
-            var tplDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NoCodeVision", "templates");
+            var tplDir = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "templates");
             Directory.CreateDirectory(tplDir);
             var tmp = Path.Combine(tplDir, $"ncv_tpl_{DateTime.Now:yyyyMMddHHmmssfff}.png");
             Cv2.ImWrite(tmp, tpl);
@@ -2371,7 +2451,7 @@ public class FlowViewModel : ViewModelBase
                     using var frame = new Mat();
                     cap.Read(frame);
                     if (frame.Empty()) return null;
-                    var tmp = Path.Combine(Path.GetTempPath(), $"ncv_cam_{DateTime.Now:yyyyMMddHHmmssfff}.png");
+                    var tmp = Path.Combine(NoCodeVision.Helpers.AppPaths.TempDirectory, $"ncv_cam_{DateTime.Now:yyyyMMddHHmmssfff}.png");
                     Cv2.ImWrite(tmp, frame);
                     step.ImageSource = tmp;
                     return frame.Clone();
@@ -2984,6 +3064,9 @@ public class OperatorViewModel : ViewModelBase
     }
 
     private void UpdateStatus() => Status = _isRunning ? "检测中…" : "已停止";
+
 }
 
 #endregion
+
+
