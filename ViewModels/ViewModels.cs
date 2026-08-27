@@ -1177,6 +1177,8 @@ public class VariablesViewModel : ViewModelBase
 
 public class FlowViewModel : ViewModelBase
 {
+    public static FlowViewModel? Instance { get; private set; }
+
     private ObservableCollection<VisionFlow> _flows = new();
     public ObservableCollection<VisionFlow> Flows
     {
@@ -1810,6 +1812,7 @@ public class FlowViewModel : ViewModelBase
 
         public FlowViewModel()
         {
+            Instance = this;
             if (!LoadState())
                 _flows = CreateDefaultFlows();
             WireAutoSave();
@@ -2343,6 +2346,62 @@ public class FlowViewModel : ViewModelBase
             : $"⚠ 时序运行完成，{alarmCount} 步偏差超阈值 ±{TimingThresholdMs:F2}ms";
     }
 
+    /// <summary>运行单个流程的全部步骤（供“全部流程循环”复用）。</summary>
+    private async Task RunSingleFlowStepsAsync(VisionFlow flow, CancellationToken ct)
+    {
+        if (flow == null || flow.Steps.Count == 0) return;
+        var matcher = new RotatedTemplateMatcher();
+        int cursor = 0;
+        int guard = 0;
+        int maxIter = flow.Steps.Count * 20 + 50;
+        while (!ct.IsCancellationRequested && cursor >= 0 && cursor < flow.Steps.Count && guard++ < maxIter)
+        {
+            // 暂停：等待恢复或停止
+            while (IsPaused && !ct.IsCancellationRequested)
+                await Task.Delay(120, ct);
+            if (ct.IsCancellationRequested) break;
+
+            var step = flow.Steps[cursor];
+            SelectedStep = step;                       // 选中并自动跳到该行
+            Status = $"运行中 · {flow.Name} · 第{step.Index}步 {step.Name} · {DateTime.Now:HH:mm:ss}";
+            RunStep(step, matcher);                    // 在当前(UI)线程执行本步
+
+            // 让 UI 重绘、滚动到当前行、并响应暂停/停止点击
+            await Task.Delay(StepPaceMs, ct);
+
+            cursor = NextStepIndex(cursor);
+        }
+    }
+
+    /// <summary>循环运行全部流程：不停跑完所有流程，直到取消（停止按钮）才跳出循环。</summary>
+    public async Task RunAllFlowsLoopAsync(CancellationToken ct)
+    {
+        if (Flows == null || Flows.Count == 0) { Status = "无可用流程"; return; }
+        IsRunning = true;
+        IsPaused = false;
+        _sharedImage?.Dispose();
+        _sharedImage = null;
+        try
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                foreach (var flow in Flows)
+                {
+                    if (ct.IsCancellationRequested) break;
+                    await RunSingleFlowStepsAsync(flow, ct);
+                }
+            }
+        }
+        finally
+        {
+            _sharedImage?.Dispose();
+            _sharedImage = null;
+            IsRunning = false;
+            IsPaused = false;
+            Status = ct.IsCancellationRequested ? "已停止 · 全部流程循环" : "完成 · 全部流程循环";
+        }
+    }
+
     private async Task RunAllAsync()
     {
         if (_selectedFlow == null || _selectedFlow.Steps.Count == 0) return;
@@ -2352,29 +2411,9 @@ public class FlowViewModel : ViewModelBase
         _sharedImage?.Dispose();
         _sharedImage = null;
         CurrentImagePath = "";
-        var matcher = new RotatedTemplateMatcher();
-        _stepCursor = 0;
-        int guard = 0;
-        int maxIter = _selectedFlow.Steps.Count * 20 + 50;
         try
         {
-            while (!_cts.IsCancellationRequested && _stepCursor >= 0 && _stepCursor < _selectedFlow.Steps.Count && guard++ < maxIter)
-            {
-                // 暂停：等待恢复或停止
-                while (IsPaused && !_cts.IsCancellationRequested)
-                    await Task.Delay(120);
-                if (_cts.IsCancellationRequested) break;
-
-                var step = _selectedFlow.Steps[_stepCursor];
-                SelectedStep = step;                       // 选中并自动跳到该行
-                Status = $"运行中 · 第{step.Index}步 {step.Name} · {DateTime.Now:HH:mm:ss}";
-                RunStep(step, matcher);                    // 在当前(UI)线程执行本步
-
-                // 让 UI 重绘、滚动到当前行、并响应暂停/停止点击
-                await Task.Delay(StepPaceMs);
-
-                _stepCursor = NextStepIndex(_stepCursor);
-            }
+            await RunSingleFlowStepsAsync(_selectedFlow, _cts.Token);
         }
         finally
         {
@@ -3015,6 +3054,7 @@ public class OperatorViewModel : ViewModelBase
     public ICommand DeleteCmd { get; }
 
     private bool _isRunning;
+    private CancellationTokenSource? _runCts;
     public bool IsRunning { get => _isRunning; set { if (SetField(ref _isRunning, value)) { OnPropertyChanged(nameof(RunButtonText)); UpdateStatus(); } } }
 
     private int _total;
@@ -3033,6 +3073,8 @@ public class OperatorViewModel : ViewModelBase
     public ICommand StartCmd { get; }
     public ICommand StopCmd { get; }
     public ICommand SampleCmd { get; }
+    public ICommand RunAllFlowsCmd { get; }
+    public ICommand StopAllFlowsCmd { get; }
 
     public OperatorViewModel()
     {
@@ -3061,6 +3103,36 @@ public class OperatorViewModel : ViewModelBase
             if (DateTime.Now.Millisecond % 10 != 0) Ok++; else Ng++;
             if (_selectedTask != null) _selectedTask.Result = Ng > 0 && DateTime.Now.Millisecond % 10 == 0 ? "NG" : "OK";
         }, _ => _isRunning);
+
+        RunAllFlowsCmd = new RelayCommand(_ => _ = StartLoopAsync(), _ => !_isRunning);
+        StopAllFlowsCmd = new RelayCommand(_ => StopLoop(), _ => _isRunning);
+    }
+
+    private async Task StartLoopAsync()
+    {
+        if (_isRunning) return;
+        _runCts = new CancellationTokenSource();
+        IsRunning = true;
+        try
+        {
+            var fvm = FlowViewModel.Instance;
+            if (fvm == null) { Status = "流程引擎不可用"; }
+            else { await fvm.RunAllFlowsLoopAsync(_runCts.Token); }
+        }
+        catch (OperationCanceledException) { /* 停止按钮触发的正常取消 */ }
+        catch (Exception ex) { Status = $"运行异常: {ex.Message}"; }
+        finally
+        {
+            _runCts?.Dispose();
+            _runCts = null;
+            IsRunning = false;
+        }
+    }
+
+    private void StopLoop()
+    {
+        try { _runCts?.Cancel(); } catch { }
+        // IsRunning 会在 StartLoopAsync 的 finally 中复位
     }
 
     private void UpdateStatus() => Status = _isRunning ? "检测中…" : "已停止";

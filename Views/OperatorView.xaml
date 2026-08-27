@@ -168,13 +168,13 @@
                             </Grid.RowDefinitions>
 
                             <Button Grid.Row="0" Grid.Column="0" Margin="0,0,6,8" Height="46"
-                                    Content="{Binding RunButtonText}" Command="{Binding RunCmd}"
+                                    Content="{Binding RunButtonText}" Command="{Binding RunAllFlowsCmd}"
                                     Style="{StaticResource AppleBigButton}" />
                             <Button Grid.Row="0" Grid.Column="1" Margin="6,0,6,8" Height="46"
                                     Content="暂停" Command="{Binding PauseCmd}"
                                     Style="{StaticResource AppleBigButton}" />
                             <Button Grid.Row="0" Grid.Column="2" Margin="6,0,0,8" Height="46"
-                                    Content="停止" Command="{Binding StopCmd}"
+                                    Content="停止" Command="{Binding StopAllFlowsCmd}"
                                     Style="{StaticResource AppleBigButtonDanger}" />
 
                             <Button Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,6,0" Height="46"
