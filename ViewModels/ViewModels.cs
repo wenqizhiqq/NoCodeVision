@@ -2488,6 +2488,7 @@ public class FlowViewModel : ViewModelBase
                     using var cap = new VideoCapture(0);
                     if (!cap.IsOpened()) return null;
                     using var frame = new Mat();
+// 温启志◎编写 ◇ 微信：187-1936-1399
                     cap.Read(frame);
                     if (frame.Empty()) return null;
                     var tmp = Path.Combine(NoCodeVision.Helpers.AppPaths.TempDirectory, $"ncv_cam_{DateTime.Now:yyyyMMddHHmmssfff}.png");

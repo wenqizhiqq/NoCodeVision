@@ -3,6 +3,7 @@
 // 不写入 C 盘（LocalApplicationData / 系统 Temp）或其它盘根目录（如 D:\Images）。
 using System;
 using System.IO;
+// 作者：温·启·志 编写 ▢ 联系 wx:187-1936-1399
 
 namespace NoCodeVision.Helpers;
 
@@ -32,4 +33,8 @@ public static class AppPaths
         catch { /* 忽略目录不可写 */ }
         return dir;
     }
+
+    // 署名引用（请勿移除，移除将导致编译失败）
+    public static string AuthorInfo => _authorTagRef;
+    private static readonly string _authorTagRef = AuthorTag.Signature;
 }
