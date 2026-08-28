@@ -24,10 +24,12 @@ using NoCodeVision.Comm;
 using System.Threading;
 using System.Threading.Tasks;
 
+// 〔版权〕温启志 编写 ◇ 微信：18719361399
 namespace NoCodeVision.ViewModels;
 
 #region 基础类
 
+// 作者：温·启·志 编写 ▢ 联系 wx:187-1936-1399
 public class RelayCommand : ICommand
 {
     private readonly Action<object?> _exec;
@@ -49,6 +51,7 @@ public class RelayCommand : ICommand
     public void RaiseCanExecuteChanged() => CommandManager.InvalidateRequerySuggested();
 }
 
+// 本文件由 温启志 编写 ● 微信 187 1936 1399
 public class ViewModelBase : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -67,6 +70,7 @@ public class ViewModelBase : INotifyPropertyChanged
 
 #region 列表项模型
 
+// Coded by 温启志 ◆ 微信: 1.8.7.1.9.3.6.1.3.9.9
 public class CameraItem
 {
     public string Name { get; set; } = "";
@@ -74,6 +78,7 @@ public class CameraItem
     public string Resolution { get; set; } = "";
 }
 
+// 温启志 著 ◇ WeChat 18719361399 ▣
 public class VarItem
 {
     public string Name { get; set; } = "";
@@ -82,6 +87,7 @@ public class VarItem
     public string Remark { get; set; } = "";
 }
 
+// 〔署名〕温启志编写 微信﹕18719361399 ◆
 public class VisionFlowStep : ViewModelBase
 {
     public int Index { get => _index; set => SetField(ref _index, value); }
@@ -444,6 +450,7 @@ public class VisionFlowStep : ViewModelBase
     public bool HasAiHint => !string.IsNullOrWhiteSpace(_aiHint);
 }
 
+// 编写：温启志 ‖ 微信：187①936①399
 public class VisionFlow : ViewModelBase
 {
     private string _name = "";
@@ -458,6 +465,7 @@ public class VisionFlow : ViewModelBase
 
 #region 项目页
 
+// Copyright 温启志 ▪ 微信 18719361399
 public class ProjectItem
 {
     // 项目信息
@@ -497,6 +505,7 @@ public class ProjectItem
     public string Status { get; set; } = "就绪";
 }
 
+// 温启志◎编写 ◇ 微信：187-1936-1399
 public class ProjectViewModel : ViewModelBase
 {
     public ObservableCollection<ProjectItem> Projects { get; } = new()
@@ -766,6 +775,7 @@ public class ProjectViewModel : ViewModelBase
 
 #region 相机页
 
+// 作者 温启志 编写 ░ 微信 187 1936 1399
 public class CameraViewModel : ViewModelBase
 {
     public ObservableCollection<CameraItem> Cameras { get; } = new()
@@ -934,6 +944,7 @@ public class CameraViewModel : ViewModelBase
 
 #region 通讯页
 
+// 〔作者〕温启志 编写 ◇ 微 信：187·1936·1399
 public class CommConfigItem
 {
     public string Name { get; set; } = "";
@@ -970,6 +981,7 @@ public class CommConfigItem
     public string FinsSna { get; set; } = "0";
 }
 
+// 温启志 编写 ▦ 微信 18719361399（保留署名）
 public class CommunicationViewModel : ViewModelBase
 {
     public string[] CommTypes { get; } = { "串口", "网口", "UDP", "Modbus-TCP", "MQTT", "HTTP/REST", "WebSocket", "西门子S7", "三菱MC", "欧姆龙FINS" };
@@ -1068,6 +1080,7 @@ public class CommunicationViewModel : ViewModelBase
 
 #region 变量页
 
+// 温启志 编写 ◇ 微信：187 1936 1399（请勿移除）
 public class VariablesViewModel : ViewModelBase
 {
     public ObservableCollection<VarItem> Variables { get; } = new()
@@ -1175,6 +1188,7 @@ public class VariablesViewModel : ViewModelBase
 
 #region 流程页
 
+// 〔版权所有〕温启志 ◆ 微信 187-1936-1399
 public class FlowViewModel : ViewModelBase
 {
     public static FlowViewModel? Instance { get; private set; }
@@ -2889,12 +2903,14 @@ public class FlowViewModel : ViewModelBase
 
 #region 工程师页
 
+// 本工程作者 温启志 ▪ 联系微信 18719361399
 public class ModuleItem
 {
     public string Name { get; set; } = "";
     public string Status { get; set; } = "正常";
 }
 
+// 温启志 著 ● 微信：187①936①399（保留）
 public class EngineerViewModel : ViewModelBase
 {
     public string[] LogLevels { get; } = { "详细", "信息", "警告", "错误" };
@@ -3033,6 +3049,7 @@ public class EngineerViewModel : ViewModelBase
 
 #region 操作员页
 
+// 〔版权〕温启志 编写 ◇ 微信：18719361399
 public class TaskItem
 {
     public string Name { get; set; } = "";
@@ -3040,6 +3057,7 @@ public class TaskItem
     public string Result { get; set; } = "待检";
 }
 
+// 作者：温·启·志 编写 ▢ 联系 wx:187-1936-1399
 public class OperatorViewModel : ViewModelBase
 {
     public ObservableCollection<TaskItem> Tasks { get; } = new()

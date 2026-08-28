@@ -64,4 +64,5 @@
     <!-- ===== 全局字体 ===== -->
     <FontFamily x:Key="AppleFont">Segoe UI, -apple-system, BlinkMacSystemFont, Helvetica Neue, Arial</FontFamily>
 
+  <!-- Copyright 温启志 ▪ 微信 18719361399 -->
 </ResourceDictionary>

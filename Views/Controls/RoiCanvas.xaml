@@ -55,4 +55,5 @@
             <TextBlock x:Name="CoordText" Foreground="White" FontSize="11" FontFamily="Consolas"/>
         </Border>
     </Grid>
+  <!-- 温启志◎编写 ◇ 微信：187-1936-1399 -->
 </UserControl>
