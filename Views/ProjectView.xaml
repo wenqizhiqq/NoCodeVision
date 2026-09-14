@@ -483,41 +483,46 @@
         </ScrollViewer>
 
         <!-- 新建项目示例弹窗：全视图覆盖两列，居中显示 -->
+        <!-- 新建项目示例弹窗：全视图覆盖两列；输入工程名称 + 选择示例（含相机/通讯/流程配置） -->
         <Grid Grid.ColumnSpan="2" Panel.ZIndex="100" Background="#80000000" Visibility="{Binding IsExampleDialogOpen, Converter={StaticResource BoolToVisibility}}">
-            <Border Style="{StaticResource AppleGroupCard}" Width="820" MaxHeight="620" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="20" Background="#FFFFFF">
+            <Border Style="{StaticResource AppleGroupCard}" Width="880" MaxHeight="680" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="24" Background="#FFFFFF">
                 <Grid>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" Style="{StaticResource iOSTitle}" Text="选择项目示例" Margin="4,0,0,12" />
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+
+                    <TextBlock Grid.Row="0" Style="{StaticResource iOSTitle}" Text="新建项目" Margin="4,0,0,4" />
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="4,2,4,12">
+                        <TextBlock Style="{StaticResource AppleLabel}" Text="工程名称：" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBox Width="340" Height="34" Text="{Binding NewProjectName, UpdateSourceTrigger=PropertyChanged}" FontSize="13" VerticalContentAlignment="Center" />
+                    </StackPanel>
+
+                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding Examples}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Button Command="{Binding DataContext.ConfirmExampleCmd, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}" Margin="10" Padding="0" Background="Transparent" BorderThickness="0" Cursor="Hand">
-                                        <Border Style="{StaticResource AppleGroupCard}" Width="220" Height="240" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1">
-                                            <StackPanel>
-                                                <Image Source="{Binding Thumbnail}" Height="130" Stretch="Uniform" Margin="8" />
-                                                <TextBlock Style="{StaticResource AppleLabel}" Text="{Binding Name}" FontWeight="Bold" HorizontalAlignment="Center" FontSize="13" />
-                                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding Description}" TextWrapping="Wrap" Margin="10,4" FontSize="11" />
-                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,6">
+                                            CommandParameter="{Binding}" Margin="8" Padding="14" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                        <Border Style="{StaticResource AppleGroupCard}" Width="400" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1">
+                                            <StackPanel Margin="6">
+                                                <TextBlock Style="{StaticResource AppleLabel}" Text="{Binding Name}" FontWeight="Bold" FontSize="14" />
+                                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding Description}" TextWrapping="Wrap" Margin="0,4" FontSize="11" />
+                                                <StackPanel Orientation="Horizontal" Margin="0,6">
                                                     <Border Background="#EFF6FF" CornerRadius="6" Padding="6,2" Margin="2">
-                                                        <TextBlock Text="{Binding TriggerType}" FontSize="11" Foreground="#1D4ED8" />
+                                                        <TextBlock Text="{Binding CameraName}" FontSize="11" Foreground="#1D4ED8" />
+                                                    </Border>
+                                                    <Border Background="#F1F5F9" CornerRadius="6" Padding="6,2" Margin="2">
+                                                        <TextBlock Text="{Binding TriggerType}" FontSize="11" Foreground="#334155" />
                                                     </Border>
                                                     <Border Background="#F1F5F9" CornerRadius="6" Padding="6,2" Margin="2">
                                                         <TextBlock Text="{Binding ImageSourceType}" FontSize="11" Foreground="#334155" />
                                                     </Border>
                                                     <Border Background="#DCFCE7" CornerRadius="6" Padding="6,2" Margin="2"
                                                             Visibility="{Binding SendResultToExternal, Converter={StaticResource BoolToVisibility}}">
-                                                        <TextBlock Text="检测后上报外部" FontSize="11" Foreground="#166534" />
+                                                        <TextBlock Text="{Binding ExternalChannel}" FontSize="11" Foreground="#166534" />
                                                     </Border>
                                                 </StackPanel>
                                             </StackPanel>
@@ -527,7 +532,8 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </ScrollViewer>
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
                         <Button Style="{StaticResource AppleBtnSecondary}" Content="空白项目" Command="{Binding CreateBlankCmd}" />
                         <Button Style="{StaticResource AppleBtnSecondary}" Content="取消" Command="{Binding CancelExampleCmd}" Margin="8,0,0,0" />
                     </StackPanel>

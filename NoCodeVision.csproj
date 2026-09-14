@@ -40,9 +40,5 @@
     </Content>
   </ItemGroup>
 
-  <ItemGroup>
-    <!-- 新建项目示例缩略图（嵌入为 WPF 资源，XAML 用 pack URI 引用） -->
-    <Resource Include="Resources\Examples\*.png" />
-  </ItemGroup>
 
 </Project>

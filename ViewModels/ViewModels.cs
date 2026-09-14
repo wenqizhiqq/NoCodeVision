@@ -511,6 +511,11 @@ public class ProjectItem
     public string ExternalChannel { get; set; } = "MQTT";       // MQTT / 网口 / UDP / 串口
     public string ExternalTarget { get; set; } = "";           // 如 192.168.1.10:1883 或 COM3
     public string ExampleId { get; set; } = "";
+
+    // 模板自带配置：相机 / 通讯 / 流程
+    public string CameraName { get; set; } = "";                       // 相机名称/编号
+    public ObservableCollection<CommConfigItem> CommConfigs { get; set; } = new();
+    public ObservableCollection<VisionFlow> Flows { get; set; } = new();
 }
 
 // 新建项目示例（带缩略图，用于弹窗选择；覆盖 硬件/软件触发 × 相机/文件 组合）
@@ -519,43 +524,97 @@ public class ProjectExample
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     public string Description { get; set; } = "";
+    public string CameraName { get; set; } = "Camera_1";        // 相机名称/编号
     public string ImageSourceType { get; set; } = "采集相机";   // 采集相机 / 打开文件 / 打开文件夹
     public string TriggerType { get; set; } = "软件触发";        // 硬件触发 / 软件触发
     public bool SendResultToExternal { get; set; }
     public string ExternalChannel { get; set; } = "MQTT";
     public string ExternalTarget { get; set; } = "";
-    // 缩略图：WPF 嵌入资源，pack URI 引用
-    public string Thumbnail => "pack://application:,,,/Resources/Examples/" + Id + ".png";
+
 
     public static ObservableCollection<ProjectExample> BuildExamples()
     {
         return new ObservableCollection<ProjectExample>
         {
-            new ProjectExample { Id = "ex_hw_cam", Name = "硬件触发·相机采集", Description = "硬触发信号启动相机拍照，检测后上报外部", ImageSourceType = "采集相机", TriggerType = "硬件触发", SendResultToExternal = true, ExternalChannel = "MQTT", ExternalTarget = "192.168.1.10:1883" },
-            new ProjectExample { Id = "ex_sw_file", Name = "软件触发·读取文件图片", Description = "软件指令读取本地图片检测，检测后上报外部", ImageSourceType = "打开文件", TriggerType = "软件触发", SendResultToExternal = true, ExternalChannel = "网口", ExternalTarget = "192.168.1.100:5000" },
-            new ProjectExample { Id = "ex_hw_file", Name = "硬件触发·读取文件图片", Description = "硬触发后读取文件图片检测，上报外部", ImageSourceType = "打开文件", TriggerType = "硬件触发", SendResultToExternal = true, ExternalChannel = "UDP", ExternalTarget = "192.168.1.50:6000" },
-            new ProjectExample { Id = "ex_sw_cam", Name = "软件触发·相机采集", Description = "软件触发相机拍照检测，不上报外部", ImageSourceType = "采集相机", TriggerType = "软件触发", SendResultToExternal = false },
+            new ProjectExample { Id = "ex_cam_mqtt", Name = "视觉定位检测（相机+MQTT）", Description = "相机采集·软件触发，MQTT 上报检测结果", CameraName = "Camera_1", ImageSourceType = "采集相机", TriggerType = "软件触发", SendResultToExternal = true, ExternalChannel = "MQTT", ExternalTarget = "192.168.1.10:1883" },
+            new ProjectExample { Id = "ex_file_tcp", Name = "离线图片检测（读文件+网口）", Description = "读取本地图片·软件触发，网口上报", CameraName = "Camera_2", ImageSourceType = "打开文件", TriggerType = "软件触发", SendResultToExternal = true, ExternalChannel = "网口", ExternalTarget = "192.168.1.100:5000" },
+            new ProjectExample { Id = "ex_hw_plc", Name = "硬件触发产线（相机+PLC）", Description = "硬触发相机拍照，PLC 串口下发结果", CameraName = "LineCam", ImageSourceType = "采集相机", TriggerType = "硬件触发", SendResultToExternal = true, ExternalChannel = "串口", ExternalTarget = "COM3" },
+            new ProjectExample { Id = "ex_cam_udp", Name = "几何尺寸检测（相机+UDP）", Description = "相机采集·软件触发，UDP 广播测量值", CameraName = "Camera_3", ImageSourceType = "采集相机", TriggerType = "软件触发", SendResultToExternal = true, ExternalChannel = "UDP", ExternalTarget = "192.168.1.50:6000" },
         };
     }
 
-    public ProjectItem ToProjectItem(int index)
+    public ObservableCollection<CommConfigItem> BuildCommConfigs()
     {
+        var cfg = new CommConfigItem { Name = "结果外发-" + ExternalChannel, CommType = ExternalChannel };
+        if (ExternalTarget.Contains(":"))
+        {
+            cfg.NetIp = ExternalTarget.Split(':')[0];
+            cfg.NetPort = ExternalTarget.Split(':')[1];
+        }
+        switch (ExternalChannel)
+        {
+            case "MQTT": cfg.SubTopics = "ncv/result"; break;
+            case "UDP": cfg.Broadcast = true; break;
+            case "串口": cfg.Port = ExternalTarget.StartsWith("COM") ? ExternalTarget : "COM3"; cfg.Baud = "115200"; break;
+        }
+        return new ObservableCollection<CommConfigItem> { cfg };
+    }
+
+    public ObservableCollection<VisionFlow> BuildFlows()
+    {
+        var captureMode = ImageSourceType;
+        var steps = new List<VisionFlowStep>
+        {
+            new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集图像", StepType = "ImageCapture", CaptureMode = captureMode, ParamSummary = captureMode, Timeout = 5000, Icon = "采", StatusText = "未开始" },
+        };
+        if (Id == "ex_cam_mqtt" || Id == "ex_hw_plc")
+        {
+            steps.Add(new VisionFlowStep { Index = steps.Count + 1, Function = "模板匹配", Name = "定位基准", StepType = "TemplateMatch", MatchMode = "灰度匹配", ScoreThreshold = 0.85, RoiX = 80, RoiY = 60, RoiW = 160, RoiH = 120, ParamSummary = "灰度匹配 / score>=0.85", Timeout = 3000, Icon = "匹", StatusText = "未开始" });
+            steps.Add(new VisionFlowStep { Index = steps.Count + 1, Function = "几何测量", Name = "测量孔径", StepType = "Measure", MeasureType = "圆径", NominalValue = 12.0, Tolerance = 0.05, ParamSummary = "圆径 / 12.00±0.05", Timeout = 2000, Icon = "测", StatusText = "未开始" });
+        }
+        else if (Id == "ex_cam_udp")
+        {
+            steps.Add(new VisionFlowStep { Index = steps.Count + 1, Function = "几何测量", Name = "测量边距", StepType = "Measure", MeasureType = "边距", RoiX = 50, RoiY = 50, RoiW = 200, RoiH = 100, NominalValue = 45.0, Tolerance = 0.1, ParamSummary = "边距 / 45.0±0.1", Timeout = 2000, Icon = "测", StatusText = "未开始" });
+        }
+        steps.Add(new VisionFlowStep { Index = steps.Count + 1, Function = "缺陷检测", Name = "缺陷检测", StepType = "Defect", ParamSummary = "差异比对 / 阈值45", Timeout = 3000, Icon = "缺", StatusText = "未开始" });
+        if (SendResultToExternal)
+            steps.Add(new VisionFlowStep { Index = steps.Count + 1, Function = "通讯发送", Name = "结果外发", StepType = "Comm", CommChannel = ExternalChannel, CommCmd = "发送", CommContent = "{\"result\":\"$(Result)\"}", CommEncoding = "ASCII", ParamSummary = ExternalChannel + " 发送结果", Timeout = 1000, Icon = "发", StatusText = "未开始" });
+        steps.Add(new VisionFlowStep { Index = steps.Count + 1, Function = "结果输出", Name = "输出结果", StepType = "Output", ParamSummary = "输出到结果表", Timeout = 1000, Icon = "出", StatusText = "未开始" });
+
+        var flow = new VisionFlow
+        {
+            Name = Name,
+            Icon = "流",
+            FlowKind = "Normal",
+            Steps = new ObservableCollection<VisionFlowStep>(steps)
+        };
+        return new ObservableCollection<VisionFlow> { flow };
+    }
+
+    public ProjectItem ToProjectItem(int index, string projectName)
+    {
+        var name = string.IsNullOrWhiteSpace(projectName) ? (Name + "-" + index) : projectName.Trim();
+        var safe = string.Join("_", name.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
+        if (string.IsNullOrWhiteSpace(safe)) safe = Id + "-" + index;
         return new ProjectItem
         {
-            ProjectName = Name + "-" + index,
+            ProjectName = name,
             Author = "admin",
             Description = Description,
-            Tags = TriggerType + "," + ImageSourceType,
+            Tags = TriggerType + "," + ImageSourceType + "," + ExternalChannel,
             ProjectVersion = "1.0.0",
-            ProjectPath = Path.Combine(NoCodeVision.Helpers.AppPaths.ProjectsDirectory, Id + "-" + index + ".ncv"),
+            ProjectPath = Path.Combine(NoCodeVision.Helpers.AppPaths.ProjectsDirectory, safe + ".ncv"),
             CreateTime = DateTime.Now.ToString("yyyy-MM-dd"),
             ModifyTime = DateTime.Now.ToString("yyyy-MM-dd"),
             ExampleId = Id,
+            CameraName = CameraName,
             ImageSourceType = ImageSourceType,
             TriggerType = TriggerType,
             SendResultToExternal = SendResultToExternal,
             ExternalChannel = ExternalChannel,
             ExternalTarget = ExternalTarget,
+            CommConfigs = BuildCommConfigs(),
+            Flows = BuildFlows(),
             AutoSave = true, SaveInterval = 300, Language = "简体中文", Theme = "浅色",
             DefaultUnit = "毫米", LogLevel = "Info", LogKeepDays = 30,
             AutoStart = false, AutoRunAfterStart = false, EmergencyStopOnError = true,
@@ -672,7 +731,7 @@ public class ProjectViewModel : ViewModelBase
     };
 
     private ProjectItem? _selectedProject;
-    public ProjectItem? SelectedProject { get => _selectedProject; set => SetField(ref _selectedProject, value); }
+    public ProjectItem? SelectedProject { get => _selectedProject; set { if (SetField(ref _selectedProject, value)) LoadCurrentProject(); } }
 
     public string[] Languages { get; } = { "简体中文", "繁體中文", "English" };
     public string[] Themes { get; } = { "浅色", "深色", "跟随系统" };
@@ -692,6 +751,40 @@ public class ProjectViewModel : ViewModelBase
 
     public ObservableCollection<ProjectExample> Examples { get; } = ProjectExample.BuildExamples();
     public static ProjectViewModel? Instance { get; set; }
+
+    public string NewProjectName { get; set; } = "";
+
+    // 将当前选中项目的 流程/通讯 配置载入运行中的 FlowViewModel / CommunicationViewModel
+    public void LoadCurrentProject()
+    {
+        var p = _selectedProject;
+        if (p == null) return;
+        if (FlowViewModel.Instance != null && p.Flows.Count > 0)
+        {
+            FlowViewModel.Instance.Flows.Clear();
+            foreach (var f in p.Flows) FlowViewModel.Instance.Flows.Add(CloneFlow(f));
+        }
+        if (CommunicationViewModel.Instance != null && p.CommConfigs.Count > 0)
+        {
+            CommunicationViewModel.Instance.Configs.Clear();
+            foreach (var c in p.CommConfigs) CommunicationViewModel.Instance.Configs.Add(CloneComm(c));
+        }
+    }
+
+    // 将运行中的 流程/通讯 配置写回项目（保存前调用，保证 .ncv 持久化最新配置）
+    private void SyncLiveToProject(ProjectItem p)
+    {
+        if (FlowViewModel.Instance != null)
+            p.Flows = new ObservableCollection<VisionFlow>(FlowViewModel.Instance.Flows.Select(CloneFlow));
+        if (CommunicationViewModel.Instance != null)
+            p.CommConfigs = new ObservableCollection<CommConfigItem>(CommunicationViewModel.Instance.Configs.Select(CloneComm));
+    }
+
+    private static VisionFlow CloneFlow(VisionFlow f)
+        => JsonSerializer.Deserialize<VisionFlow>(JsonSerializer.Serialize(f))!;
+    private static CommConfigItem CloneComm(CommConfigItem c)
+        => JsonSerializer.Deserialize<CommConfigItem>(JsonSerializer.Serialize(c))!;
+
 
     private bool _isExampleDialogOpen;
     public bool IsExampleDialogOpen { get => _isExampleDialogOpen; set => SetField(ref _isExampleDialogOpen, value); }
@@ -812,11 +905,13 @@ public class ProjectViewModel : ViewModelBase
             var ex = p as ProjectExample;
             if (ex == null) return;
             var next = Projects.Count + 1;
-            var item = ex.ToProjectItem(next);
+            var item = ex.ToProjectItem(next, NewProjectName);
             Projects.Add(item);
             SelectedProject = item;
+            SyncLiveToProject(item);
             IsExampleDialogOpen = false;
             SelectedExample = null;
+            NewProjectName = "";
             try { SaveProject(item); } catch { }
         });
         CreateBlankCmd = new RelayCommand(_ =>
@@ -824,7 +919,7 @@ public class ProjectViewModel : ViewModelBase
             var next = Projects.Count + 1;
             var item = new ProjectItem
             {
-                ProjectName = "空白项目-" + next,
+                ProjectName = string.IsNullOrWhiteSpace(NewProjectName) ? ("空白项目-" + next) : NewProjectName.Trim(),
                 Author = "admin",
                 Description = "空白项目",
                 ProjectVersion = "1.0.0",
@@ -849,12 +944,14 @@ public class ProjectViewModel : ViewModelBase
             Projects.Add(item);
             SelectedProject = item;
             IsExampleDialogOpen = false;
+            NewProjectName = "";
             try { SaveProject(item); } catch { }
         });
     }
 
     private void SaveProject(ProjectItem item)
     {
+        SyncLiveToProject(item);
         var dir = Path.GetDirectoryName(item.ProjectPath);
         if (!string.IsNullOrWhiteSpace(dir)) Directory.CreateDirectory(dir);
         var json = JsonSerializer.Serialize(item, new JsonSerializerOptions { WriteIndented = true });
@@ -1149,9 +1246,12 @@ public class CommunicationViewModel : ViewModelBase
     public ICommand ClearLogCmd { get; }
     public ICommand AutoScanCmd { get; }
 
+    public static CommunicationViewModel? Instance { get; set; }
     public CommunicationViewModel()
     {
         SelectedConfig = Configs[0];
+        Instance = this;
+        ProjectViewModel.Instance?.LoadCurrentProject();
         CommHub.Instance.Log += msg => PushLog(msg);
         CommHub.Instance.DataReceived += msg => PushLog($"[接收] " + msg.TrimEnd());
         CommHub.Instance.StateChanged += open => IsConnected = open;
@@ -1998,6 +2098,7 @@ public class FlowViewModel : ViewModelBase
         public FlowViewModel()
         {
             Instance = this;
+            ProjectViewModel.Instance?.LoadCurrentProject();
             if (!LoadState())
                 _flows = CreateDefaultFlows();
             WireAutoSave();
