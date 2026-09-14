@@ -503,6 +503,69 @@ public class ProjectItem
 
     // 状态
     public string Status { get; set; } = "就绪";
+
+    // 新建项目示例配置（采集源 / 触发方式 / 外发外部软件）
+    public string ImageSourceType { get; set; } = "采集相机";   // 采集相机 / 打开文件 / 打开文件夹
+    public string TriggerType { get; set; } = "软件触发";        // 硬件触发 / 软件触发
+    public bool SendResultToExternal { get; set; } = false;     // 缺陷检测后是否外发结果
+    public string ExternalChannel { get; set; } = "MQTT";       // MQTT / 网口 / UDP / 串口
+    public string ExternalTarget { get; set; } = "";           // 如 192.168.1.10:1883 或 COM3
+    public string ExampleId { get; set; } = "";
+}
+
+// 新建项目示例（带缩略图，用于弹窗选择；覆盖 硬件/软件触发 × 相机/文件 组合）
+public class ProjectExample
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string Description { get; set; } = "";
+    public string ImageSourceType { get; set; } = "采集相机";   // 采集相机 / 打开文件 / 打开文件夹
+    public string TriggerType { get; set; } = "软件触发";        // 硬件触发 / 软件触发
+    public bool SendResultToExternal { get; set; }
+    public string ExternalChannel { get; set; } = "MQTT";
+    public string ExternalTarget { get; set; } = "";
+    // 缩略图：WPF 嵌入资源，pack URI 引用
+    public string Thumbnail => "pack://application:,,,/Resources/Examples/" + Id + ".png";
+
+    public static ObservableCollection<ProjectExample> BuildExamples()
+    {
+        return new ObservableCollection<ProjectExample>
+        {
+            new ProjectExample { Id = "ex_hw_cam", Name = "硬件触发·相机采集", Description = "硬触发信号启动相机拍照，检测后上报外部", ImageSourceType = "采集相机", TriggerType = "硬件触发", SendResultToExternal = true, ExternalChannel = "MQTT", ExternalTarget = "192.168.1.10:1883" },
+            new ProjectExample { Id = "ex_sw_file", Name = "软件触发·读取文件图片", Description = "软件指令读取本地图片检测，检测后上报外部", ImageSourceType = "打开文件", TriggerType = "软件触发", SendResultToExternal = true, ExternalChannel = "网口", ExternalTarget = "192.168.1.100:5000" },
+            new ProjectExample { Id = "ex_hw_file", Name = "硬件触发·读取文件图片", Description = "硬触发后读取文件图片检测，上报外部", ImageSourceType = "打开文件", TriggerType = "硬件触发", SendResultToExternal = true, ExternalChannel = "UDP", ExternalTarget = "192.168.1.50:6000" },
+            new ProjectExample { Id = "ex_sw_cam", Name = "软件触发·相机采集", Description = "软件触发相机拍照检测，不上报外部", ImageSourceType = "采集相机", TriggerType = "软件触发", SendResultToExternal = false },
+        };
+    }
+
+    public ProjectItem ToProjectItem(int index)
+    {
+        return new ProjectItem
+        {
+            ProjectName = Name + "-" + index,
+            Author = "admin",
+            Description = Description,
+            Tags = TriggerType + "," + ImageSourceType,
+            ProjectVersion = "1.0.0",
+            ProjectPath = Path.Combine(NoCodeVision.Helpers.AppPaths.ProjectsDirectory, Id + "-" + index + ".ncv"),
+            CreateTime = DateTime.Now.ToString("yyyy-MM-dd"),
+            ModifyTime = DateTime.Now.ToString("yyyy-MM-dd"),
+            ExampleId = Id,
+            ImageSourceType = ImageSourceType,
+            TriggerType = TriggerType,
+            SendResultToExternal = SendResultToExternal,
+            ExternalChannel = ExternalChannel,
+            ExternalTarget = ExternalTarget,
+            AutoSave = true, SaveInterval = 300, Language = "简体中文", Theme = "浅色",
+            DefaultUnit = "毫米", LogLevel = "Info", LogKeepDays = 30,
+            AutoStart = false, AutoRunAfterStart = false, EmergencyStopOnError = true,
+            ImageSavePath = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Images"),
+            DataSavePath = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Data"),
+            BackupPath = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Backup"),
+            MaxBackupCount = 10, PasswordEnabled = false, AutoLockMinutes = 5,
+            AllowRemote = false, MaxUndoSteps = 50, ResultRetainDays = 90, DebugMode = false
+        };
+    }
 }
 
 // 温启志◎编写 ◇ 微信：187-1936-1399
@@ -622,6 +685,19 @@ public class ProjectViewModel : ViewModelBase
     public ICommand OpenCmd { get; }
     public ICommand SaveCmd { get; }
 
+    public ICommand ShowExamplesCmd { get; }
+    public ICommand ConfirmExampleCmd { get; }
+    public ICommand CancelExampleCmd { get; }
+    public ICommand CreateBlankCmd { get; }
+
+    public ObservableCollection<ProjectExample> Examples { get; } = ProjectExample.BuildExamples();
+    public static ProjectViewModel? Instance { get; set; }
+
+    private bool _isExampleDialogOpen;
+    public bool IsExampleDialogOpen { get => _isExampleDialogOpen; set => SetField(ref _isExampleDialogOpen, value); }
+    private ProjectExample? _selectedExample;
+    public ProjectExample? SelectedExample { get => _selectedExample; set => SetField(ref _selectedExample, value); }
+
     public ProjectViewModel()
     {
         SelectedProject = Projects[0];
@@ -727,6 +803,54 @@ public class ProjectViewModel : ViewModelBase
 
         SyncProjectsWithDisk();
         if (Projects.Count > 0) SelectedProject = Projects[0];
+
+        Instance = this;
+        ShowExamplesCmd = new RelayCommand(_ => { IsExampleDialogOpen = true; });
+        CancelExampleCmd = new RelayCommand(_ => { IsExampleDialogOpen = false; SelectedExample = null; });
+        ConfirmExampleCmd = new RelayCommand(p =>
+        {
+            var ex = p as ProjectExample;
+            if (ex == null) return;
+            var next = Projects.Count + 1;
+            var item = ex.ToProjectItem(next);
+            Projects.Add(item);
+            SelectedProject = item;
+            IsExampleDialogOpen = false;
+            SelectedExample = null;
+            try { SaveProject(item); } catch { }
+        });
+        CreateBlankCmd = new RelayCommand(_ =>
+        {
+            var next = Projects.Count + 1;
+            var item = new ProjectItem
+            {
+                ProjectName = "空白项目-" + next,
+                Author = "admin",
+                Description = "空白项目",
+                ProjectVersion = "1.0.0",
+                ProjectPath = Path.Combine(NoCodeVision.Helpers.AppPaths.ProjectsDirectory, "Blank-" + next + ".ncv"),
+                CreateTime = DateTime.Now.ToString("yyyy-MM-dd"),
+                ModifyTime = DateTime.Now.ToString("yyyy-MM-dd"),
+                ExampleId = "ex_blank",
+                ImageSourceType = "采集相机",
+                TriggerType = "软件触发",
+                SendResultToExternal = false,
+                ExternalChannel = "MQTT",
+                ExternalTarget = "",
+                AutoSave = true, SaveInterval = 300, Language = "简体中文", Theme = "浅色",
+                DefaultUnit = "毫米", LogLevel = "Info", LogKeepDays = 30,
+                AutoStart = false, AutoRunAfterStart = false, EmergencyStopOnError = true,
+                ImageSavePath = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Images"),
+                DataSavePath = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Data"),
+                BackupPath = Path.Combine(NoCodeVision.Helpers.AppPaths.DataDirectory, "Backup"),
+                MaxBackupCount = 10, PasswordEnabled = false, AutoLockMinutes = 5,
+                AllowRemote = false, MaxUndoSteps = 50, ResultRetainDays = 90, DebugMode = false
+            };
+            Projects.Add(item);
+            SelectedProject = item;
+            IsExampleDialogOpen = false;
+            try { SaveProject(item); } catch { }
+        });
     }
 
     private void SaveProject(ProjectItem item)
@@ -1600,6 +1724,53 @@ public class FlowViewModel : ViewModelBase
         {
             if (ownMat && srcMat != null) srcMat.Dispose();
         }
+    }
+
+    private async void TrySendDefectResultToExternal(List<DefectResult> defects)
+    {
+        try
+        {
+            var proj = ProjectViewModel.Instance?.SelectedProject;
+            if (proj == null || !proj.SendResultToExternal) return;
+            var count = defects != null ? defects.Count : 0;
+            var payload = new System.Collections.Generic.Dictionary<string, object>
+            {
+                ["type"] = "defect_result",
+                ["project"] = proj.ProjectName ?? "",
+                ["defectCount"] = count,
+                ["time"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+            };
+            var json = System.Text.Json.JsonSerializer.Serialize(payload);
+            var hub = CommHub.Instance;
+            if (!hub.IsOpen)
+            {
+                var cfg = new CommConfigItem
+                {
+                    Name = "外发-" + (proj.ExternalChannel ?? "MQTT"),
+                    CommType = proj.ExternalChannel ?? "MQTT",
+                    NetIp = ParseTargetIp(proj.ExternalTarget),
+                    NetPort = ParseTargetPort(proj.ExternalTarget),
+                    Port = proj.ExternalTarget
+                };
+                await hub.ConnectAsync(cfg);
+            }
+            if (hub.IsOpen) await hub.SendAsync(json);
+            Status = "已向外部软件发送检测结果（缺陷 " + count + " 处）";
+        }
+        catch (Exception ex) { Status = "外发失败：" + ex.Message; }
+    }
+
+    private static string ParseTargetIp(string target)
+    {
+        if (string.IsNullOrWhiteSpace(target)) return "";
+        var parts = target.Split(':');
+        return parts[0];
+    }
+    private static string ParseTargetPort(string target)
+    {
+        if (string.IsNullOrWhiteSpace(target)) return "0";
+        var parts = target.Split(':');
+        return parts.Length > 1 ? parts[1] : "0";
     }
 
     private ImageSource? BuildDefectOverlay(List<DefectResult> defects)
@@ -2794,6 +2965,7 @@ public class FlowViewModel : ViewModelBase
                             foreach (var d in defects) FlowDefectResults.Add(d);
                             DefectSummaryText = defects.Count == 0 ? "未发现缺陷" : $"发现 {defects.Count} 处缺陷";
                             DefectOverlayImage = BuildDefectOverlay(defects);
+                            TrySendDefectResultToExternal(defects);
                         }
                     }
                     break;
