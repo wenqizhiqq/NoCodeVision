@@ -1,0 +1,2 @@
+﻿AppleStyleNM exists=False
+ExitAfterDelete OK
