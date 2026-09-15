@@ -8,8 +8,6 @@
 <!-- 温启志：18719361399  混淆: 温h启b志n：y1a8g7b1m9e3y6i1g3b9o9 -->
 
 
-
-
     <UserControl.Resources>
         <DataTemplate x:Key="TaskItemTemplate">
             <DockPanel LastChildFill="True">
@@ -36,11 +34,53 @@
                 <TextBlock Style="{StaticResource AppleLabel}" Text="{Binding Name}" />
             </DockPanel>
         </DataTemplate>
+
+        <!-- ===== 监控卡片（紧凑网格单元） ===== -->
+        <Style x:Key="MonitorCard" TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+            <Setter Property="Margin" Value="7" />
+        </Style>
+
+        <Style x:Key="MonStatusPill" TargetType="Border" BasedOn="{StaticResource AppleStatusPill}">
+            <Setter Property="Background" Value="{StaticResource TextMutedBrush}" />
+            <Setter Property="Padding" Value="8,3" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="运行中">
+                    <Setter Property="Background" Value="{StaticResource AccentSoftBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="通过">
+                    <Setter Property="Background" Value="{StaticResource SuccessSoftBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="失败">
+                    <Setter Property="Background" Value="{StaticResource ErrorSoftBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="已停止">
+                    <Setter Property="Background" Value="{StaticResource WarningSoftBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="MonStatusText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="运行中">
+                    <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="通过">
+                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="失败">
+                    <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="260" />
+            <ColumnDefinition Width="340" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
@@ -51,7 +91,9 @@
                               DeleteCommand="{Binding DeleteCmd}"
                               ItemTemplate="{StaticResource TaskItemTemplate}" />
 
-        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <!-- ===== 中部：操作员状态 + 机台运行控制（保留） ===== -->
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                      Margin="12,0,0,0">
             <StackPanel Margin="0,2,0,8">
 
                 <TextBlock Style="{StaticResource iOSTitle}" Text="操作员" />
@@ -116,7 +158,6 @@
                     <StackPanel Margin="14,12">
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="机台运行控制" />
 
-                        <!-- 运行状态指示 -->
                         <DockPanel Style="{StaticResource AppleRow}" Margin="0,4,0,8">
                             <Ellipse Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,10,0">
                                 <Ellipse.Style>
@@ -142,7 +183,6 @@
                                        Text="{Binding LastResult}" />
                         </DockPanel>
 
-                        <!-- 急停报警横幅 -->
                         <Border CornerRadius="8" Background="{StaticResource DangerSoftBrush}"
                                 Padding="10,8" Margin="0,0,0,8">
                             <Border.Style>
@@ -159,7 +199,6 @@
                                        Text="⛔ 急停已触发：机台已锁停，请排除故障后点「复位」恢复" />
                         </Border>
 
-                        <!-- 五个真实按钮：运行/暂停/停止/急停/复位 -->
                         <Grid Margin="0,4,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -172,13 +211,13 @@
                             </Grid.RowDefinitions>
 
                             <Button Grid.Row="0" Grid.Column="0" Margin="0,0,6,8" Height="46"
-                                    Content="{Binding RunButtonText}" Command="{Binding RunAllFlowsCmd}"
+                                    Content="{Binding RunButtonText}" Command="{Binding RunCmd}"
                                     Style="{StaticResource AppleBigButton}" />
                             <Button Grid.Row="0" Grid.Column="1" Margin="6,0,6,8" Height="46"
                                     Content="暂停" Command="{Binding PauseCmd}"
                                     Style="{StaticResource AppleBigButton}" />
                             <Button Grid.Row="0" Grid.Column="2" Margin="6,0,0,8" Height="46"
-                                    Content="停止" Command="{Binding StopAllFlowsCmd}"
+                                    Content="停止" Command="{Binding StopCmd}"
                                     Style="{StaticResource AppleBigButtonDanger}" />
 
                             <Button Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,6,0" Height="46"
@@ -202,6 +241,166 @@
 
             </StackPanel>
         </ScrollViewer>
+
+        <!-- ===== 右侧：多通道视觉监控（1×2 / 2×3 / 3×4 选择） ===== -->
+        <Grid Grid.Column="2" Margin="12,0,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- 顶部：标题 + 布局选择 + 全局启停 -->
+            <Border Grid.Row="0" Style="{StaticResource AppleGroupCard}" Padding="12,8" Margin="0,0,0,10">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="📡" FontSize="18" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <TextBlock Text="视觉监控" Style="{StaticResource iOSTitle}" FontSize="15" VerticalAlignment="Center" />
+                    <Border Background="{StaticResource SegTrackBrush}" CornerRadius="8" Padding="3" Margin="14,0,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="1×2" Style="{StaticResource SegButton}" Command="{Binding Layout12Cmd}"
+                                    MinWidth="44" Padding="8,4" FontSize="11" />
+                            <Button Content="2×3" Style="{StaticResource SegButtonSelected}" Command="{Binding Layout23Cmd}"
+                                    MinWidth="44" Padding="8,4" FontSize="11" />
+                            <Button Content="3×4" Style="{StaticResource SegButton}" Command="{Binding Layout34Cmd}"
+                                    MinWidth="44" Padding="8,4" FontSize="11" />
+                        </StackPanel>
+                    </Border>
+                    <Button Style="{StaticResource AppleBtn}" Content="全部启动" Command="{Binding CameraStartAllCmd}"
+                            Margin="14,0,0,0" Padding="12,5" FontSize="11" />
+                    <Button Style="{StaticResource AppleBtnSecondary}" Content="全部停止" Command="{Binding CameraStopAllCmd}"
+                            Margin="8,0,0,0" Padding="12,5" FontSize="11" />
+                </StackPanel>
+            </Border>
+
+            <!-- 相机网格 -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding Channels}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="{Binding LayoutRows}" Columns="{Binding LayoutCols}"
+                                         HorizontalAlignment="Stretch" VerticalAlignment="Top" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource MonitorCard}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="120" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <!-- 行 0：通道名 + 状态 -->
+                                    <DockPanel Grid.Row="0" Margin="6,6,6,2" LastChildFill="True">
+                                        <TextBlock DockPanel.Dock="Left" Text="{Binding Name}" Style="{StaticResource AppleLabel}"
+                                                   FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                        <Border DockPanel.Dock="Right" Style="{StaticResource MonStatusPill}">
+                                            <TextBlock Text="{Binding Status}" Style="{StaticResource MonStatusText}" />
+                                        </Border>
+                                    </DockPanel>
+
+                                    <!-- 行 1：图像预览 -->
+                                    <Border Grid.Row="1" Margin="6,2,6,4" Background="{StaticResource PreviewBgBrush}" CornerRadius="8"
+                                            HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                        <Grid>
+                                            <Image Source="{Binding LastImage, Mode=OneWay}" Stretch="Uniform" IsHitTestVisible="False">
+                                                <Image.Style>
+                                                    <Style TargetType="Image">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding LastImage}" Value="{x:Null}">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Image.Style>
+                                            </Image>
+                                            <Border HorizontalAlignment="Center" VerticalAlignment="Center" CornerRadius="6"
+                                                    Background="#1C1C22" Padding="10,6">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="📷" FontSize="14" VerticalAlignment="Center" Margin="0,0,4,0" />
+                                                    <TextBlock Text="{Binding CameraId}" Foreground="#8E8E93" FontSize="10" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Border>
+                                            <Border HorizontalAlignment="Center" VerticalAlignment="Center" CornerRadius="6"
+                                                    Background="#1A2332" Padding="10,6">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <MultiDataTrigger>
+                                                                <MultiDataTrigger.Conditions>
+                                                                    <Condition Binding="{Binding LastImage}" Value="{x:Null}" />
+                                                                    <Condition Binding="{Binding IsRunning}" Value="True" />
+                                                                </MultiDataTrigger.Conditions>
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </MultiDataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="● 采集中" Foreground="{StaticResource AccentBrush}" FontSize="11"
+                                                               HorizontalAlignment="Center" FontWeight="SemiBold" />
+                                                    <TextBlock Text="{Binding FrameCount, StringFormat='{}{0} 帧'}" Foreground="#8E8E93" FontSize="9"
+                                                               HorizontalAlignment="Center" Margin="0,1,0,0" />
+                                                </StackPanel>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- 行 2：三列指标 -->
+                                    <Grid Grid.Row="2" Margin="6,2,6,2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                                            <TextBlock Text="{Binding MatchScore, StringFormat={}{0:F2}}" FontSize="13" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource SuccessBrush}" HorizontalAlignment="Center" />
+                                            <TextBlock Text="匹配" FontSize="9" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                            <TextBlock Text="{Binding DefectCount}" FontSize="13" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource ErrorBrush}" HorizontalAlignment="Center" />
+                                            <TextBlock Text="缺陷" FontSize="9" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                                            <TextBlock Text="{Binding CycleTime, StringFormat={}{0:F0}}" FontSize="13" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" />
+                                            <TextBlock Text="ms" FontSize="9" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- 行 3：相机 ID + 启停 -->
+                                    <DockPanel Grid.Row="3" Margin="6,2,6,6" LastChildFill="True">
+                                        <TextBlock DockPanel.Dock="Left" Text="{Binding CameraId}" Style="{StaticResource AppleSubLabel}"
+                                                   FontSize="9" VerticalAlignment="Center" />
+                                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                            <Button Style="{StaticResource AppleBtn}" Content="启" Command="{Binding StartCmd}"
+                                                    Padding="8,2" FontSize="10" />
+                                            <Button Style="{StaticResource AppleBtnSecondary}" Content="停" Command="{Binding StopCmd}"
+                                                    Margin="4,0,0,0" Padding="8,2" FontSize="10" />
+                                        </StackPanel>
+                                    </DockPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
     </Grid>
   <!-- 作者：温·启·志 编写 ▢ 联系 wx:187-1936-1399 -->
 </UserControl>

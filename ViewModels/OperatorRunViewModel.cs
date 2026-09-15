@@ -1,7 +1,9 @@
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Threading;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using GrayMatch;
 using NoCodeVision.Hardware;
 using OpenCvSharp;
@@ -221,7 +223,83 @@ public class OperatorRunViewModel : OperatorViewModel
         EmergencyStopCmd = new RelayCommand(_ => EStop(), _ => CanEStop);
 
         ResetCmd = new RelayCommand(_ => Reset(), _ => CanReset);
+
+        InitCameraMonitor();
     }
+
+    #region 多通道视觉监控（操作员页右侧 1×2 / 2×3 / 3×4 选择）
+
+    /// <summary>所有相机通道（最多 12 个，覆盖 3×4 布局）。</summary>
+    public ObservableCollection<VisionChannel> Channels { get; } = new();
+
+    /// <summary>监控网格行数。</summary>
+    public int LayoutRows { get => _layoutRows; set => SetField(ref _layoutRows, value); }
+    private int _layoutRows = 2;
+
+    /// <summary>监控网格列数。</summary>
+    public int LayoutCols { get => _layoutCols; set => SetField(ref _layoutCols, value); }
+    private int _layoutCols = 3;
+
+    public ICommand Layout12Cmd { get; private set; } = new RelayCommand(_ => { });
+    public ICommand Layout23Cmd { get; private set; } = new RelayCommand(_ => { });
+    public ICommand Layout34Cmd { get; private set; } = new RelayCommand(_ => { });
+    public ICommand CameraStartAllCmd { get; private set; } = new RelayCommand(_ => { });
+    public ICommand CameraStopAllCmd { get; private set; } = new RelayCommand(_ => { });
+
+    private readonly DispatcherTimer _camTimer = new()
+    {
+        Interval = TimeSpan.FromMilliseconds(100)
+    };
+
+    private void InitCameraMonitor()
+    {
+        Layout12Cmd = new RelayCommand(_ => { LayoutRows = 1; LayoutCols = 2; });
+        Layout23Cmd = new RelayCommand(_ => { LayoutRows = 2; LayoutCols = 3; });
+        Layout34Cmd = new RelayCommand(_ => { LayoutRows = 3; LayoutCols = 4; });
+        CameraStartAllCmd = new RelayCommand(_ => { foreach (var c in Channels) if (!c.IsRunning) c.Start(); });
+        CameraStopAllCmd = new RelayCommand(_ => { foreach (var c in Channels) if (c.IsRunning) c.Stop(); });
+
+        // 预置 12 个通道（覆盖 3×4 布局）
+        var names = new[]
+        {
+            "上表面检测", "下表面检测", "左侧面定位", "右侧面定位",
+            "前端面检测", "后端面检测", "顶面复检", "底面复检",
+            "螺纹孔检测", "焊点检测", "标签识别", "尺寸测量",
+        };
+        for (int i = 0; i < names.Length; i++)
+            Channels.Add(new VisionChannel($"通道 {i + 1} · {names[i]}", $"CAM-{i + 1:D2}"));
+
+        _camTimer.Tick += PollCameras;
+        _camTimer.Start();
+    }
+
+    /// <summary>定时器轮询所有运行中通道：抓取帧 + 模拟匹配指标。</summary>
+    private void PollCameras(object? sender = null, EventArgs? e = null)
+    {
+        foreach (var ch in Channels)
+        {
+            if (!ch.IsRunning) continue;
+            if (HardwareManager.Instance.Cameras.TryGetValue(ch.CameraId, out var cam))
+            {
+                try
+                {
+                    var frame = cam.GrabOne();
+                    if (frame != null) { ch.LastImage = frame; ch.FrameCount++; }
+                }
+                catch { }
+            }
+            if (ch.FrameCount % 10 == 0)
+            {
+                var rnd = Random.Shared.Next(8000, 9990) * 0.0001;
+                ch.MatchScore = ch.MatchScore > 0 ? Math.Round(ch.MatchScore * 0.7 + rnd * 0.3, 3) : rnd;
+                ch.DefectCount = ch.MatchScore < 0.85 ? Random.Shared.Next(0, 4) : 0;
+                ch.CycleTime = 30 + Random.Shared.NextDouble() * 35;
+                ch.Status = ch.MatchScore >= 0.85 ? "通过" : (ch.MatchScore > 0 ? "失败" : "运行中");
+            }
+        }
+    }
+
+    #endregion
 
     #region 状态机动作
 
