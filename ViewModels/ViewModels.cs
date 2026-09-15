@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using System.Collections.Generic;
 
@@ -2123,8 +2123,8 @@ public class ProjectViewModel : ViewModelBase
 // 作者 温启志 编写 ░ 微信 187 1936 1399
 
 public class CameraViewModel : ViewModelBase
-
 {
+    public static CameraViewModel? Instance { get; private set; }
 
     public ObservableCollection<CameraItem> Cameras { get; } = new()
 
@@ -2403,6 +2403,7 @@ public class CameraViewModel : ViewModelBase
     public CameraViewModel()
 
     {
+        Instance = this;
 
         SelectedCamera = Cameras[0];
 

@@ -227,24 +227,24 @@ public class OperatorRunViewModel : OperatorViewModel
         InitCameraMonitor();
     }
 
-    #region 多通道视觉监控（操作员页右侧 1×2 / 2×3 / 3×4 选择）
+    #region 多通道视觉监控（操作员页右侧，通道数来自项目相机配置）
 
-    /// <summary>所有相机通道（最多 12 个，覆盖 3×4 布局）。</summary>
+    /// <summary>所有相机通道（动态来自 CameraViewModel.Instance.Cameras）。</summary>
     public ObservableCollection<VisionChannel> Channels { get; } = new();
 
-    /// <summary>监控网格行数。</summary>
+    /// <summary>监控网格行数（根据相机数自动适配）。</summary>
     public int LayoutRows { get => _layoutRows; set => SetField(ref _layoutRows, value); }
     private int _layoutRows = 2;
 
-    /// <summary>监控网格列数。</summary>
+    /// <summary>监控网格列数（根据相机数自动适配）。</summary>
     public int LayoutCols { get => _layoutCols; set => SetField(ref _layoutCols, value); }
-    private int _layoutCols = 3;
+    private int _layoutCols = 2;
 
-    public ICommand Layout12Cmd { get; private set; } = new RelayCommand(_ => { });
-    public ICommand Layout23Cmd { get; private set; } = new RelayCommand(_ => { });
-    public ICommand Layout34Cmd { get; private set; } = new RelayCommand(_ => { });
-    public ICommand CameraStartAllCmd { get; private set; } = new RelayCommand(_ => { });
-    public ICommand CameraStopAllCmd { get; private set; } = new RelayCommand(_ => { });
+    public ICommand Layout12Cmd { get; private set; }
+    public ICommand Layout23Cmd { get; private set; }
+    public ICommand Layout34Cmd { get; private set; }
+    public ICommand CameraStartAllCmd { get; private set; }
+    public ICommand CameraStopAllCmd { get; private set; }
 
     private readonly DispatcherTimer _camTimer = new()
     {
@@ -259,18 +259,44 @@ public class OperatorRunViewModel : OperatorViewModel
         CameraStartAllCmd = new RelayCommand(_ => { foreach (var c in Channels) if (!c.IsRunning) c.Start(); });
         CameraStopAllCmd = new RelayCommand(_ => { foreach (var c in Channels) if (c.IsRunning) c.Stop(); });
 
-        // 预置 12 个通道（覆盖 3×4 布局）
-        var names = new[]
-        {
-            "上表面检测", "下表面检测", "左侧面定位", "右侧面定位",
-            "前端面检测", "后端面检测", "顶面复检", "底面复检",
-            "螺纹孔检测", "焊点检测", "标签识别", "尺寸测量",
-        };
-        for (int i = 0; i < names.Length; i++)
-            Channels.Add(new VisionChannel($"通道 {i + 1} · {names[i]}", $"CAM-{i + 1:D2}"));
+        // 从项目相机列表动态创建通道（不硬编码）
+        RebuildChannelsFromCameras();
+
+        // 监听相机列表变化（用户在相机页增删相机时，操作员页自动同步）
+        if (CameraViewModel.Instance != null)
+            CameraViewModel.Instance.Cameras.CollectionChanged += (_, _) => RebuildChannelsFromCameras();
 
         _camTimer.Tick += PollCameras;
         _camTimer.Start();
+    }
+
+    /// <summary>根据 CameraViewModel.Instance.Cameras 重建通道列表。</summary>
+    private void RebuildChannelsFromCameras()
+    {
+        var camVm = CameraViewModel.Instance;
+        if (camVm == null) return;
+
+        Channels.Clear();
+        for (int i = 0; i < camVm.Cameras.Count; i++)
+        {
+            var cam = camVm.Cameras[i];
+            // 从 CameraItem.Name 提取相机 ID（如 "Camera_0 (左视野)" -> "Camera_0"）
+            var camId = cam.Name.Contains(' ') ? cam.Name.Split(' ')[0] : cam.Name;
+            var displayName = cam.Name;
+            Channels.Add(new VisionChannel(displayName, camId));
+        }
+
+        // 根据相机数量自动选择最佳布局
+        AutoFitLayout();
+    }
+
+    /// <summary>根据当前通道数自动选择最紧凑的布局。</summary>
+    private void AutoFitLayout()
+    {
+        var count = Channels.Count;
+        if (count <= 2) { LayoutRows = 1; LayoutCols = 2; }
+        else if (count <= 6) { LayoutRows = 2; LayoutCols = 3; }
+        else { LayoutRows = 3; LayoutCols = 4; }
     }
 
     /// <summary>定时器轮询所有运行中通道：抓取帧 + 模拟匹配指标。</summary>
@@ -301,7 +327,6 @@ public class OperatorRunViewModel : OperatorViewModel
 
     #endregion
 
-    #region 状态机动作
 
     private void StartRun()
     {
@@ -382,8 +407,6 @@ public class OperatorRunViewModel : OperatorViewModel
         try { HardwareManager.Instance.Motion.Connect(); } catch { }
         AppendLog("已复位");
     }
-
-    #endregion
 
     #region 生产循环（真实取图 + 检测 + 结果下发 PLC）
 
