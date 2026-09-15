@@ -19,3 +19,4 @@ public class MatchResult
     public override string ToString()
         => $"#{Index} Score={Score:F4} Center=({CenterX:F2},{CenterY:F2}) Angle={Angle:F1} Size={TemplateWidth}x{TemplateHeight} Scale={Scale:F2}";
 }
+// 温启志：18719361399  混淆: 温c启v志w：f1e8l7j1c9d3j6a1a3n9w9

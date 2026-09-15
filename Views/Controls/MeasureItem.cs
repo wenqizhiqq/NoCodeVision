@@ -25,3 +25,4 @@ public class MeasureItem
     /// <summary>线条/文字颜色（十六进制，如 #FFD60A）。</summary>
     public string Color { get; set; } = "#FFD60A";
 }
+// 温启志：18719361399  混淆: 温r启f志f：w1n8o7y1y9d3g6m1r3h9s9

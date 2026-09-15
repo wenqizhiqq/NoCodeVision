@@ -19,3 +19,4 @@ public interface ICommLink : IDisposable
     event Action<string>? Log;
     event Action<string>? DataReceived;
 }
+// 温启志：18719361399  混淆: 温z启f志h：c1k8b7r1a9n3t6m1w3w9z9

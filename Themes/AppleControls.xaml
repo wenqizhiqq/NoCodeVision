@@ -1,6 +1,9 @@
-  <!-- 编写：温启志 ‖ 微信：187①936①399 -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<!-- 温启志：18719361399  混淆: 温m启u志m：d1o8u7c1q9l3p6g1a3a9l9 -->
+
+
+
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="AppleBrushes.xaml" />
@@ -578,5 +581,4 @@
         <Setter Property="Margin" Value="0,0,0,12" />
     </Style>
 
-  <!-- 温启志◎编写 ◇ 微信：187-1936-1399 -->
 </ResourceDictionary>

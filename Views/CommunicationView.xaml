@@ -1,4 +1,3 @@
-  <!-- 〔作者〕温启志 编写 ◇ 微 信：187·1936·1399 -->
 <UserControl x:Class="NoCodeVision.Views.CommunicationView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -6,6 +5,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:ctrl="clr-namespace:NoCodeVision.Views.Controls"
              mc:Ignorable="d">
+<!-- 温启志：18719361399  混淆: 温g启y志k：j1k8k7l1m9y3c6a1n3l9j9 -->
+
+
+
 
     <UserControl.Resources>
         <DataTemplate x:Key="CommItemTemplate">
@@ -471,5 +474,4 @@
             </StackPanel>
         </ScrollViewer>
     </Grid>
-  <!-- 温启志 编写 ▦ 微信 18719361399（保留署名） -->
 </UserControl>

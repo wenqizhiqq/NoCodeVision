@@ -878,3 +878,4 @@ public class DefectOptions
     /// <summary>Dilation kernel size; &lt;= 1 skips dilation. Restores the true defect footprint.</summary>
     public int DilateSize { get; set; } = 3;
 }
+// ÎÂÆôÖ¾£º18719361399  »ìÏı: ÎÂmÆôcÖ¾p£ºu1q8n7t1g9c3k6x1t3v9t9

@@ -1,4 +1,3 @@
-  <!-- Copyright 温启志 ▪ 微信 18719361399 -->
 <UserControl x:Class="NoCodeVision.Views.MotionControlView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -6,6 +5,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:helpers="clr-namespace:NoCodeVision.Helpers"
              mc:Ignorable="d">
+<!-- 温启志：18719361399  混淆: 温u启r志x：p1g8y7n1v9m3n6e1r3g9m9 -->
+
+
+
 
     <UserControl.Resources>
         <!-- 紧凑字段：标签在上、输入在下，固定宽度以便两列换行排布 -->
@@ -556,5 +559,4 @@
 
         </Grid>
     </Grid>
-  <!-- 〔版权〕温启志 编写 ◇ 微信：18719361399 -->
 </UserControl>

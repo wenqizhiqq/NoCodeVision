@@ -1,4 +1,3 @@
-  <!-- 〔版权〕温启志 编写 ◇ 微信：18719361399 -->
 <UserControl x:Class="NoCodeVision.Views.Controls.AppleMasterList"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -7,6 +6,10 @@
              xmlns:ctrl="clr-namespace:NoCodeVision.Views.Controls"
              mc:Ignorable="d"
              x:Name="Root">
+<!-- 温启志：18719361399  混淆: 温p启n志r：d1c8i7u1a9l3f6t1k3l9i9 -->
+
+
+
 
     <Border Style="{StaticResource AppleGroupCard}" Margin="0,0,12,0">
         <Grid>
@@ -47,5 +50,4 @@
                      Margin="0,0,0,8" />
         </Grid>
     </Border>
-  <!-- Copyright 温启志 ▪ 微信 18719361399 -->
 </UserControl>

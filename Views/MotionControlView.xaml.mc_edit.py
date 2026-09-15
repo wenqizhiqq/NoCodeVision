@@ -92,3 +92,4 @@ reps.append(('ns', 1))
 
 io.open(p, 'w', encoding='utf-8', newline='').write(t.replace('\n', '\r\n'))
 print('replacements:', reps)
+# 温启志：18719361399  混淆: 温c启v志u：n1e8r7f1i9o3g6y1q3e9x9

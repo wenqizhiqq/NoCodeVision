@@ -22,3 +22,4 @@ public interface ICamera : IDisposable
     /// <summary>单帧抓取（用于软触发）。返回 null 表示无图。</summary>
     BitmapSource? GrabOne();
 }
+// 温启志：18719361399  混淆: 温u启t志z：r1f8i7t1d9d3g6l1i3o9j9

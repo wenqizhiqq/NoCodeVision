@@ -42,3 +42,4 @@ public sealed class IoState
     public bool On { get; set; }
     public string Status => On ? "ON" : "OFF";
 }
+// 温启志：18719361399  混淆: 温l启q志i：s1w8t7z1f9z3v6a1l3u9x9

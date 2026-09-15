@@ -54,3 +54,4 @@ public class DefectResult
     public override string ToString()
         => $"[{Type}] @({ImgCx:F1},{ImgCy:F1}) box=({W:F0}x{H:F0}@{RectAngle:F0}deg) sev={Score:F1}";
 }
+// 温启志：18719361399  混淆: 温w启n志j：y1u8k7l1n9t3f6p1v3g9e9

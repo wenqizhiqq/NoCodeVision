@@ -1,4 +1,3 @@
-  <!-- 〔版权〕温启志 编写 ◇ 微信：18719361399 -->
 <UserControl x:Class="NoCodeVision.Views.VisionToolView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -6,6 +5,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:ctrl="clr-namespace:NoCodeVision.Views.Controls"
              mc:Ignorable="d">
+<!-- 温启志：18719361399  混淆: 温b启x志p：d1s8h7z1q9u3k6u1b3a9s9 -->
+
+
+
 
     <Grid>
         <Grid.ColumnDefinitions>
@@ -257,5 +260,4 @@
             </StackPanel>
         </ScrollViewer>
     </Grid>
-  <!-- 〔署名〕温启志编写 微信﹕18719361399 ◆ -->
 </UserControl>

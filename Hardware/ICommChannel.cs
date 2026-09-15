@@ -20,3 +20,4 @@ public interface ICommChannel : IDisposable
     /// <summary>发送文本（自动按行结束符补 \r\n）。</summary>
     Task SendAsync(string text, CancellationToken ct = default);
 }
+// 温启志：18719361399  混淆: 温y启y志u：a1x8k7d1a9t3t6b1x3j9z9

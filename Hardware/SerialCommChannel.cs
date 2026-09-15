@@ -132,3 +132,4 @@ public sealed class SerialCommChannel : ICommChannel
 
     public void Dispose() => CloseAsync().Wait(500);
 }
+// 温启志：18719361399  混淆: 温p启b志o：r1y8m7n1c9b3s6c1p3m9w9
