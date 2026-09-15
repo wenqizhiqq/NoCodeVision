@@ -23,8 +23,9 @@ public partial class MainWindow : Window
             new EngineerView(),
             new OperatorView(),
             new ManualView(),
+            new SmartCenterView { DataContext = new SmartCenterViewModel() },
         };
-        _navButtons = new[] { Nav0, Nav1, Nav2, Nav3, Nav4, Nav5, Nav6, Nav7, Nav8 };
+        _navButtons = new[] { Nav0, Nav1, Nav2, Nav3, Nav4, Nav5, Nav6, Nav7, Nav8, Nav9 };
         Navigate(0);
     }
 

@@ -84,12 +84,83 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <ctrl:AppleMasterList Grid.Column="0" Header="检测批次" HeaderIcon="📦"
-                              ItemsSource="{Binding Tasks}"
-                              SelectedItem="{Binding SelectedTask}"
-                              AddCommand="{Binding AddCmd}"
-                              DeleteCommand="{Binding DeleteCmd}"
-                              ItemTemplate="{StaticResource TaskItemTemplate}" />
+        <!-- ===== 左侧：生产统计（UPH + 产量指标 + 折线图） ===== -->
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="0,2,0,8">
+
+                <!-- 实时 UPH 大卡片 -->
+                <Border Style="{StaticResource AppleGroupCard}" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="实时 UPH" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,4,0,0">
+                            <TextBlock Text="{Binding UPH, StringFormat='{}{0:F0}'}" FontSize="46" FontWeight="Bold"
+                                       Foreground="{StaticResource AccentBrush}" />
+                            <TextBlock Text=" 件/小时" FontSize="13" Foreground="{StaticResource TextMutedBrush}"
+                                       VerticalAlignment="Bottom" Margin="2,0,0,8" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding RunDurationText, StringFormat='运行 {0}'}" FontSize="12"
+                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <!-- 产量指标 -->
+                <Border Style="{StaticResource AppleGroupCard}" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="产量统计" />
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding Total}" FontSize="24" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+                                <TextBlock Text="总产量" FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                           HorizontalAlignment="Center" Margin="0,2,0,0" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding Ok}" FontSize="24" FontWeight="SemiBold"
+                                           Foreground="{StaticResource SuccessBrush}" HorizontalAlignment="Center" />
+                                <TextBlock Text="良品" FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                           HorizontalAlignment="Center" Margin="0,2,0,0" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding Ng}" FontSize="24" FontWeight="SemiBold"
+                                           Foreground="{StaticResource ErrorBrush}" HorizontalAlignment="Center" />
+                                <TextBlock Text="不良" FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                           HorizontalAlignment="Center" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Grid>
+                        <Border Background="{StaticResource HoverBrush}" CornerRadius="10" Padding="12,8" Margin="0,10,0,0">
+                            <DockPanel>
+                                <TextBlock Text="良率" Style="{StaticResource AppleSubLabel}"
+                                           Foreground="{StaticResource TextSecondaryBrush}" DockPanel.Dock="Left" />
+                                <TextBlock Text="{Binding YieldText}" Style="{StaticResource AppleLabel}"
+                                           FontWeight="SemiBold" HorizontalAlignment="Right" />
+                            </DockPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- 生产折线图 -->
+                <Border Style="{StaticResource AppleGroupCard}" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="生产趋势" />
+                        <Viewbox Stretch="Fill" Height="140" Margin="0,6,0,0">
+                            <Canvas Width="300" Height="120" Background="{StaticResource CanvasBrush}">
+                                <Polyline Points="{Binding ProductionPolylinePoints}"
+                                          Stroke="{StaticResource AccentBrush}" StrokeThickness="2"
+                                          Fill="Transparent" />
+                            </Canvas>
+                        </Viewbox>
+                        <TextBlock Text="累计产量随时间变化" FontSize="10" Foreground="{StaticResource TextMutedBrush}"
+                                   Margin="0,4,0,0" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
 
         <!-- ===== 中部：操作员状态 + 机台运行控制（保留） ===== -->
         <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
@@ -256,12 +327,74 @@
                     <TextBlock Text="视觉监控" Style="{StaticResource iOSTitle}" FontSize="15" VerticalAlignment="Center" />
                     <Border Background="{StaticResource SegTrackBrush}" CornerRadius="8" Padding="3" Margin="14,0,0,0">
                         <StackPanel Orientation="Horizontal">
-                            <Button Content="1×2" Style="{StaticResource SegButton}" Command="{Binding Layout12Cmd}"
-                                    MinWidth="44" Padding="8,4" FontSize="11" />
-                            <Button Content="2×3" Style="{StaticResource SegButtonSelected}" Command="{Binding Layout23Cmd}"
-                                    MinWidth="44" Padding="8,4" FontSize="11" />
-                            <Button Content="3×4" Style="{StaticResource SegButton}" Command="{Binding Layout34Cmd}"
-                                    MinWidth="44" Padding="8,4" FontSize="11" />
+                            <Button Content="自适应" Command="{Binding AutoFitCmd}" MinWidth="56" Padding="8,4" FontSize="11">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SegButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsAutoFit}" Value="True">
+                                                <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+                                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                                                <Setter Property="FontWeight" Value="Medium" />
+                                                <Setter Property="Effect" Value="{StaticResource PillShadow}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Button Content="1×2" Command="{Binding Layout12Cmd}" MinWidth="44" Padding="8,4" FontSize="11">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SegButton}">
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsAutoFit}" Value="False" />
+                                                    <Condition Binding="{Binding LayoutCols}" Value="2" />
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+                                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                                                <Setter Property="FontWeight" Value="Medium" />
+                                                <Setter Property="Effect" Value="{StaticResource PillShadow}" />
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Button Content="2×3" Command="{Binding Layout23Cmd}" MinWidth="44" Padding="8,4" FontSize="11">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SegButton}">
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsAutoFit}" Value="False" />
+                                                    <Condition Binding="{Binding LayoutCols}" Value="3" />
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+                                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                                                <Setter Property="FontWeight" Value="Medium" />
+                                                <Setter Property="Effect" Value="{StaticResource PillShadow}" />
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Button Content="3×4" Command="{Binding Layout34Cmd}" MinWidth="44" Padding="8,4" FontSize="11">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SegButton}">
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsAutoFit}" Value="False" />
+                                                    <Condition Binding="{Binding LayoutCols}" Value="4" />
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+                                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                                                <Setter Property="FontWeight" Value="Medium" />
+                                                <Setter Property="Effect" Value="{StaticResource PillShadow}" />
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                         </StackPanel>
                     </Border>
                     <Button Style="{StaticResource AppleBtn}" Content="全部启动" Command="{Binding CameraStartAllCmd}"

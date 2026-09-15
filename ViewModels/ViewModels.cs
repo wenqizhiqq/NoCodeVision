@@ -2398,6 +2398,9 @@ public class CameraViewModel : ViewModelBase
 
     public ICommand StopCmd { get; }
 
+    /// <summary>构造时捕获 UI 线程 Dispatcher，避免后台相机线程里 Application.Current 为空导致 NullReferenceException。</summary>
+    private readonly System.Windows.Threading.Dispatcher _uiDispatcher;
+
 
 
     public CameraViewModel()
@@ -2405,9 +2408,19 @@ public class CameraViewModel : ViewModelBase
     {
         Instance = this;
 
+        // 捕获 UI 线程 Dispatcher（单例在 UI 线程构造），后台相机线程回调不再依赖 Application.Current
+        _uiDispatcher = System.Windows.Threading.Dispatcher.CurrentDispatcher;
+
         SelectedCamera = Cameras[0];
 
-        HardwareManager.Instance.Camera.FrameReady += bmp => System.Windows.Application.Current.Dispatcher.Invoke(() => CameraLiveImage = bmp);
+        HardwareManager.Instance.Camera.FrameReady += bmp =>
+        {
+            var d = _uiDispatcher;
+            if (d != null && !d.CheckAccess())
+                d.BeginInvoke(new Action(() => CameraLiveImage = bmp));
+            else
+                CameraLiveImage = bmp;
+        };
 
 
 
@@ -4557,7 +4570,7 @@ public class FlowViewModel : ViewModelBase
 
             if (_selectedFlow == null) return;
 
-            var owner = System.Windows.Application.Current.MainWindow;
+            var owner = System.Windows.Application.Current?.MainWindow;
 
             var newName = Views.InputDialog.Show(owner, "请输入新流程名称：", _selectedFlow.Name);
 

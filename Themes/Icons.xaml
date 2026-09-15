@@ -239,4 +239,47 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <!-- 智能中心：神经网络联想（中心节点 + 4 卫星节点） -->
+    <DrawingImage x:Key="IcoSmart">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="#2563EB">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="12,12" RadiusX="3.2" RadiusY="3.2" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#1D4ED8">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="5,6" RadiusX="2" RadiusY="2" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#1D4ED8">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="19,7" RadiusX="2" RadiusY="2" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#1D4ED8">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="6,18" RadiusX="2" RadiusY="2" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#1D4ED8">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="18,18" RadiusX="2" RadiusY="2" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#93C5FD">
+                    <GeometryDrawing.Geometry>
+                        <GeometryGroup>
+                            <LineGeometry StartPoint="12,12" EndPoint="5,6" />
+                            <LineGeometry StartPoint="12,12" EndPoint="19,7" />
+                            <LineGeometry StartPoint="12,12" EndPoint="6,18" />
+                            <LineGeometry StartPoint="12,12" EndPoint="18,18" />
+                        </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
 </ResourceDictionary>

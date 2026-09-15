@@ -1,0 +1,105 @@
+<UserControl x:Class="NoCodeVision.Views.SmartCenterView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             FontFamily="{StaticResource AppleFont}"
+             Background="{StaticResource CanvasBrush}">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 顶栏：标题 + 运行演示 -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Border Width="34" Height="34" CornerRadius="9" Background="{StaticResource AccentBrush}" Margin="0,0,12,0">
+                    <Image Source="{StaticResource IcoSmart}" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel>
+                    <TextBlock Text="智能中心" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="记忆 · 联想 · 仿真 三模块协同" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
+                </StackPanel>
+            </StackPanel>
+            <Border Background="{StaticResource AccentBrush}" CornerRadius="10" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Button Background="Transparent" BorderThickness="0" Foreground="White"
+                        Padding="16,9" FontSize="14" FontWeight="SemiBold"
+                        Command="{Binding RunDemoCmd}" Content="▶ 运行演示"/>
+            </Border>
+        </Grid>
+
+        <!-- 三卡片 -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1"
+                        CornerRadius="14" Padding="16" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="记忆模块 · 检测数据概览" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{Binding StatsText}" FontSize="13" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
+                        <ItemsControl ItemsSource="{Binding LogLines}" Margin="0,8,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" FontSize="12.5" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,2"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1"
+                        CornerRadius="14" Padding="16" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="联想机制 · 相似检索与参数推荐" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <ItemsControl ItemsSource="{Binding RelatedLines}" Margin="0,8,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" FontSize="12.5" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,2"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Border Background="{StaticResource AccentSoftBrush}" CornerRadius="8" Padding="10" Margin="0,8,0,0">
+                            <TextBlock Text="{Binding RecText}" FontSize="12.5" Foreground="{StaticResource AccentBrush}" TextWrapping="Wrap"/>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1"
+                        CornerRadius="14" Padding="16" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="仿真模块 · 产能与良率推演" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <Border Background="{StaticResource AccentSoftBrush}" CornerRadius="8" Padding="12,8" Margin="0,0,10,0">
+                                <StackPanel>
+                                    <TextBlock Text="预测良率" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                                    <TextBlock Text="{Binding PredYield, StringFormat='{}{0:P1}'}" FontSize="22" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="{StaticResource AccentSoftBrush}" CornerRadius="8" Padding="12,8">
+                                <StackPanel>
+                                    <TextBlock Text="预测 UPH" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                                    <TextBlock Text="{Binding PredUph, StringFormat='{}{0:F0}'}" FontSize="22" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"/>
+                                    <TextBlock Text="件/小时" FontSize="10" Foreground="{StaticResource TextMutedBrush}"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                        <ItemsControl ItemsSource="{Binding ForecastLines}" Margin="0,8,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" FontSize="12.5" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,2"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Viewbox Stretch="Fill" Height="150" Margin="0,8,0,0">
+                            <Canvas Width="320" Height="140" Background="{StaticResource CanvasBrush}">
+                                <Polyline Points="{Binding SimPolylinePoints}" Stroke="{StaticResource AccentBrush}" StrokeThickness="2" Fill="Transparent"/>
+                            </Canvas>
+                        </Viewbox>
+                        <TextBlock Text="累计良率随推演步数变化" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

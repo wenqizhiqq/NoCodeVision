@@ -14,7 +14,7 @@ public sealed class SimulatedCamera : ICamera
 {
     private Thread? _thread;
     private volatile bool _run;
-    private int _w = 640, _h = 480;
+    private int _w = 1920, _h = 1080; // 16:9 1080p 比例（原 640×480 为 4:3，预览会被拉伸）
     private double _phase;
     private readonly string _cameraId;
     // 每个通道不同的视觉特征（颜色 / 标签偏移）
@@ -49,7 +49,7 @@ public sealed class SimulatedCamera : ICamera
         if (_run) return;
         _run = true;
         _phase = 0;
-        Log?.Invoke($"[相机] 模拟相机已启动{(serial != null ? $"（{serial}）" : "")}，640×480");
+        Log?.Invoke($"[相机] 模拟相机已启动{(serial != null ? $"（{serial}）" : "")}，1920×1080 (16:9)");
         _thread = new Thread(Loop) { IsBackground = true, Name = "SimCamera" };
         _thread.Start();
     }
@@ -92,20 +92,24 @@ public sealed class SimulatedCamera : ICamera
     {
         _phase += 0.06;
         var mat = new Mat(_h, _w, MatType.CV_8UC3, Scalar.All(28));
-        // 网格背景
-        for (int x = 0; x < _w; x += 40) Cv2.Line(mat, new CvPoint(x, 0), new CvPoint(x, _h), new Scalar(45, 45, 52), 1);
-        for (int y = 0; y < _h; y += 40) Cv2.Line(mat, new CvPoint(0, y), new CvPoint(_w, y), new Scalar(45, 45, 52), 1);
-        // 运动目标（圆）— 每通道不同颜色和相位
-        var cx = (int)(_w / 2 + Math.Cos(_phase + _phaseOffset) * 180);
-        var cy = (int)(_h / 2 + Math.Sin(_phase * 1.3 + _phaseOffset) * 120);
-        Cv2.Circle(mat, new CvPoint(cx, cy), 36, _primaryColor, -1);
-        Cv2.Circle(mat, new CvPoint(cx, cy), 36, new Scalar(255, 255, 255), 2);
+        // 网格背景（间距随分辨率等比缩放，保持视觉密度一致）
+        int step = Math.Max(40, _w / 24);
+        for (int x = 0; x < _w; x += step) Cv2.Line(mat, new CvPoint(x, 0), new CvPoint(x, _h), new Scalar(45, 45, 52), 1);
+        for (int y = 0; y < _h; y += step) Cv2.Line(mat, new CvPoint(0, y), new CvPoint(_w, y), new Scalar(45, 45, 52), 1);
+        // 运动目标（圆）— 每通道不同颜色和相位，振幅随分辨率等比缩放
+        var cx = (int)(_w / 2 + Math.Cos(_phase + _phaseOffset) * _w * 0.18);
+        var cy = (int)(_h / 2 + Math.Sin(_phase * 1.3 + _phaseOffset) * _h * 0.20);
+        int r = (int)(_h * 0.05);
+        Cv2.Circle(mat, new CvPoint(cx, cy), r, _primaryColor, -1);
+        Cv2.Circle(mat, new CvPoint(cx, cy), r, new Scalar(255, 255, 255), 2);
         // 十字准星
-        Cv2.Line(mat, new CvPoint(_w / 2 - 20, _h / 2), new CvPoint(_w / 2 + 20, _h / 2), new Scalar(180, 180, 190), 1);
-        Cv2.Line(mat, new CvPoint(_w / 2, _h / 2 - 20), new CvPoint(_w / 2, _h / 2 + 20), new Scalar(180, 180, 190), 1);
-        // 时间戳 + 通道 ID 文字
+        int cross = (int)(_h * 0.02);
+        Cv2.Line(mat, new CvPoint(_w / 2 - cross, _h / 2), new CvPoint(_w / 2 + cross, _h / 2), new Scalar(180, 180, 190), 1);
+        Cv2.Line(mat, new CvPoint(_w / 2, _h / 2 - cross), new CvPoint(_w / 2, _h / 2 + cross), new Scalar(180, 180, 190), 1);
+        // 时间戳 + 通道 ID 文字（字号随分辨率等比缩放）
+        double fontScale = Math.Max(1.0, _w / 960.0);
         Cv2.PutText(mat, $"{_cameraId}  {DateTime.Now:HH:mm:ss.fff}",
-            new CvPoint(12, _h - 14), HersheyFonts.HersheyPlain, 1.2, new Scalar(230, 230, 235));
+            new CvPoint(16, _h - 20), HersheyFonts.HersheyPlain, fontScale, new Scalar(230, 230, 235));
         return mat;
     }
 

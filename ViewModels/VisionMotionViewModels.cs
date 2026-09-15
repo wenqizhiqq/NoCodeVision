@@ -575,6 +575,8 @@ namespace NoCodeVision.ViewModels
         public MotionControlViewModel()
         {
             Instance = this;
+            // 构造于 UI 线程，捕获 UI Dispatcher 供后台定时器回到 UI 线程
+            var uiDisp = System.Windows.Threading.Dispatcher.CurrentDispatcher;
             Axes = new ObservableCollection<MotionRow>
             {
                 new() { Name = "X 轴", Status = "使能", Value = 12.34, Unit = "mm", Enabled = true },
@@ -753,13 +755,17 @@ namespace NoCodeVision.ViewModels
             {
                 try
                 {
-                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    if (uiDisp != null)
                     {
-                        foreach (var ax in _baseAxes)
-                            if (ax.Enabled) ax.Value += (_rnd.NextDouble() - 0.5) * 0.06;
-                        Axes.Clear();
-                        foreach (var ax in _baseAxes) Axes.Add(ax);
-                    });
+                        // 用构造时捕获的 UI Dispatcher 回到 UI 线程（不依赖 Application.Current，避免后台定时器线程里为空崩溃）
+                        uiDisp.BeginInvoke(new Action(() =>
+                        {
+                            foreach (var ax in _baseAxes)
+                                if (ax.Enabled) ax.Value += (_rnd.NextDouble() - 0.5) * 0.06;
+                            Axes.Clear();
+                            foreach (var ax in _baseAxes) Axes.Add(ax);
+                        }));
+                    }
                 }
                 catch { }
             }, null, 0, 400);
@@ -845,6 +851,9 @@ namespace NoCodeVision.ViewModels
         private int _frameCount;
         public int FrameCount { get => _frameCount; set => SetField(ref _frameCount, value); }
 
+        /// <summary>构造时捕获 UI 线程 Dispatcher，避免后台相机线程里 Application.Current 为空导致 NullReferenceException。</summary>
+        private readonly System.Windows.Threading.Dispatcher _uiDispatcher;
+
         public ICommand StartCmd { get; }
         public ICommand StopCmd { get; }
 
@@ -852,6 +861,8 @@ namespace NoCodeVision.ViewModels
         {
             Name = name;
             CameraId = cameraId;
+            // 在 UI 线程构造时抓取 Dispatcher（MainWindow 导航与 VM 初始化均发生在 UI 线程）
+            _uiDispatcher = System.Windows.Threading.Dispatcher.CurrentDispatcher;
             StartCmd = new RelayCommand(_ => Start(), _ => !IsRunning);
             StopCmd = new RelayCommand(_ => Stop(), _ => IsRunning);
         }
@@ -891,27 +902,34 @@ namespace NoCodeVision.ViewModels
             Status = "已停止";
         }
 
-        /// <summary>相机帧回调：在 UI 线程更新图像和帧计数。</summary>
+        /// <summary>相机帧回调：相机会在后台线程触发，统一回到 UI 线程更新属性。</summary>
         private void OnFrameReady(System.Windows.Media.Imaging.BitmapSource frame)
         {
-            // 通过 Dispatcher 回到 UI 线程更新 INPC 属性
-            System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            // 使用构造时捕获的 UI Dispatcher 回到 UI 线程（不再依赖 Application.Current，
+            // 后台线程中 Application.Current 为空会抛 NullReferenceException）。
+            if (_uiDispatcher != null && !_uiDispatcher.CheckAccess())
+                _uiDispatcher.BeginInvoke(new Action(() => UpdateFrame(frame)));
+            else
+                UpdateFrame(frame);
+        }
+
+        /// <summary>在 UI 线程执行：更新图像与检测状态。</summary>
+        private void UpdateFrame(System.Windows.Media.Imaging.BitmapSource frame)
+        {
+            LastImage = frame;
+            FrameCount++;
+            // 模拟匹配分数波动（0.80 ~ 0.99，真实场景替换为算法结果）
+            if (FrameCount % 10 == 0)
             {
-                LastImage = frame;
-                FrameCount++;
-                // 模拟匹配分数波动（0.80 ~ 0.99，真实场景替换为算法结果）
-                if (FrameCount % 10 == 0)
-                {
-                    var rnd = Random.Shared.Next(8000, 9990) * 0.0001;
-                    MatchScore = MatchScore > 0 ? Math.Round(MatchScore * 0.7 + rnd * 0.3, 3) : rnd;
-                    // 模拟缺陷检测（低分时随机出现缺陷）
-                    DefectCount = MatchScore < 0.85 ? Random.Shared.Next(0, 4) : 0;
-                    // 模拟周期时间（30~65ms）
-                    CycleTime = 30 + Random.Shared.NextDouble() * 35;
-                    // 根据分数自动切换状态
-                    Status = MatchScore >= 0.85 ? "通过" : (MatchScore > 0 ? "失败" : "运行中");
-                }
-            }));
+                var rnd = Random.Shared.Next(8000, 9990) * 0.0001;
+                MatchScore = MatchScore > 0 ? Math.Round(MatchScore * 0.7 + rnd * 0.3, 3) : rnd;
+                // 模拟缺陷检测（低分时随机出现缺陷）
+                DefectCount = MatchScore < 0.85 ? Random.Shared.Next(0, 4) : 0;
+                // 模拟周期时间（30~65ms）
+                CycleTime = 30 + Random.Shared.NextDouble() * 35;
+                // 根据分数自动切换状态
+                Status = MatchScore >= 0.85 ? "通过" : (MatchScore > 0 ? "失败" : "运行中");
+            }
         }
     }
 

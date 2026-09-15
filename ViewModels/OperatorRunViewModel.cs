@@ -225,6 +225,7 @@ public class OperatorRunViewModel : OperatorViewModel
         ResetCmd = new RelayCommand(_ => Reset(), _ => CanReset);
 
         InitCameraMonitor();
+        InitProductionStats();
     }
 
     #region 多通道视觉监控（操作员页右侧，通道数来自项目相机配置）
@@ -240,6 +241,15 @@ public class OperatorRunViewModel : OperatorViewModel
     public int LayoutCols { get => _layoutCols; set => SetField(ref _layoutCols, value); }
     private int _layoutCols = 2;
 
+    /// <summary>是否自适应布局（true=按相机数量自动最大化卡片；false=使用手动基准密度）。</summary>
+    public bool IsAutoFit { get => _isAutoFit; set => SetField(ref _isAutoFit, value); }
+    private bool _isAutoFit = true;
+
+    /// <summary>手动布局基准行列（仅 IsAutoFit=false 时生效）。</summary>
+    private int _manualRows = 2;
+    private int _manualCols = 3;
+
+    public ICommand AutoFitCmd { get; private set; }
     public ICommand Layout12Cmd { get; private set; }
     public ICommand Layout23Cmd { get; private set; }
     public ICommand Layout34Cmd { get; private set; }
@@ -253,9 +263,10 @@ public class OperatorRunViewModel : OperatorViewModel
 
     private void InitCameraMonitor()
     {
-        Layout12Cmd = new RelayCommand(_ => { LayoutRows = 1; LayoutCols = 2; });
-        Layout23Cmd = new RelayCommand(_ => { LayoutRows = 2; LayoutCols = 3; });
-        Layout34Cmd = new RelayCommand(_ => { LayoutRows = 3; LayoutCols = 4; });
+        AutoFitCmd = new RelayCommand(_ => { IsAutoFit = true; AutoFitLayout(); });
+        Layout12Cmd = new RelayCommand(_ => { IsAutoFit = false; _manualRows = 1; _manualCols = 2; ApplyManualLayout(); });
+        Layout23Cmd = new RelayCommand(_ => { IsAutoFit = false; _manualRows = 2; _manualCols = 3; ApplyManualLayout(); });
+        Layout34Cmd = new RelayCommand(_ => { IsAutoFit = false; _manualRows = 3; _manualCols = 4; ApplyManualLayout(); });
         CameraStartAllCmd = new RelayCommand(_ => { foreach (var c in Channels) if (!c.IsRunning) c.Start(); });
         CameraStopAllCmd = new RelayCommand(_ => { foreach (var c in Channels) if (c.IsRunning) c.Stop(); });
 
@@ -286,17 +297,44 @@ public class OperatorRunViewModel : OperatorViewModel
             Channels.Add(new VisionChannel(displayName, camId));
         }
 
-        // 根据相机数量自动选择最佳布局
-        AutoFitLayout();
+        // 数量变化时重新排布（自适应或手动均保证容纳）
+        if (IsAutoFit) AutoFitLayout();
+        else ApplyManualLayout();
     }
 
-    /// <summary>根据当前通道数自动选择最紧凑的布局。</summary>
+    /// <summary>自适应布局：根据相机数量 N 计算最优行列，保证全部显示且卡片尽量大（接近正方形、填满区域）。</summary>
     private void AutoFitLayout()
     {
-        var count = Channels.Count;
-        if (count <= 2) { LayoutRows = 1; LayoutCols = 2; }
-        else if (count <= 6) { LayoutRows = 2; LayoutCols = 3; }
-        else { LayoutRows = 3; LayoutCols = 4; }
+        int n = Channels.Count;
+        if (n <= 0) { LayoutRows = 1; LayoutCols = 1; return; }
+
+        const double aspect = 1.6; // 监控区域宽高比偏好（宽>高）
+        int bestRows = 1, bestCols = n;
+        double bestScore = double.MaxValue;
+
+        for (int r = 1; r <= n; r++)
+        {
+            int c = (n + r - 1) / r; // 整数向上取整 cols
+            int waste = r * c - n;
+            double ratio = (double)c / r;
+            // 评分：优先少浪费，其次接近目标宽高比（卡片更均衡美观）
+            double score = waste * 2 + System.Math.Abs(ratio - aspect);
+            if (score < bestScore) { bestScore = score; bestRows = r; bestCols = c; }
+        }
+
+        LayoutRows = bestRows;
+        LayoutCols = bestCols;
+    }
+
+    /// <summary>手动布局：以用户选定的基准行列为准，但保证能容纳所有相机（不足则自动加行）。</summary>
+    private void ApplyManualLayout()
+    {
+        int n = Channels.Count;
+        if (n <= 0) { LayoutRows = _manualRows; LayoutCols = _manualCols; return; }
+        int rows = _manualRows;
+        while (rows * _manualCols < n) rows++;
+        LayoutRows = rows;
+        LayoutCols = _manualCols;
     }
 
     /// <summary>定时器轮询所有运行中通道：抓取帧 + 模拟匹配指标。</summary>
@@ -328,6 +366,94 @@ public class OperatorRunViewModel : OperatorViewModel
     #endregion
 
 
+    #region 生产统计（UPH / 运行时长 / 产量折线图）
+
+    /// <summary>本次运行开始时间（用于计算 UPH 与运行时长）。</summary>
+    private DateTime? _runStart;
+
+    /// <summary>本次运行结束时间（停止后冻结统计，null 表示仍在运行）。</summary>
+    private DateTime? _runEnd;
+
+    /// <summary>实时 UPH（Units Per Hour，每小时产量）。</summary>
+    public double UPH { get => _uph; private set => SetField(ref _uph, value); }
+    private double _uph;
+
+    /// <summary>运行时长（hh:mm:ss），停止后冻结。</summary>
+    public string RunDurationText
+    {
+        get
+        {
+            if (_runStart == null) return "00:00:00";
+            var end = _runEnd ?? DateTime.Now;
+            return (end - _runStart.Value).ToString(@"hh\:mm\:ss");
+        }
+    }
+
+    /// <summary>产量采样序列（每 2 秒记录一次累计产量，用于折线图）。</summary>
+    public ObservableCollection<double> ProductionSeries { get; } = new();
+
+    /// <summary>折线图 Polyline 点串（逻辑坐标 300×120，供 Canvas 绑定）。</summary>
+    public string ProductionPolylinePoints { get => _prodPoints; private set => SetField(ref _prodPoints, value); }
+    private string _prodPoints = "";
+
+    private readonly DispatcherTimer _prodTimer = new()
+    {
+        Interval = TimeSpan.FromSeconds(2)
+    };
+
+    private void InitProductionStats()
+    {
+        _prodTimer.Tick += (_, _) => SampleProduction();
+        _prodTimer.Start();
+
+        // 总产量/良品/不良变化时联动刷新 UPH 与折线
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(Total)) RefreshUpd();
+        };
+    }
+
+    /// <summary>每 2 秒采样一次：更新 UPH、记录产量序列、重绘折线。</summary>
+    private void SampleProduction()
+    {
+        if (_runStart == null || _runEnd != null) return;
+        ProductionSeries.Add(Total);
+        if (ProductionSeries.Count > 60) ProductionSeries.RemoveAt(0);
+        RefreshUpd();
+        RebuildPolyline();
+        OnPropertyChanged(nameof(RunDurationText));
+    }
+
+    private void RefreshUpd()
+    {
+        if (_runStart == null) { UPH = 0; return; }
+        var end = _runEnd ?? DateTime.Now;
+        var secs = (end - _runStart.Value).TotalSeconds;
+        UPH = secs > 1 ? Total / secs * 3600 : 0;
+    }
+
+    /// <summary>将产量序列映射为 300×120 逻辑坐标的折线点串。</summary>
+    private void RebuildPolyline()
+    {
+        const double W = 300, H = 120, pad = 8;
+        if (ProductionSeries.Count < 2) { ProductionPolylinePoints = ""; return; }
+        double max = ProductionSeries.Max();
+        double min = ProductionSeries.Min();
+        double range = max - min;
+        if (range < 1e-6) range = 1;
+        var sb = new System.Text.StringBuilder();
+        for (int i = 0; i < ProductionSeries.Count; i++)
+        {
+            double x = pad + (ProductionSeries.Count == 1 ? 0 : (double)i / (ProductionSeries.Count - 1) * (W - 2 * pad));
+            double y = H - pad - (ProductionSeries[i] - min) / range * (H - 2 * pad);
+            sb.Append(x.ToString("F1")).Append(',').Append(y.ToString("F1")).Append(' ');
+        }
+        ProductionPolylinePoints = sb.ToString().Trim();
+    }
+
+    #endregion
+
+
     private void StartRun()
     {
         if (_state != MachineState.Idle) return;
@@ -339,6 +465,14 @@ public class OperatorRunViewModel : OperatorViewModel
         AlarmText = "";
         LastResult = "";
         _pauseGate.Set(); // 放行
+
+        // 重置生产统计
+        _runStart = DateTime.Now;
+        _runEnd = null;
+        ProductionSeries.Clear();
+        UPH = 0;
+        RefreshUpd();
+        OnPropertyChanged(nameof(RunDurationText));
 
         // 真实硬件：上电/回零、开始取图、通知 PLC 启动
         try
@@ -382,6 +516,9 @@ public class OperatorRunViewModel : OperatorViewModel
         State = MachineState.Stopping;
         _pauseGate.Set();
         _cts?.Cancel();
+        _runEnd = DateTime.Now;
+        RefreshUpd();
+        OnPropertyChanged(nameof(RunDurationText));
         _ = EnsureCommAndSendAsync("MACHINE:STOP");
         try { HardwareManager.Instance.Camera.Stop(); } catch { }
     }
@@ -393,6 +530,9 @@ public class OperatorRunViewModel : OperatorViewModel
         _pauseGate.Set();
         AlarmText = "急停已触发，必须复位后才能再次运行";
         _cts?.Cancel();
+        _runEnd = DateTime.Now;
+        RefreshUpd();
+        OnPropertyChanged(nameof(RunDurationText));
         _ = EnsureCommAndSendAsync("MACHINE:ESTOP");
         try { HardwareManager.Instance.Camera.Stop(); } catch { }
         AppendLog("⛔ 急停！");
@@ -403,6 +543,12 @@ public class OperatorRunViewModel : OperatorViewModel
         if (_state != MachineState.Faulted) return;
         State = MachineState.Idle;
         AlarmText = "";
+        _runEnd = null;
+        _runStart = null;
+        UPH = 0;
+        ProductionSeries.Clear();
+        ProductionPolylinePoints = "";
+        OnPropertyChanged(nameof(RunDurationText));
         _ = EnsureCommAndSendAsync("MACHINE:RESET");
         try { HardwareManager.Instance.Motion.Connect(); } catch { }
         AppendLog("已复位");
