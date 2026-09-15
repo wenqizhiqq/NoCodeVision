@@ -16,11 +16,33 @@ public sealed class SimulatedCamera : ICamera
     private volatile bool _run;
     private int _w = 640, _h = 480;
     private double _phase;
+    private readonly string _cameraId;
+    // 每个通道不同的视觉特征（颜色 / 标签偏移）
+    private readonly Scalar _primaryColor;
+    private readonly double _phaseOffset;
 
     public bool IsGrabbing => _run;
 
     public event Action<BitmapSource>? FrameReady;
     public event Action<string>? Log;
+
+    /// <summary>创建模拟相机。cameraId 用于多通道区分（不同颜色/相位）。</summary>
+    public SimulatedCamera(string cameraId = "default")
+    {
+        _cameraId = cameraId;
+        // 根据 ID 哈希确定每个通道的独有颜色和相位偏移（保证视觉可区分）
+        var hash = Math.Abs(cameraId.GetHashCode());
+        var hues = new[] {
+            new Scalar(52, 199, 89),   // Apple 绿
+            new Scalar(0, 122, 255),   // Apple 蓝
+            new Scalar(255, 149, 0),   // Apple 橙
+            new Scalar(255, 59, 48),   // Apple 红
+            new Scalar(175, 82, 222),  // Apple 紫
+            new Scalar(90, 200, 250),  // Apple 青
+        };
+        _primaryColor = hues[hash % hues.Length];
+        _phaseOffset = (hash % 100) * 0.0628;
+    }
 
     public void Start(string? serial = null)
     {
@@ -73,16 +95,16 @@ public sealed class SimulatedCamera : ICamera
         // 网格背景
         for (int x = 0; x < _w; x += 40) Cv2.Line(mat, new CvPoint(x, 0), new CvPoint(x, _h), new Scalar(45, 45, 52), 1);
         for (int y = 0; y < _h; y += 40) Cv2.Line(mat, new CvPoint(0, y), new CvPoint(_w, y), new Scalar(45, 45, 52), 1);
-        // 运动目标（圆）
-        var cx = (int)(_w / 2 + Math.Cos(_phase) * 180);
-        var cy = (int)(_h / 2 + Math.Sin(_phase * 1.3) * 120);
-        Cv2.Circle(mat, new CvPoint(cx, cy), 36, new Scalar(52, 199, 89), -1);     // Apple 绿
+        // 运动目标（圆）— 每通道不同颜色和相位
+        var cx = (int)(_w / 2 + Math.Cos(_phase + _phaseOffset) * 180);
+        var cy = (int)(_h / 2 + Math.Sin(_phase * 1.3 + _phaseOffset) * 120);
+        Cv2.Circle(mat, new CvPoint(cx, cy), 36, _primaryColor, -1);
         Cv2.Circle(mat, new CvPoint(cx, cy), 36, new Scalar(255, 255, 255), 2);
         // 十字准星
         Cv2.Line(mat, new CvPoint(_w / 2 - 20, _h / 2), new CvPoint(_w / 2 + 20, _h / 2), new Scalar(180, 180, 190), 1);
         Cv2.Line(mat, new CvPoint(_w / 2, _h / 2 - 20), new CvPoint(_w / 2, _h / 2 + 20), new Scalar(180, 180, 190), 1);
-        // 时间戳文字
-        Cv2.PutText(mat, $"SIM CAM {DateTime.Now:HH:mm:ss.fff}",
+        // 时间戳 + 通道 ID 文字
+        Cv2.PutText(mat, $"{_cameraId}  {DateTime.Now:HH:mm:ss.fff}",
             new CvPoint(12, _h - 14), HersheyFonts.HersheyPlain, 1.2, new Scalar(230, 230, 235));
         return mat;
     }

@@ -387,10 +387,13 @@ namespace NoCodeVision.ViewModels
     {
         private string _name = "";
         public string Name { get => _name; set => SetField(ref _name, value); }
-        public string Status { get; set; } = "";
-        public double Value { get; set; }
+        private string _status = "";
+        public string Status { get => _status; set => SetField(ref _status, value); }
+        private double _value;
+        public double Value { get => _value; set => SetField(ref _value, value); }
         public string Unit { get; set; } = "";
-        public bool Enabled { get; set; }
+        private bool _enabled;
+        public bool Enabled { get => _enabled; set => SetField(ref _enabled, value); }
         public string Address { get; set; } = "";
         public string Type { get; set; } = "";
         public string Action { get; set; } = "";
@@ -484,9 +487,32 @@ namespace NoCodeVision.ViewModels
         public ObservableCollection<TrayCell> Cells { get; } = new();
     }
 
+    /// <summary>控制卡（控制器）模型，对齐 NoCodeMotion 的 AxisControllerPage。</summary>
+    public class ControllerCard : ViewModelBase
+    {
+        private string _kind = "运动控制卡";
+        public string Kind { get => _kind; set => SetField(ref _kind, value); }
+        private string _name = "";
+        public string Name { get => _name; set => SetField(ref _name, value); }
+        private string _vendor = "";
+        public string Vendor { get => _vendor; set => SetField(ref _vendor, value); }
+        private string _busType = "EtherCAT";
+        public string BusType { get => _busType; set => SetField(ref _busType, value); }
+        private string _cardType = "";
+        public string CardType { get => _cardType; set => SetField(ref _cardType, value); }
+        private string _cardNo = "0";
+        public string CardNo { get => _cardNo; set => SetField(ref _cardNo, value); }
+        private string _axisCount = "4";
+        public string AxisCount { get => _axisCount; set => SetField(ref _axisCount, value); }
+        private string _connection = "网口";
+        public string Connection { get => _connection; set => SetField(ref _connection, value); }
+        private string _description = "";
+        public string Description { get => _description; set => SetField(ref _description, value); }
+    }
+
     public class MotionControlViewModel : ViewModelBase
     {
-        public string[] Tabs { get; } = { "轴", "IO", "气缸", "轴点位表", "料盘" };
+        public string[] Tabs { get; } = { "轴", "IO", "气缸", "轴点位表", "料盘", "控制器" };
         /// <summary>共享单例：供工程师调试页等其它页面访问同一份轴/IO/气缸数据。</summary>
         public static MotionControlViewModel? Instance { get; private set; }
         public string SelectedTab { get => _selectedTab; set => SetField(ref _selectedTab, value); }
@@ -497,6 +523,11 @@ namespace NoCodeVision.ViewModels
         public ObservableCollection<MotionRow> Cylinders { get; }
         public ObservableCollection<PointTableGroup> PointTables { get; }
         public ObservableCollection<TrayGroup> Trays { get; }
+        public ObservableCollection<ControllerCard> Controllers { get; }
+        public ControllerCard? SelectedController { get => _selectedController; set => SetField(ref _selectedController, value); }
+        private ControllerCard? _selectedController;
+        public string NewControllerName { get => _newControllerName; set => SetField(ref _newControllerName, value); }
+        private string _newControllerName = "";
 
         public MotionRow? SelectedAxis { get => _selectedAxis; set => SetField(ref _selectedAxis, value); }
         private MotionRow? _selectedAxis;
@@ -530,6 +561,13 @@ namespace NoCodeVision.ViewModels
         public ICommand RenamePointCmd { get; }
         public ICommand ExportPointsCmd { get; }
         public ICommand ImportPointsCmd { get; }
+        public double JogStep { get => _jogStep; set => SetField(ref _jogStep, value); }
+        private double _jogStep = 1.0;
+        public ICommand JogPlusCmd { get; }
+        public ICommand JogMinusCmd { get; }
+        public ICommand HomeAxisCmd { get; }
+        public ICommand EnableAxisCmd { get; }
+        public ICommand StopAxisCmd { get; }
 
         public int TrayRows { get; } = 6;
         public int TrayCols { get; } = 8;
@@ -597,6 +635,19 @@ namespace NoCodeVision.ViewModels
             Trays.Add(_tray0);
             SelectedTray = Trays[0];
 
+            Controllers = new ObservableCollection<ControllerCard>
+            {
+                new() { Name = "雷赛控制卡", Vendor = "Leadshine", CardType = "DMC", CardNo = "0", AxisCount = "4", Connection = "网口", BusType = "EtherCAT", Description = "四轴脉冲控制卡" },
+                new() { Name = "固高控制卡", Vendor = "Googol", CardType = "GTS", CardNo = "1", AxisCount = "8", Connection = "PCI", BusType = "PCI", Description = "八轴总线控制卡" },
+            };
+            SelectedController = Controllers[0];
+
+            JogPlusCmd = new RelayCommand(_ => JogAxis(+JogStep), _ => SelectedAxis != null && SelectedAxis.Enabled);
+            JogMinusCmd = new RelayCommand(_ => JogAxis(-JogStep), _ => SelectedAxis != null && SelectedAxis.Enabled);
+            HomeAxisCmd = new RelayCommand(_ => HomeSelectedAxis(), _ => SelectedAxis != null);
+            EnableAxisCmd = new RelayCommand(_ => ToggleAxisEnable(), _ => SelectedAxis != null);
+            StopAxisCmd = new RelayCommand(_ => StopSelectedAxis(), _ => SelectedAxis != null);
+
             // 列表操作命令
             AddCmd = new RelayCommand(_ =>
             {
@@ -615,6 +666,7 @@ namespace NoCodeVision.ViewModels
                             Trays.Add(_tg);
                             break;
                         }
+                    case "控制器": Controllers.Add(new ControllerCard { Name = string.IsNullOrWhiteSpace(NewItemName) ? $"控制器_{Controllers.Count + 1}" : NewItemName }); break;
                 }
                 NewItemName = "";
                 OnPropertyChanged(nameof(NewItemName));
@@ -628,8 +680,9 @@ namespace NoCodeVision.ViewModels
                     case "气缸": if (SelectedCylinder != null) Cylinders.Remove(SelectedCylinder); break;
                     case "轴点位表": if (SelectedPointTable != null) PointTables.Remove(SelectedPointTable); break;
                     case "料盘": if (SelectedTray != null) Trays.Remove(SelectedTray); break;
+                case "控制器": if (SelectedController != null) Controllers.Remove(SelectedController); break;
                 }
-            }, _ => SelectedTab switch { "轴" => SelectedAxis != null, "IO" => SelectedIo != null, "气缸" => SelectedCylinder != null, "轴点位表" => SelectedPointTable != null, "料盘" => SelectedTray != null, _ => false });
+            }, _ => SelectedTab switch { "轴" => SelectedAxis != null, "IO" => SelectedIo != null, "气缸" => SelectedCylinder != null, "轴点位表" => SelectedPointTable != null, "料盘" => SelectedTray != null, "控制器" => SelectedController != null, _ => false });
             RenameCmd = new RelayCommand(_ =>
             {
                 if (string.IsNullOrWhiteSpace(NewItemName)) return;
@@ -640,6 +693,7 @@ namespace NoCodeVision.ViewModels
                     case "气缸": if (SelectedCylinder != null) SelectedCylinder.Name = NewItemName; break;
                     case "轴点位表": if (SelectedPointTable != null) SelectedPointTable.Name = NewItemName; break;
                     case "料盘": if (SelectedTray != null) SelectedTray.Name = NewItemName; break;
+                case "控制器": if (SelectedController != null) SelectedController.Name = NewItemName; break;
                 }
                 NewItemName = "";
                 OnPropertyChanged(nameof(NewItemName));
@@ -710,7 +764,309 @@ namespace NoCodeVision.ViewModels
                 catch { }
             }, null, 0, 400);
         }
+
+        // ===== 运控实时控制（JOG / 回零 / 使能 / 停止），对齐 NoCodeMotion 轴控交互 =====
+        private void JogAxis(double delta)
+        {
+            if (SelectedAxis == null) return;
+            try
+            {
+                HardwareManager.Instance.Motion.Jog(SelectedAxis.Name, delta);
+                if (SelectedAxis.Enabled) SelectedAxis.Value += delta;
+                OnPropertyChanged(nameof(Axes));
+            }
+            catch { }
+        }
+        private void HomeSelectedAxis()
+        {
+            if (SelectedAxis == null) return;
+            try
+            {
+                HardwareManager.Instance.Motion.EnableAxis(SelectedAxis.Name, true);
+                SelectedAxis.Enabled = true;
+                SelectedAxis.Status = "使能";
+                SelectedAxis.Value = 0;
+                OnPropertyChanged(nameof(Axes));
+            }
+            catch { }
+        }
+        private void ToggleAxisEnable()
+        {
+            if (SelectedAxis == null) return;
+            try
+            {
+                SelectedAxis.Enabled = !SelectedAxis.Enabled;
+                HardwareManager.Instance.Motion.EnableAxis(SelectedAxis.Name, SelectedAxis.Enabled);
+                SelectedAxis.Status = SelectedAxis.Enabled ? "使能" : "禁用";
+                OnPropertyChanged(nameof(Axes));
+            }
+            catch { }
+        }
+        private void StopSelectedAxis()
+        {
+            if (SelectedAxis == null) return;
+            try { HardwareManager.Instance.Motion.Jog(SelectedAxis.Name, 0); }
+            catch { }
+        }
     }
+
+    #region 多通道视觉监控（多相机同时检测状态面板）
+
+    /// <summary>单通道视觉检测状态，供多通道监控仪表盘使用。</summary>
+    public class VisionChannel : ViewModelBase
+    {
+        private string _name = "";
+        public string Name { get => _name; set => SetField(ref _name, value); }
+
+        private string _cameraId = "";
+        public string CameraId { get => _cameraId; set => SetField(ref _cameraId, value); }
+
+        private string _status = "空闲";
+        public string Status { get => _status; set => SetField(ref _status, value); }
+
+        private System.Windows.Media.ImageSource? _lastImage;
+        public System.Windows.Media.ImageSource? LastImage { get => _lastImage; set => SetField(ref _lastImage, value); }
+
+        private double _matchScore;
+        public double MatchScore { get => _matchScore; set => SetField(ref _matchScore, value); }
+
+        private int _defectCount;
+        public int DefectCount { get => _defectCount; set => SetField(ref _defectCount, value); }
+
+        private double _cycleTime;
+        public double CycleTime { get => _cycleTime; set => SetField(ref _cycleTime, value); }
+
+        private bool _isConnected;
+        public bool IsConnected { get => _isConnected; set => SetField(ref _isConnected, value); }
+
+        private bool _isRunning;
+        public bool IsRunning { get => _isRunning; set => SetField(ref _isRunning, value); }
+
+        private int _frameCount;
+        public int FrameCount { get => _frameCount; set => SetField(ref _frameCount, value); }
+
+        public ICommand StartCmd { get; }
+        public ICommand StopCmd { get; }
+
+        public VisionChannel(string name, string cameraId)
+        {
+            Name = name;
+            CameraId = cameraId;
+            StartCmd = new RelayCommand(_ => Start(), _ => !IsRunning);
+            StopCmd = new RelayCommand(_ => Stop(), _ => IsRunning);
+        }
+
+        /// <summary>启动通道：通过 HardwareManager 获取/创建真实（或模拟）相机并开始采集。</summary>
+        internal void Start()
+        {
+            try
+            {
+                var cam = HardwareManager.Instance.GetOrCreateCamera(CameraId);
+                cam.FrameReady += OnFrameReady;
+                cam.Start(CameraId);
+                IsRunning = true;
+                Status = "运行中";
+                IsConnected = true;
+            }
+            catch (Exception ex)
+            {
+                Status = "错误";
+                System.Diagnostics.Debug.WriteLine($"[通道{CameraId} 启动失败] {ex.Message}");
+            }
+        }
+
+        /// <summary>停止通道采集。</summary>
+        internal void Stop()
+        {
+            try
+            {
+                if (HardwareManager.Instance.Cameras.TryGetValue(CameraId, out var cam))
+                {
+                    cam.FrameReady -= OnFrameReady;
+                    cam.Stop();
+                }
+            }
+            catch { }
+            IsRunning = false;
+            Status = "已停止";
+        }
+
+        /// <summary>相机帧回调：在 UI 线程更新图像和帧计数。</summary>
+        private void OnFrameReady(System.Windows.Media.Imaging.BitmapSource frame)
+        {
+            // 通过 Dispatcher 回到 UI 线程更新 INPC 属性
+            System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                LastImage = frame;
+                FrameCount++;
+                // 模拟匹配分数波动（0.80 ~ 0.99，真实场景替换为算法结果）
+                if (FrameCount % 10 == 0)
+                {
+                    var rnd = Random.Shared.Next(8000, 9990) * 0.0001;
+                    MatchScore = MatchScore > 0 ? Math.Round(MatchScore * 0.7 + rnd * 0.3, 3) : rnd;
+                    // 模拟缺陷检测（低分时随机出现缺陷）
+                    DefectCount = MatchScore < 0.85 ? Random.Shared.Next(0, 4) : 0;
+                    // 模拟周期时间（30~65ms）
+                    CycleTime = 30 + Random.Shared.NextDouble() * 35;
+                    // 根据分数自动切换状态
+                    Status = MatchScore >= 0.85 ? "通过" : (MatchScore > 0 ? "失败" : "运行中");
+                }
+            }));
+        }
+    }
+
+    /// <summary>多通道视觉监控仪表盘 VM：同时展示 N 个相机通道的检测状态。</summary>
+    public class MultiChannelMonitorViewModel : ViewModelBase
+    {
+        public ObservableCollection<VisionChannel> Channels { get; } = new();
+        public VisionChannel? SelectedChannel { get => _selectedChannel; set => SetField(ref _selectedChannel, value); }
+        private VisionChannel? _selectedChannel;
+
+        /// <summary>是否显示通道详情浮层（点击卡片放大）。</summary>
+        public bool ShowDetail { get => _showDetail; set => SetField(ref _showDetail, value); }
+        private bool _showDetail;
+
+        public int LayoutColumns { get => _layoutColumns; set => SetField(ref _layoutColumns, value); }
+        private int _layoutColumns = 3;
+
+        public string GlobalStatus { get => _globalStatus; set => SetField(ref _globalStatus, value); }
+        private string _globalStatus = "全部就绪";
+
+        public ICommand AddChannelCmd { get; }
+        public ICommand RemoveChannelCmd { get; }
+        public ICommand StartAllCmd { get; }
+        public ICommand StopAllCmd { get; }
+        public ICommand Layout2Cmd { get; }
+        public ICommand Layout3Cmd { get; }
+        public ICommand Layout4Cmd { get; }
+        /// <summary>关闭详情浮层。</summary>
+        public ICommand CloseDetailCmd { get; }
+
+        private int _channelCounter;
+        private readonly System.Windows.Threading.DispatcherTimer _pollTimer;
+        private VisionChannel? _dragSource;
+
+        public MultiChannelMonitorViewModel()
+        {
+            AddChannelCmd = new RelayCommand(_ => AddChannel());
+            RemoveChannelCmd = new RelayCommand(_ => { if (SelectedChannel != null) Channels.Remove(SelectedChannel); }, _ => SelectedChannel != null);
+            StartAllCmd = new RelayCommand(_ => StartAll());
+            StopAllCmd = new RelayCommand(_ => StopAll());
+            Layout2Cmd = new RelayCommand(_ => LayoutColumns = 2);
+            Layout3Cmd = new RelayCommand(_ => LayoutColumns = 3);
+            Layout4Cmd = new RelayCommand(_ => LayoutColumns = 4);
+            CloseDetailCmd = new RelayCommand(_ => ShowDetail = false);
+
+            // 预置 4 个示例通道（对齐用户「多个通道」场景）
+            AddChannel("通道 1 · 上表面检测", "CAM-01");
+            AddChannel("通道 2 · 下表面检测", "CAM-02");
+            AddChannel("通道 3 · 侧面定位", "CAM-03");
+            AddChannel("通道 4 · 缺陷复检", "CAM-04");
+
+            // 定时器：100ms 轮询一次各运行中通道（作为 FrameReady 事件的补充/兜底）
+            _pollTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(100)
+            };
+            _pollTimer.Tick += PollChannels;
+        }
+
+        /// <summary>启动定时器（在 View Loaded 时调用）。</summary>
+        internal void StartPolling() { if (!_pollTimer.IsEnabled) _pollTimer.Start(); }
+
+        /// <summary>停止定时器（在 View Unloaded 时调用）。</summary>
+        internal void StopPolling() { _pollTimer.Stop(); }
+
+        /// <summary>轮询所有运行中通道：对没有通过 FrameReady 更新的通道主动 GrabOne。</summary>
+        private void PollChannels(object? sender = null, EventArgs? e = null)
+        {
+            foreach (var ch in Channels)
+            {
+                if (!ch.IsRunning) continue;
+                // 如果相机支持 FrameReady 事件则依赖事件推送；否则主动轮询
+                if (HardwareManager.Instance.Cameras.TryGetValue(ch.CameraId, out var cam))
+                {
+                    try
+                    {
+                        var frame = cam.GrabOne();
+                        if (frame != null)
+                        {
+                            ch.LastImage = frame;
+                            ch.FrameCount++;
+                        }
+                    }
+                    catch { /* 轮询失败静默跳过 */ }
+                }
+                // 模拟匹配指标波动（每 10 次轮询更新一次，避免过于频繁）
+                if (ch.FrameCount % 10 == 0)
+                {
+                    var rnd = Random.Shared.Next(8000, 9990) * 0.0001;
+                    ch.MatchScore = ch.MatchScore > 0 ? Math.Round(ch.MatchScore * 0.7 + rnd * 0.3, 3) : rnd;
+                    ch.DefectCount = ch.MatchScore < 0.85 ? Random.Shared.Next(0, 4) : 0;
+                    ch.CycleTime = 30 + Random.Shared.NextDouble() * 35;
+                    ch.Status = ch.MatchScore >= 0.85 ? "通过" : (ch.MatchScore > 0 ? "失败" : "运行中");
+                }
+            }
+            UpdateGlobalStatus();
+        }
+
+        private void AddChannel(string? name = null, string? cameraId = null)
+        {
+            _channelCounter++;
+            var ch = new VisionChannel(name ?? $"通道 {_channelCounter}", cameraId ?? $"CAM-{_channelCounter:D2}");
+            // 模拟不同状态让界面更真实
+            var states = new[] { ("空闲", 0.0, 0, 0.0), ("运行中", 0.92, 0, 45.2), ("通过", 0.87, 0, 38.6), ("失败", 0.0, 3, 52.1) };
+            var s = states[(Channels.Count) % states.Length];
+            ch.Status = s.Item1; ch.MatchScore = s.Item2; ch.DefectCount = s.Item3; ch.CycleTime = s.Item4;
+            ch.IsConnected = true;
+            Channels.Add(ch);
+            UpdateGlobalStatus();
+        }
+
+        private void StartAll()
+        {
+            foreach (var ch in Channels) if (!ch.IsRunning) ch.Start();
+            UpdateGlobalStatus();
+        }
+
+        private void StopAll()
+        {
+            foreach (var ch in Channels) if (ch.IsRunning) ch.Stop();
+            UpdateGlobalStatus();
+        }
+
+        private void UpdateGlobalStatus()
+        {
+            var running = Channels.Count(c => c.IsRunning);
+            var total = Channels.Count;
+            GlobalStatus = running > 0 ? $"{running}/{total} 通道运行中" : $"{total} 通道就绪";
+        }
+
+        // ===== 拖拽排序（供 XAML code-behind 调用） =====
+
+        /// <summary>记录拖拽源通道。</summary>
+        internal void OnDragStart(VisionChannel ch) { _dragSource = ch; }
+
+        /// <summary>拖拽放入目标通道：交换两者在集合中的位置。</summary>
+        internal void OnDrop(VisionChannel target)
+        {
+            if (_dragSource == null || _dragSource == target) return;
+            var srcIdx = Channels.IndexOf(_dragSource);
+            var tgtIdx = Channels.IndexOf(target);
+            if (srcIdx < 0 || tgtIdx < 0) return;
+            Channels.Move(srcIdx, tgtIdx);
+            _dragSource = null;
+        }
+
+        /// <summary>点击卡片：选中并打开详情浮层。</summary>
+        internal void OnChannelClick(VisionChannel ch)
+        {
+            SelectedChannel = ch;
+            ShowDetail = true;
+        }
+    }
+
+    #endregion
 
     #endregion
 }

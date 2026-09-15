@@ -13,11 +13,26 @@ public sealed class HardwareManager
     public ICamera Camera { get; private set; }
     public IMotionController Motion { get; private set; }
 
+    /// <summary>多相机字典（key = 相机 ID 如 "CAM-01"）。监控面板按 ID 取相机。</summary>
+    public System.Collections.Generic.Dictionary<string, ICamera> Cameras { get; } = new();
+
     public HardwareManager()
     {
         // 无硬件：默认使用模拟实现，预留真实注入点
         Camera = new SimulatedCamera();
         Motion = new SimulatedMotionController();
+        // 默认注册一个模拟相机到 Cameras 字典（向后兼容单相机场景）
+        Cameras["default"] = Camera;
+    }
+
+    /// <summary>获取或创建指定 ID 的模拟相机（不存在则自动新建 SimulatedCamera）。</summary>
+    public ICamera GetOrCreateCamera(string cameraId)
+    {
+        if (Cameras.TryGetValue(cameraId, out var cam)) return cam;
+        // 每个通道独立 SimulatedCamera 实例（不同相位/颜色，视觉可区分）
+        var sim = new SimulatedCamera(cameraId);
+        Cameras[cameraId] = sim;
+        return sim;
     }
 
     /// <summary>真实相机 SDK 注入点（硬件到位后调用）。</summary>

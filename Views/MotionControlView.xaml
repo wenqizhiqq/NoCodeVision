@@ -103,8 +103,50 @@
                         </Style.Triggers>
                     </Style>
                 </Border.Style>
-                <WrapPanel Orientation="Horizontal" Margin="0,4,0,0">
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="轴参数" Width="100000" Margin="0,0,0,4" />
+                <StackPanel>
+                    <!-- 运控：实时位置 + JOG 控制（对齐 NoCodeMotion 轴控交互） -->
+                    <Border Style="{StaticResource AppleGroupCard}" Margin="0,0,0,12" Padding="12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Style="{StaticResource AppleSectionHeader}" Text="实时运控" Margin="0,0,0,8" />
+                                <Grid Margin="0,2">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource AxisLabel}" Text="当前位置" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <TextBlock VerticalAlignment="Center" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" Text="{Binding SelectedAxis.Value, StringFormat={}{0:F3}, FallbackValue=0}" />
+                                        <TextBlock VerticalAlignment="Center" Margin="4,0,0,0" Foreground="{StaticResource TextMutedBrush}" Text="{Binding SelectedAxis.Unit, FallbackValue=''}" />
+                                    </StackPanel>
+                                </Grid>
+                                <Grid Margin="0,2">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource AxisLabel}" Text="状态" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{StaticResource TextPrimaryBrush}" Text="{Binding SelectedAxis.Status, FallbackValue=''}" />
+                                </Grid>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,8">
+                                    <Button Style="{StaticResource AppleBtn}" Content="JOG -" Command="{Binding JogMinusCmd}" Padding="14,6" Margin="0,0,8,0" />
+                                    <Button Style="{StaticResource AppleBtn}" Content="JOG +" Command="{Binding JogPlusCmd}" Padding="14,6" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,8">
+                                    <Button Style="{StaticResource AppleBtnSecondary}" Content="回零" Command="{Binding HomeAxisCmd}" Padding="12,6" Margin="0,0,8,0" />
+                                    <Button Style="{StaticResource AppleBtnSecondary}" Content="使能/禁能" Command="{Binding EnableAxisCmd}" Padding="12,6" Margin="0,0,8,0" />
+                                    <Button Style="{StaticResource AppleBtnSecondary}" Content="停止" Command="{Binding StopAxisCmd}" Padding="12,6" />
+                                </StackPanel>
+                                <Grid Width="200" Margin="0,2">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource AxisLabel}" Text="单步增量" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBox Grid.Column="1" Style="{StaticResource AppleTextField}" Text="{Binding JogStep, UpdateSourceTrigger=PropertyChanged}" />
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <WrapPanel Orientation="Horizontal" Margin="0,4,0,0">
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="轴参数" Width="100000" Margin="0,0,0,4" />
                     <Grid Style="{StaticResource AxisField}">
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="名称" />
@@ -146,6 +188,7 @@
                         <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.Note, FallbackValue=''}" />
                     </Grid>
                 </WrapPanel>
+                </StackPanel>
             </Border>
 
             <!-- ===== IO ===== -->
@@ -555,6 +598,115 @@
                         <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedTrayCell.State, FallbackValue=''}" />
                     </StackPanel>
                 </Grid>
+            </Border>
+
+            <!-- ===== 控制器（控制卡）===== -->
+            <Border Grid.Column="0" Padding="12" Margin="0,0,12,0">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedTab}" Value="控制器">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Style="{StaticResource AppleBtn}" Content="新增" Command="{Binding AddCmd}" />
+                        <Button Style="{StaticResource AppleBtnSecondary}" Content="删除" Command="{Binding DeleteCmd}" Margin="8,0,0,0" />
+                        <TextBox Style="{StaticResource AppleTextField}" Text="{Binding NewItemName, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="12,0,0,0" />
+                        <Button Style="{StaticResource AppleBtnSecondary}" Content="重命名" Command="{Binding RenameCmd}" Margin="8,0,0,0" />
+                    </StackPanel>
+                    <ListView Grid.Row="1" ItemsSource="{Binding Controllers}" SelectedItem="{Binding SelectedController, Mode=TwoWay}" BorderThickness="0">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="名称" DisplayMemberBinding="{Binding Name}" Width="120" />
+                                <GridViewColumn Header="品牌" DisplayMemberBinding="{Binding Vendor}" Width="90" />
+                                <GridViewColumn Header="总线" DisplayMemberBinding="{Binding BusType}" Width="80" />
+                                <GridViewColumn Header="轴数" DisplayMemberBinding="{Binding AxisCount}" Width="60" />
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="1" Padding="14">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedTab}" Value="控制器">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="控制卡参数" Margin="0,0,0,8" />
+                        <Grid Style="{StaticResource AxisField}">
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="类型" />
+                            <TextBlock Grid.Row="1" VerticalAlignment="Center" Foreground="{StaticResource TextPrimaryBrush}" Text="{Binding SelectedController.Kind, FallbackValue=''}" />
+                        </Grid>
+                        <Grid Style="{StaticResource AxisField}">
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="名称" />
+                            <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedController.Name, UpdateSourceTrigger=PropertyChanged, FallbackValue=''}" />
+                        </Grid>
+                        <Grid Style="{StaticResource AxisField}">
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="品牌" />
+                            <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedController.Vendor, UpdateSourceTrigger=PropertyChanged, FallbackValue=''}" />
+                        </Grid>
+                        <Grid Style="{StaticResource AxisField}">
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="总线类型" />
+                            <ComboBox Grid.Row="1" IsEditable="True" Text="{Binding SelectedController.BusType, UpdateSourceTrigger=PropertyChanged, FallbackValue=''}">
+                                <ComboBoxItem Content="EtherCAT" />
+                                <ComboBoxItem Content="PCI" />
+                                <ComboBoxItem Content="网口" />
+                                <ComboBoxItem Content="COM" />
+                            </ComboBox>
+                        </Grid>
+                        <Grid Style="{StaticResource AxisField}">
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="卡型号" />
+                            <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedController.CardType, UpdateSourceTrigger=PropertyChanged, FallbackValue=''}" />
+                        </Grid>
+                        <Grid Style="{StaticResource AxisField}">
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="卡号" />
+                            <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedController.CardNo, UpdateSourceTrigger=PropertyChanged, FallbackValue=''}" />
+                        </Grid>
+                        <Grid Style="{StaticResource AxisField}">
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="轴数量" />
+                            <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedController.AxisCount, UpdateSourceTrigger=PropertyChanged, FallbackValue=''}" />
+                        </Grid>
+                        <Grid Style="{StaticResource AxisField}">
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="连接方式" />
+                            <ComboBox Grid.Row="1" SelectedValue="{Binding SelectedController.Connection, FallbackValue=''}" SelectedValuePath="Content">
+                                <ComboBoxItem Content="PCI" />
+                                <ComboBoxItem Content="网口" />
+                                <ComboBoxItem Content="COM" />
+                                <ComboBoxItem Content="EtherCAT" />
+                            </ComboBox>
+                        </Grid>
+                        <Grid Style="{StaticResource AxisField}">
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="备注" />
+                            <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedController.Description, UpdateSourceTrigger=PropertyChanged, FallbackValue=''}" />
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
             </Border>
 
         </Grid>

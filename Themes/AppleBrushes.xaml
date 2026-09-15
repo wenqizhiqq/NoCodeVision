@@ -38,6 +38,9 @@
     <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource iOSGray}" />
     <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource iOSGreen}" />
     <SolidColorBrush x:Key="SuccessDarkBrush" Color="#2BA24A" />
+    <SolidColorBrush x:Key="SuccessSoftBrush" Color="#E8F9EE" />
+    <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource iOSRed}" />
+    <SolidColorBrush x:Key="ErrorSoftBrush" Color="#FDECEB" />
     <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource iOSRed}" />
     <SolidColorBrush x:Key="WarningSoftBrush" Color="#FDECEB" />
     <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource iOSRed}" />
