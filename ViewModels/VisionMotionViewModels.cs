@@ -879,7 +879,9 @@ namespace NoCodeVision.ViewModels
             try
             {
                 var cam = HardwareManager.Instance.GetOrCreateCamera(CameraId);
-                // 通道图像改由流程引擎 ProductInspected 事件驱动（真实抓拍帧），不再订阅相机帧回调
+                // 订阅相机实时帧：后台线程触发，OnFrameReady 内已回到 UI 线程更新 LastImage（实时预览）。
+                // 检测流程运行时的 ProductInspected 结果帧会持续覆盖 LastImage 显示抓拍结果。
+                cam.FrameReady += OnFrameReady;
                 cam.Start(CameraId);
                 IsRunning = true;
                 Status = "运行中";
@@ -899,6 +901,7 @@ namespace NoCodeVision.ViewModels
             {
                 if (HardwareManager.Instance.Cameras.TryGetValue(CameraId, out var cam))
                 {
+                    cam.FrameReady -= OnFrameReady;
                     cam.Stop();
                 }
             }
@@ -923,7 +926,7 @@ namespace NoCodeVision.ViewModels
         {
             LastImage = frame;
             FrameCount++;
-            // 图像由真实流程抓拍帧驱动；匹配分数/缺陷/状态由 ProductInspected 事件写入，此处不再模拟。
+            // 相机实时帧驱动预览；匹配分数/缺陷/状态由 ProductInspected 事件写入。
         }
     }
 
