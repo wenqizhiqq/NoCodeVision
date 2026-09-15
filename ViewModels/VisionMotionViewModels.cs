@@ -10,6 +10,8 @@ using System.Runtime.InteropServices;
 using System.IO;
 using NoCodeVision.Services;
 using GrayMatch;
+using System;
+using System.Linq;
 
 namespace NoCodeVision
 {
@@ -848,6 +850,10 @@ namespace NoCodeVision.ViewModels
         private bool _isRunning;
         public bool IsRunning { get => _isRunning; set => SetField(ref _isRunning, value); }
 
+        /// <summary>重点模式下是否为主画面（高亮用）。</summary>
+        private bool _isMain;
+        public bool IsMain { get => _isMain; set => SetField(ref _isMain, value); }
+
         private int _frameCount;
         public int FrameCount { get => _frameCount; set => SetField(ref _frameCount, value); }
 
@@ -873,7 +879,7 @@ namespace NoCodeVision.ViewModels
             try
             {
                 var cam = HardwareManager.Instance.GetOrCreateCamera(CameraId);
-                cam.FrameReady += OnFrameReady;
+                // 通道图像改由流程引擎 ProductInspected 事件驱动（真实抓拍帧），不再订阅相机帧回调
                 cam.Start(CameraId);
                 IsRunning = true;
                 Status = "运行中";
@@ -893,7 +899,6 @@ namespace NoCodeVision.ViewModels
             {
                 if (HardwareManager.Instance.Cameras.TryGetValue(CameraId, out var cam))
                 {
-                    cam.FrameReady -= OnFrameReady;
                     cam.Stop();
                 }
             }
@@ -918,18 +923,7 @@ namespace NoCodeVision.ViewModels
         {
             LastImage = frame;
             FrameCount++;
-            // 模拟匹配分数波动（0.80 ~ 0.99，真实场景替换为算法结果）
-            if (FrameCount % 10 == 0)
-            {
-                var rnd = Random.Shared.Next(8000, 9990) * 0.0001;
-                MatchScore = MatchScore > 0 ? Math.Round(MatchScore * 0.7 + rnd * 0.3, 3) : rnd;
-                // 模拟缺陷检测（低分时随机出现缺陷）
-                DefectCount = MatchScore < 0.85 ? Random.Shared.Next(0, 4) : 0;
-                // 模拟周期时间（30~65ms）
-                CycleTime = 30 + Random.Shared.NextDouble() * 35;
-                // 根据分数自动切换状态
-                Status = MatchScore >= 0.85 ? "通过" : (MatchScore > 0 ? "失败" : "运行中");
-            }
+            // 图像由真实流程抓拍帧驱动；匹配分数/缺陷/状态由 ProductInspected 事件写入，此处不再模拟。
         }
     }
 
@@ -1015,15 +1009,7 @@ namespace NoCodeVision.ViewModels
                     }
                     catch { /* 轮询失败静默跳过 */ }
                 }
-                // 模拟匹配指标波动（每 10 次轮询更新一次，避免过于频繁）
-                if (ch.FrameCount % 10 == 0)
-                {
-                    var rnd = Random.Shared.Next(8000, 9990) * 0.0001;
-                    ch.MatchScore = ch.MatchScore > 0 ? Math.Round(ch.MatchScore * 0.7 + rnd * 0.3, 3) : rnd;
-                    ch.DefectCount = ch.MatchScore < 0.85 ? Random.Shared.Next(0, 4) : 0;
-                    ch.CycleTime = 30 + Random.Shared.NextDouble() * 35;
-                    ch.Status = ch.MatchScore >= 0.85 ? "通过" : (ch.MatchScore > 0 ? "失败" : "运行中");
-                }
+                // 监控页已移除；匹配指标/缺陷/状态由真实流程事件驱动，此处不再模拟。
             }
             UpdateGlobalStatus();
         }

@@ -10,6 +10,13 @@ using OpenCvSharp;
 
 namespace NoCodeVision.ViewModels;
 
+/// <summary>视觉监控布局模式：网格（多画面平铺）/ 重点（1 大 + 多小，点击缩略图切换主画面）。</summary>
+public enum MonitorMode
+{
+    Grid,       // 网格平铺（自适应 / 1×2 / 2×3 / 3×4）
+    Spotlight   // 重点监控：1 个大画面 + 底部小画面缩略图，点击缩略图切换主画面
+}
+
 /// <summary>
 /// 操作员机台运行控制器。
 /// 在原有 OperatorViewModel（批次/良率统计）基础上，增加真实机台控制状态机：
@@ -191,6 +198,10 @@ public class OperatorRunViewModel : OperatorViewModel
     private CancellationTokenSource? _cts;
     private readonly ManualResetEventSlim _pauseGate = new(true); // true=放行（运行），false=暂停
     private Task? _loopTask;
+    private CancellationTokenSource? _flowCts;
+    private bool _flowStartedByOp;
+    private bool _flowSubscribed;
+    private int _chRot;
 
     #endregion
 
@@ -241,6 +252,29 @@ public class OperatorRunViewModel : OperatorViewModel
     public int LayoutCols { get => _layoutCols; set => SetField(ref _layoutCols, value); }
     private int _layoutCols = 2;
 
+    /// <summary>图像预览区高度（随布局列数自适应，近似 16:9 填满卡片宽度，替代原固定 120px）。</summary>
+    public double PreviewHeight { get => _previewHeight; private set => SetField(ref _previewHeight, value); }
+    private double _previewHeight = 500;
+
+    /// <summary>按最终列数计算预览高度：列越少卡片越宽，预览越高；重点模式下统一为 480。</summary>
+    private void UpdatePreviewHeight()
+    {
+        if (Mode == MonitorMode.Spotlight) { PreviewHeight = 480; return; }
+        PreviewHeight = LayoutCols switch { <= 1 => 500, 2 => 260, 3 => 180, _ => 140 };
+    }
+
+    /// <summary>当前监控布局模式（网格平铺 / 重点 1+多）。</summary>
+    public MonitorMode Mode { get => _mode; private set => SetField(ref _mode, value); }
+    private MonitorMode _mode = MonitorMode.Grid;
+
+    /// <summary>重点模式下显示的大画面通道；点击缩略图切换。</summary>
+    public VisionChannel? MainChannel { get => _mainChannel; private set => SetField(ref _mainChannel, value); }
+    private VisionChannel? _mainChannel;
+
+    public ICommand GridModeCmd { get; private set; }
+    public ICommand SpotlightModeCmd { get; private set; }
+    public ICommand SwitchMainCmd { get; private set; }
+
     /// <summary>是否自适应布局（true=按相机数量自动最大化卡片；false=使用手动基准密度）。</summary>
     public bool IsAutoFit { get => _isAutoFit; set => SetField(ref _isAutoFit, value); }
     private bool _isAutoFit = true;
@@ -269,6 +303,10 @@ public class OperatorRunViewModel : OperatorViewModel
         Layout34Cmd = new RelayCommand(_ => { IsAutoFit = false; _manualRows = 3; _manualCols = 4; ApplyManualLayout(); });
         CameraStartAllCmd = new RelayCommand(_ => { foreach (var c in Channels) if (!c.IsRunning) c.Start(); });
         CameraStopAllCmd = new RelayCommand(_ => { foreach (var c in Channels) if (c.IsRunning) c.Stop(); });
+
+        GridModeCmd = new RelayCommand(_ => EnterGridMode());
+        SpotlightModeCmd = new RelayCommand(_ => EnterSpotlightMode());
+        SwitchMainCmd = new RelayCommand(p => SwitchMain(p as VisionChannel));
 
         // 从项目相机列表动态创建通道（不硬编码）
         RebuildChannelsFromCameras();
@@ -300,13 +338,50 @@ public class OperatorRunViewModel : OperatorViewModel
         // 数量变化时重新排布（自适应或手动均保证容纳）
         if (IsAutoFit) AutoFitLayout();
         else ApplyManualLayout();
+
+        // 维护重点模式主画面有效性
+        if (MainChannel == null || !Channels.Contains(MainChannel))
+            MainChannel = Channels.FirstOrDefault();
+        UpdateMainFlags();
+    }
+
+    /// <summary>切换到网格平铺模式并重新应用当前布局。</summary>
+    private void EnterGridMode()
+    {
+        Mode = MonitorMode.Grid;
+        if (IsAutoFit) AutoFitLayout();
+        else ApplyManualLayout();
+    }
+
+    /// <summary>切换到重点模式：1 个大画面 + 缩略图，主画面默认取当前主通道。</summary>
+    private void EnterSpotlightMode()
+    {
+        Mode = MonitorMode.Spotlight;
+        if (MainChannel == null || !Channels.Contains(MainChannel))
+            MainChannel = Channels.FirstOrDefault();
+        UpdateMainFlags();
+        PreviewHeight = 480;
+    }
+
+    /// <summary>点击缩略图切换重点模式的主画面。</summary>
+    private void SwitchMain(VisionChannel? ch)
+    {
+        if (ch == null) return;
+        MainChannel = ch;
+        UpdateMainFlags();
+    }
+
+    /// <summary>刷新各通道的 IsMain 标志（仅 MainChannel 为 true），驱动缩略图高亮。</summary>
+    private void UpdateMainFlags()
+    {
+        foreach (var c in Channels) c.IsMain = (c == MainChannel);
     }
 
     /// <summary>自适应布局：根据相机数量 N 计算最优行列，保证全部显示且卡片尽量大（接近正方形、填满区域）。</summary>
     private void AutoFitLayout()
     {
         int n = Channels.Count;
-        if (n <= 0) { LayoutRows = 1; LayoutCols = 1; return; }
+        if (n <= 0) { LayoutRows = 1; LayoutCols = 1; UpdatePreviewHeight(); return; }
 
         const double aspect = 1.6; // 监控区域宽高比偏好（宽>高）
         int bestRows = 1, bestCols = n;
@@ -324,44 +399,23 @@ public class OperatorRunViewModel : OperatorViewModel
 
         LayoutRows = bestRows;
         LayoutCols = bestCols;
+        UpdatePreviewHeight();
     }
 
     /// <summary>手动布局：以用户选定的基准行列为准，但保证能容纳所有相机（不足则自动加行）。</summary>
     private void ApplyManualLayout()
     {
         int n = Channels.Count;
-        if (n <= 0) { LayoutRows = _manualRows; LayoutCols = _manualCols; return; }
+        if (n <= 0) { LayoutRows = _manualRows; LayoutCols = _manualCols; UpdatePreviewHeight(); return; }
         int rows = _manualRows;
         while (rows * _manualCols < n) rows++;
         LayoutRows = rows;
         LayoutCols = _manualCols;
+        UpdatePreviewHeight();
     }
 
-    /// <summary>定时器轮询所有运行中通道：抓取帧 + 模拟匹配指标。</summary>
-    private void PollCameras(object? sender = null, EventArgs? e = null)
-    {
-        foreach (var ch in Channels)
-        {
-            if (!ch.IsRunning) continue;
-            if (HardwareManager.Instance.Cameras.TryGetValue(ch.CameraId, out var cam))
-            {
-                try
-                {
-                    var frame = cam.GrabOne();
-                    if (frame != null) { ch.LastImage = frame; ch.FrameCount++; }
-                }
-                catch { }
-            }
-            if (ch.FrameCount % 10 == 0)
-            {
-                var rnd = Random.Shared.Next(8000, 9990) * 0.0001;
-                ch.MatchScore = ch.MatchScore > 0 ? Math.Round(ch.MatchScore * 0.7 + rnd * 0.3, 3) : rnd;
-                ch.DefectCount = ch.MatchScore < 0.85 ? Random.Shared.Next(0, 4) : 0;
-                ch.CycleTime = 30 + Random.Shared.NextDouble() * 35;
-                ch.Status = ch.MatchScore >= 0.85 ? "通过" : (ch.MatchScore > 0 ? "失败" : "运行中");
-            }
-        }
-    }
+    /// <summary>实时数据改由流程引擎 ProductInspected 事件驱动（真实匹配分数/缺陷/图像），此处不再轮询模拟。</summary>
+    private void PollCameras(object? sender = null, EventArgs? e = null) { }
 
     #endregion
 
@@ -481,17 +535,58 @@ public class OperatorRunViewModel : OperatorViewModel
         }
         catch (Exception ex) { AppendLog("运控连接失败：" + ex.Message); }
 
-        try
-        {
-            HardwareManager.Instance.Camera.Start(CameraSerial);
-        }
-        catch (Exception ex) { AppendLog("相机启动失败：" + ex.Message); }
-
         _ = EnsureCommAndSendAsync("MACHINE:RUN");
 
-        _cts = new CancellationTokenSource();
-        var token = _cts.Token;
-        _loopTask = Task.Run(() => ProductionLoop(token), token);
+        // 启动真实生产：优先驱动流程引擎（视觉流程）真实生产，否则退回相机自检
+        StartRealProduction();
+    }
+
+    /// <summary>启动真实生产：优先驱动流程引擎（视觉流程）真实生产，否则退回相机自检（真实取图 + 外部注入的 InspectionHook）。</summary>
+    private void StartRealProduction()
+    {
+        if (FlowViewModel.Instance != null)
+        {
+            if (!_flowSubscribed)
+            {
+                FlowViewModel.Instance.ProductInspected += OnFlowProductInspected;
+                _flowSubscribed = true;
+            }
+            if (!FlowViewModel.Instance.IsRunning)
+            {
+                _flowCts = new CancellationTokenSource();
+                _flowStartedByOp = true;
+                _ = FlowViewModel.Instance.RunAllFlowsLoopAsync(_flowCts.Token);
+            }
+        }
+        else
+        {
+            _cts = new CancellationTokenSource();
+            var token = _cts.Token;
+            _loopTask = Task.Run(() => ProductionLoop(token), token);
+        }
+    }
+
+    /// <summary>消费流程引擎真实单件结果：更新产量/良率统计与多通道实时图像，并下发 PLC 结果。</summary>
+    private void OnFlowProductInspected(FlowProductResult e)
+    {
+        if (_state != MachineState.Running) return;
+        _uiCtx?.Post(_ =>
+        {
+            Total++;
+            if (e.IsOk) Ok++; else Ng++;
+            LastResult = e.IsOk ? "OK" : "NG";
+            if (Channels.Count > 0)
+            {
+                var ch = Channels[_chRot % Channels.Count];
+                ch.LastImage = e.Image;
+                ch.MatchScore = e.Score;
+                ch.DefectCount = e.DefectCount;
+                ch.Status = e.IsOk ? "通过" : "失败";
+                ch.FrameCount++;
+                _chRot++;
+            }
+        }, null);
+        _ = EnsureCommAndSendAsync(e.IsOk ? "RESULT:OK" : "RESULT:NG");
     }
 
     private void Resume()
@@ -516,11 +611,13 @@ public class OperatorRunViewModel : OperatorViewModel
         State = MachineState.Stopping;
         _pauseGate.Set();
         _cts?.Cancel();
+        if (_flowStartedByOp) { _flowCts?.Cancel(); _flowStartedByOp = false; }
         _runEnd = DateTime.Now;
         RefreshUpd();
         OnPropertyChanged(nameof(RunDurationText));
         _ = EnsureCommAndSendAsync("MACHINE:STOP");
         try { HardwareManager.Instance.Camera.Stop(); } catch { }
+        State = MachineState.Idle;
     }
 
     private void EStop()
@@ -530,6 +627,7 @@ public class OperatorRunViewModel : OperatorViewModel
         _pauseGate.Set();
         AlarmText = "急停已触发，必须复位后才能再次运行";
         _cts?.Cancel();
+        if (_flowStartedByOp) { _flowCts?.Cancel(); _flowStartedByOp = false; }
         _runEnd = DateTime.Now;
         RefreshUpd();
         OnPropertyChanged(nameof(RunDurationText));

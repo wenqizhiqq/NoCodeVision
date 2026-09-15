@@ -2968,11 +2968,25 @@ public class VariablesViewModel : ViewModelBase
 
 // 〔版权所有〕温启志 ◆ 微信 187-1936-1399
 
+/// <summary>流程单次检测（一件产品）的真实结果，供操作员页等消费。</summary>
+public class FlowProductResult
+{
+    public bool IsOk { get; init; }
+    public double Score { get; init; }
+    public int DefectCount { get; init; }
+    public System.Windows.Media.Imaging.BitmapSource? Image { get; init; }
+    public string? FlowName { get; init; }
+    public DateTime Timestamp { get; init; }
+}
+
 public class FlowViewModel : ViewModelBase
 
 {
 
     public static FlowViewModel? Instance { get; private set; }
+
+    /// <summary>单件产品检测完成事件：携带真实匹配分数 / 缺陷数 / 抓拍图像 / 合格结论，供操作员页订阅。</summary>
+    public event Action<FlowProductResult>? ProductInspected;
 
 
 
@@ -4111,6 +4125,11 @@ public class FlowViewModel : ViewModelBase
     // 流程级共享图像：图像采集得到的 Mat，直接传给后续的模板匹配/几何测量步骤
 
     private Mat? _sharedImage;
+
+    // 单件产品真实结果累计（用于 ProductInspected 事件）
+    private bool _curProductOk = true;
+    private double _curProductScore = 0;
+    private int _curProductDefects = 0;
 
     private List<MatchResult>? _lastMatchResults;
 
@@ -5421,6 +5440,9 @@ public class FlowViewModel : ViewModelBase
         int guard = 0;
 
         int maxIter = flow.Steps.Count * 20 + 50;
+        _curProductOk = true;
+        _curProductScore = 0;
+        _curProductDefects = 0;
 
         while (!ct.IsCancellationRequested && cursor >= 0 && cursor < flow.Steps.Count && guard++ < maxIter)
 
@@ -5455,6 +5477,22 @@ public class FlowViewModel : ViewModelBase
             cursor = NextStepIndex(cursor);
 
         }
+
+        // 单件产品流程跑完：发布真实结果事件（OK/NG、匹配分数、缺陷数、抓拍图像），供操作员页等消费
+        try
+        {
+            var _prodImg = MatToBitmapSource(_sharedImage);
+            ProductInspected?.Invoke(new FlowProductResult
+            {
+                IsOk = _curProductOk,
+                Score = _curProductScore,
+                DefectCount = _curProductDefects,
+                Image = _prodImg,
+                FlowName = flow.Name,
+                Timestamp = DateTime.Now
+            });
+        }
+        catch { }
 
     }
 
@@ -5739,6 +5777,38 @@ public class FlowViewModel : ViewModelBase
     }
 
 
+
+    /// <summary>Mat -> WriteableBitmap（BGR/BGRA/Gray 自动归一，像素级拷贝，独立于源 Mat 生命周期）。</summary>
+    private static System.Windows.Media.Imaging.BitmapSource? MatToBitmapSource(Mat? mat)
+    {
+        if (mat == null || mat.Empty()) return null;
+        try
+        {
+            int w = mat.Width, h = mat.Height;
+            int ch = mat.Channels();
+            Mat? conv = null; Mat srcMat;
+            if (ch == 3) srcMat = mat;
+            else if (ch == 1) { conv = new Mat(); Cv2.CvtColor(mat, conv, ColorConversionCodes.GRAY2BGR); srcMat = conv; }
+            else if (ch == 4) { conv = new Mat(); Cv2.CvtColor(mat, conv, ColorConversionCodes.BGRA2BGR); srcMat = conv; }
+            else return null;
+            var wb = new System.Windows.Media.Imaging.WriteableBitmap(w, h, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null);
+            wb.Lock();
+            try
+            {
+                int stride = wb.BackBufferStride;
+                var px = new byte[stride * h];
+                var src = new byte[w * h * 3];
+                System.Runtime.InteropServices.Marshal.Copy(srcMat.Data, src, 0, src.Length);
+                for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) { int si = (y * w + x) * 3; int di = y * stride + x * 4; px[di] = src[si]; px[di + 1] = src[si + 1]; px[di + 2] = src[si + 2]; px[di + 3] = 255; }
+                System.Runtime.InteropServices.Marshal.Copy(px, 0, wb.BackBuffer, px.Length);
+            }
+            finally { wb.Unlock(); }
+            wb.Freeze();
+            if (conv != null) conv.Dispose();
+            return wb;
+        }
+        catch { return null; }
+    }
 
     private void LoadCurrentImageSource()
 
@@ -6097,6 +6167,7 @@ public class FlowViewModel : ViewModelBase
                         step.ActualValue = "无图像源";
 
                         step.StatusText = "匹配失败";
+                        _curProductOk = false;
 
                     }
 
@@ -6143,6 +6214,8 @@ public class FlowViewModel : ViewModelBase
                             step.ActualValue = $"({r0.CenterX:F1},{r0.CenterY:F1}) θ{r0.Angle:F1} score{r0.Score:F2}";
 
                             step.StatusText = "匹配成功";
+                            _curProductScore = r0.Score;
+                            if (r0.Score < step.ScoreThreshold) _curProductOk = false;
 
                             foreach (var r in results)
 
@@ -6179,6 +6252,8 @@ public class FlowViewModel : ViewModelBase
                             step.ActualValue = "未匹配";
 
                             step.StatusText = "匹配失败";
+                            _curProductScore = 0;
+                            _curProductOk = false;
 
                         }
 
@@ -6213,6 +6288,7 @@ public class FlowViewModel : ViewModelBase
                         step.ActualValue = "无匹配结果";
 
                         step.StatusText = "错误";
+                        _curProductOk = false;
 
                     }
 
@@ -6241,6 +6317,8 @@ public class FlowViewModel : ViewModelBase
                         };
 
                         var defects = matcher.DetectDefects(_lastMatchResults);
+                        _curProductDefects = defects.Count;
+                        if (defects.Count > 0) _curProductOk = false;
 
                         if (defects.Count > 0)
 
@@ -6309,6 +6387,7 @@ public class FlowViewModel : ViewModelBase
                         step.ActualValue = "无图像源";
 
                         step.StatusText = "测量失败";
+                        _curProductOk = false;
 
                     }
 
@@ -6329,6 +6408,7 @@ public class FlowViewModel : ViewModelBase
                             bool ok = System.Math.Abs(val - step.NominalValue) <= step.Tolerance;
 
                             step.StatusText = ok ? "尺寸合格" : "尺寸超差";
+                            if (!ok) _curProductOk = false;
 
                             step.ActualValue = measured + (ok ? "  合格" : "  超差");
 
@@ -6363,6 +6443,7 @@ public class FlowViewModel : ViewModelBase
             step.ActualValue = $"错误:{ex.Message}";
 
             step.StatusText = "错误";
+            _curProductOk = false;
 
         }
 
