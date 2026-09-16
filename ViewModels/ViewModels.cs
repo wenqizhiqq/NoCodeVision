@@ -4482,6 +4482,8 @@ public class FlowViewModel : ViewModelBase
 
     public ICommand AddScriptFlowCmd { get; }
 
+    public ICommand AddVisualFlowCmd { get; }
+
         public ICommand AddMotionFlowCmd { get; }
 
         public ICommand RenameFlowCmd { get; }
@@ -4822,6 +4824,22 @@ public class FlowViewModel : ViewModelBase
 
         }, _ => true);
 
+
+
+        AddVisualFlowCmd = new RelayCommand(_ =>
+        {
+            var next = Flows.Count + 1;
+            var flow = new VisionFlow
+            {
+                Name = $"视觉流程-{next}",
+                Icon = "🖼",
+                FlowKind = "Visual",
+                Steps = CreateStandardPipeline()
+            };
+            Flows.Add(flow);
+            SelectedFlow = flow;
+            SelectedStep = flow.Steps.FirstOrDefault();
+        }, _ => true);
 
 
         AddMotionFlowCmd = new RelayCommand(_ =>

@@ -1,0 +1,156 @@
+<UserControl x:Class="NoCodeVision.Views.VisualFlowView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:ctrl="clr-namespace:NoCodeVision.Views.Controls"
+             xmlns:local="clr-namespace:NoCodeVision"
+             mc:Ignorable="d">
+<!-- 温启志：18719361399  混淆: 温k启s志l：p1c8s7p1l9m3s6k1f3r9w9 -->
+
+    <UserControl.Resources>
+        <local:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+        <local:FlowEmptyToVisibilityConverter x:Key="FlowEmptyToVisibilityConverter" />
+        <local:StatusToMarkConverter x:Key="StatusToMarkConverter" />
+        <local:StatusToMarkBrushConverter x:Key="StatusToMarkBrushConverter" />
+
+        <!-- 圆形运行控制按钮：▶ 运行（绿实心）/ ▶| 单步（绿描边）/ ⏹ 停止（红描边） -->
+        <Style x:Key="VfRoundBtn" TargetType="Button">
+            <Setter Property="Width" Value="38" />
+            <Setter Property="Height" Value="38" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="19">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.85" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.35" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 步骤行：图标 + N．功能名 + 耗时 ms + 通过标记 -->
+        <DataTemplate x:Key="VfStepRow">
+            <Grid Margin="12,9">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="30" />
+                </Grid.ColumnDefinitions>
+                <ctrl:AppleIconTile Glyph="{Binding Icon}" TileSize="26" Margin="0,0,10,0" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" FontSize="13" VerticalAlignment="Center"
+                           Foreground="{StaticResource TextPrimaryBrush}">
+                    <Run Text="{Binding Index, Mode=OneWay}" /><Run Text="．" /><Run Text="{Binding Function, Mode=OneWay}" />
+                </TextBlock>
+                <TextBlock Grid.Column="2" FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Text="{Binding CostMs, Mode=OneWay, StringFormat={}{0:0} ms}" />
+                <TextBlock Grid.Column="3" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"
+                           HorizontalAlignment="Center"
+                           Text="{Binding StatusText, Mode=OneWay, Converter={StaticResource StatusToMarkConverter}}"
+                           Foreground="{Binding StatusText, Mode=OneWay, Converter={StaticResource StatusToMarkBrushConverter}}" />
+            </Grid>
+        </DataTemplate>
+
+        <!-- 步骤行容器：圆角高亮，选中淡蓝 -->
+        <Style x:Key="VfStepItem" TargetType="ListBoxItem">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="bd" Background="Transparent" CornerRadius="10" Margin="4,1">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{StaticResource HoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{StaticResource AccentSoftBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <!-- 与参考图一致的紧凑视觉流程面板：窄列靠左 -->
+    <Border Background="{StaticResource SurfaceBrush}" CornerRadius="14"
+            BorderBrush="{StaticResource LineBrush}" BorderThickness="1"
+            Width="400" HorizontalAlignment="Left" Padding="12">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- 行1：运行状态（流程在左侧「流程方案」列表选择） -->
+            <DockPanel Margin="2,2,2,8">
+                <Border DockPanel.Dock="Right" Style="{StaticResource AppleStatusPill}"
+                        Background="{StaticResource AccentSoftBrush}" Padding="10,5" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding RunStateText, Mode=OneWay}" FontSize="12"
+                               Foreground="{StaticResource AccentBrush}" />
+                </Border>
+            </DockPanel>
+
+            <!-- 行2：运行工具栏（与参考图一致：▶ / ▶| / ⏹） -->
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="2,0,2,10">
+                <Button Style="{StaticResource VfRoundBtn}" Background="{StaticResource SuccessBrush}" BorderThickness="0"
+                        Command="{Binding RunCmd}" ToolTip="全部运行" Content="▶">
+                    <Button.Foreground>
+                        <SolidColorBrush Color="White" />
+                    </Button.Foreground>
+                    <Button.FontSize>14</Button.FontSize>
+                </Button>
+                <Button Style="{StaticResource VfRoundBtn}" Background="{StaticResource SurfaceBrush}"
+                        BorderBrush="{StaticResource SuccessBrush}" BorderThickness="1.5"
+                        Command="{Binding StepRunCmd}" ToolTip="单步运行" Margin="10,0,0,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="▶" FontSize="12" Foreground="{StaticResource SuccessBrush}" VerticalAlignment="Center" />
+                        <Rectangle Width="2" Height="12" Fill="{StaticResource SuccessBrush}" Margin="3,0,0,0" RadiusX="1" RadiusY="1" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource VfRoundBtn}" Background="{StaticResource SurfaceBrush}"
+                        BorderBrush="{StaticResource ErrorBrush}" BorderThickness="1.5"
+                        Command="{Binding StopCmd}" ToolTip="停止" Margin="10,0,0,0">
+                    <Rectangle Width="12" Height="12" Fill="{StaticResource ErrorBrush}" RadiusX="2.5" RadiusY="2.5" />
+                </Button>
+            </StackPanel>
+
+            <!-- 行3：步骤列表（图标 + N．功能名 + 耗时 + ✓/✗），选中行高亮并联动右侧属性 -->
+            <Grid Grid.Row="2">
+                <ListBox ItemsSource="{Binding SelectedFlow.Steps}"
+                         SelectedItem="{Binding SelectedStep, Mode=TwoWay}"
+                         ItemTemplate="{StaticResource VfStepRow}"
+                         ItemContainerStyle="{StaticResource VfStepItem}"
+                         Background="Transparent" BorderThickness="0"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto" />
+
+                <!-- 空状态提示 -->
+                <TextBlock Text="请先在「流程」页新建并选择一个流程" FontSize="13"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"
+                           Visibility="{Binding SelectedFlow, Converter={StaticResource NullToVisibilityConverter}}" />
+                <TextBlock Text="当前流程还没有步骤，去「流程」页 ➕添加" FontSize="13"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"
+                           Visibility="{Binding SelectedFlow, Converter={StaticResource FlowEmptyToVisibilityConverter}}" />
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

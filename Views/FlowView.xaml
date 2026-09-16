@@ -107,6 +107,7 @@
                     <Button Style="{StaticResource AppleBtn}" Content="📝 添加脚本流程" Command="{Binding AddScriptFlowCmd}" VerticalAlignment="Center" Margin="0,0,8,8" />
                     <Button Style="{StaticResource AppleBtnSecondary}" Content="✏️ 重命名" Command="{Binding RenameFlowCmd}" VerticalAlignment="Center" Margin="0,0,8,8" />
                     <Button Style="{StaticResource AppleBtn}" Content="🕹 添加运控" Command="{Binding AddMotionFlowCmd}" VerticalAlignment="Center" Margin="0,0,8,8" />
+                    <Button Style="{StaticResource AppleBtn}" Content="🖼 添加视觉流程" Command="{Binding AddVisualFlowCmd}" VerticalAlignment="Center" Margin="0,0,8,8" />
                 </WrapPanel>
             </ctrl:MasterListBehaviors.FooterContent>
         </ctrl:AppleMasterList>
@@ -125,6 +126,20 @@
             </views:ScriptFlowView.Style>
         </views:ScriptFlowView>
 
+        <!-- 视觉流程视图（选中视觉流程时显示，占中间一列；步骤/工具参数在右侧属性页设置） -->
+        <views:VisualFlowView Grid.Column="1" Margin="16,0" DataContext="{Binding}">
+            <views:VisualFlowView.Style>
+                <Style TargetType="UserControl">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding SelectedFlow.FlowKind}" Value="Visual">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </views:VisualFlowView.Style>
+        </views:VisualFlowView>
+
         <!-- 中间：流程步骤（普通流程显示） -->
         <Grid Grid.Column="1" Margin="16,0">
             <Grid.Style>
@@ -132,6 +147,9 @@
                     <Setter Property="Visibility" Value="Visible" />
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding SelectedFlow.FlowKind}" Value="Script">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding SelectedFlow.FlowKind}" Value="Visual">
                             <Setter Property="Visibility" Value="Collapsed" />
                         </DataTrigger>
                     </Style.Triggers>
