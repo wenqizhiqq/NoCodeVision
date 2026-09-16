@@ -9,6 +9,7 @@ using System.Windows.Threading;
 using System.Runtime.InteropServices;
 using System.IO;
 using NoCodeVision.Services;
+using NoCodeVision.Helpers;
 using GrayMatch;
 using System;
 using System.Linq;
@@ -771,6 +772,15 @@ namespace NoCodeVision.ViewModels
                 }
                 catch { }
             }, null, 0, 400);
+
+            // 自动保存/恢复运控页（轴/IO/气缸/点位表/料盘/控制器 + 当前tab），bin\Data\ui_state.json
+            UiState.AttachVm("Motion", this);
+            if (SelectedPointTable == null || !PointTables.Contains(SelectedPointTable))
+                SelectedPointTable = PointTables.Count > 0 ? PointTables[0] : null;
+            if (SelectedTray == null || !Trays.Contains(SelectedTray))
+                SelectedTray = Trays.Count > 0 ? Trays[0] : null;
+            if (SelectedController == null || !Controllers.Contains(SelectedController))
+                SelectedController = Controllers.Count > 0 ? Controllers[0] : null;
         }
 
         // ===== 运控实时控制（JOG / 回零 / 使能 / 停止），对齐 NoCodeMotion 轴控交互 =====

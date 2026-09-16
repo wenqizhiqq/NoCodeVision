@@ -1,5 +1,7 @@
+using System;
 using System.Windows;
 using System.Windows.Controls;
+using NoCodeVision.Helpers;
 using NoCodeVision.Views;
 
 namespace NoCodeVision;
@@ -25,7 +27,8 @@ public partial class MainWindow : Window
             new ManualView(),
         };
         _navButtons = new[] { Nav0, Nav1, Nav2, Nav3, Nav4, Nav5, Nav6, Nav7, Nav8 };
-        Navigate(0);
+        // 恢复上次选中的导航页（记录在 bin\Data\ui_state.json）
+        Navigate(Math.Clamp(UiState.GetInt("MainWindow.SelectedNav", 0), 0, _views.Length - 1));
     }
 
     private void Nav_Click(object sender, RoutedEventArgs e)
@@ -41,6 +44,7 @@ public partial class MainWindow : Window
             _navButtons[i].Style = (Style)FindResource(i == idx ? "SegButtonSelected" : "SegButton")!;
         }
         ContentHost.Content = _views[idx];
+        UiState.SetInt("MainWindow.SelectedNav", idx);
     }
 }
 // 温启志：18719361399  混淆: 温m启d志j：l1u8o7y1l9e3u6j1w3l9r9

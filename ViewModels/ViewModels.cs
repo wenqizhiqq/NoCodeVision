@@ -38,6 +38,8 @@ using OpenCvSharp;
 
 using NoCodeVision;
 
+using NoCodeVision.Helpers;
+
 using NoCodeVision.Scripting;
 
 using NoCodeVision.Services;
@@ -2470,6 +2472,11 @@ public class CameraViewModel : ViewModelBase
 
         StopCmd = new RelayCommand(_ => { IsConnected = false; HardwareManager.Instance.Camera.Stop(); }, _ => IsConnected);
 
+        // 自动保存/恢复相机列表与连接状态（bin\Data\ui_state.json）
+        UiState.AttachVm("Camera", this);
+
+        SelectedCamera = Cameras.Count > 0 ? Cameras[0] : null;
+
     }
 
 }
@@ -2736,6 +2743,11 @@ public class CommunicationViewModel : ViewModelBase
 
         AutoScanCmd = new RelayCommand(_ => PushLog("[扫描] 发现设备 COM3 / 192.168.1.100:5000"));
 
+        // 自动保存/恢复通讯配置列表（bin\Data\ui_state.json）
+        UiState.AttachVm("Comm", this);
+
+        SelectedConfig = Configs.Count > 0 ? Configs[0] : null;
+
     }
 
 
@@ -2963,6 +2975,11 @@ public class VariablesViewModel : ViewModelBase
             ExcelStatus = "已导入 " + rows.Count + " 个变量（来自 " + path + "）";
 
         }, _ => !string.IsNullOrWhiteSpace(ExcelPath) && File.Exists(ExcelPath));
+
+        // 自动保存/恢复变量列表（bin\Data\ui_state.json）
+        UiState.AttachVm("Vars", this);
+
+        Selected = Variables.Count > 0 ? Variables[0] : null;
 
     }
 
@@ -7120,6 +7137,11 @@ public class EngineerViewModel : ViewModelBase
             ToggleOutputCmd = new RelayCommand(p => ToggleOutput((MotionRow)p!));
 
             ToggleCylinderCmd = new RelayCommand(p => ToggleCylinder((MotionRow)p!));
+
+            // 自动保存/恢复工程师页模块列表等（bin\Data\ui_state.json）
+            UiState.AttachVm("Engineer", this);
+
+            SelectedModule = Modules.Count > 0 ? Modules[0] : SelectedModule;
 
         }
 
