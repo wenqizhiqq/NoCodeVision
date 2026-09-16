@@ -206,6 +206,12 @@ public class OperatorRunViewModel : OperatorViewModel
     private bool _flowSubscribed;
     private int _chRot;
 
+    /// <summary>当前已订阅步骤变化事件的流程（切换流程时退订旧流程）。</summary>
+    private VisionFlow? _subscribedFlow;
+
+    /// <summary>会产生图像的视觉步骤类型：图像采集 / 模板匹配 / 几何测量 / 缺陷检测。</summary>
+    private static readonly HashSet<string> _visualStepTypes = new() { "ImageCapture", "TemplateMatch", "Measure", "Defect" };
+
     #endregion
 
     #region 命令
@@ -241,13 +247,18 @@ public class OperatorRunViewModel : OperatorViewModel
         InitCameraMonitor();
         InitProductionStats();
 
+        Channels.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ImageCount));
+
         _uiTimer.Tick += (_, _) => OnUiTimerTick();
     }
 
     #region 多通道视觉监控（操作员页右侧，通道数来自项目相机配置）
 
-    /// <summary>所有相机通道（动态来自 CameraViewModel.Instance.Cameras）。</summary>
+    /// <summary>所有监控通道（图像数量与图像内容由所选流程的视觉步骤决定）。</summary>
     public ObservableCollection<VisionChannel> Channels { get; } = new();
+
+    /// <summary>图像数量：当前监控通道数，等于所选流程中视觉步骤（采集/匹配/测量/缺陷）的数量；流程变化即变化。</summary>
+    public int ImageCount => Channels.Count;
 
     /// <summary>监控网格行数（根据相机数自动适配）。</summary>
     public int LayoutRows { get => _layoutRows; set => SetField(ref _layoutRows, value); }
@@ -309,12 +320,23 @@ public class OperatorRunViewModel : OperatorViewModel
         SpotlightModeCmd = new RelayCommand(_ => EnterSpotlightMode());
         SwitchMainCmd = new RelayCommand(p => SwitchMain(p as VisionChannel));
 
-        // 从项目相机列表动态创建通道（不硬编码）
-        RebuildChannelsFromCameras();
-
-        // 监听相机列表变化（用户在相机页增删相机时，操作员页自动同步）
-        if (CameraViewModel.Instance != null)
+        // 监控通道来自流程：图像数量与图像内容由所选流程的视觉步骤（采集/匹配/测量/缺陷）决定；
+        // 切换流程或增删步骤时操作员页自动同步（需求：流程有变化，图像就要变化）
+        if (FlowViewModel.Instance != null)
+        {
+            FlowViewModel.Instance.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName is null or nameof(FlowViewModel.SelectedFlow))
+                    RebuildChannelsFromFlow();
+            };
+            RebuildChannelsFromFlow();
+        }
+        else if (CameraViewModel.Instance != null)
+        {
+            // 无流程数据时回退到相机列表
+            RebuildChannelsFromCameras();
             CameraViewModel.Instance.Cameras.CollectionChanged += (_, _) => RebuildChannelsFromCameras();
+        }
 
         _camTimer.Tick += PollCameras;
         _camTimer.Start();
@@ -344,6 +366,54 @@ public class OperatorRunViewModel : OperatorViewModel
         if (MainChannel == null || !Channels.Contains(MainChannel))
             MainChannel = Channels.FirstOrDefault();
         UpdateMainFlags();
+    }
+
+    /// <summary>根据所选流程的视觉步骤重建监控通道：每个视觉步骤（采集/匹配/测量/缺陷）对应一路图像。</summary>
+    private void RebuildChannelsFromFlow()
+    {
+        // 退订上一个流程的步骤变化事件，避免重复触发
+        if (_subscribedFlow != null)
+            _subscribedFlow.Steps.CollectionChanged -= OnFlowStepsChanged;
+        var flow = FlowViewModel.Instance?.SelectedFlow;
+        _subscribedFlow = flow;
+        if (flow != null)
+            flow.Steps.CollectionChanged += OnFlowStepsChanged;
+
+        Channels.Clear();
+        if (flow != null)
+        {
+            foreach (var step in flow.Steps)
+            {
+                if (!_visualStepTypes.Contains(step.StepType)) continue;
+                // CameraId 用步骤的图像来源（模板文件/源图）或步骤名，便于后续绑定真实相机
+                var src = string.IsNullOrWhiteSpace(step.ImageSource) ? step.Name : step.ImageSource;
+                Channels.Add(new VisionChannel(step.Name, src));
+            }
+        }
+
+        if (IsAutoFit) AutoFitLayout(); else ApplyManualLayout();
+        if (MainChannel == null || !Channels.Contains(MainChannel))
+            MainChannel = Channels.FirstOrDefault();
+        UpdateMainFlags();
+
+        // 若正在运行，新通道直接进入运行态（图像由流程引擎 ProductInspected 推送，不单独启硬件相机）
+        if (_state == MachineState.Running) EnsureChannelsRunning();
+        OnPropertyChanged(nameof(ImageCount));
+    }
+
+    private void OnFlowStepsChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        => RebuildChannelsFromFlow();
+
+    /// <summary>让所有通道进入运行态（仅更新状态，图像由流程引擎推送，不单独创建硬件相机）。</summary>
+    private void EnsureChannelsRunning()
+    {
+        foreach (var c in Channels)
+        {
+            if (c.IsRunning) continue;
+            c.IsRunning = true;
+            c.Status = "运行中";
+            c.IsConnected = true;
+        }
     }
 
     /// <summary>切换到网格平铺模式并重新应用当前布局。</summary>
@@ -541,9 +611,8 @@ public class OperatorRunViewModel : OperatorViewModel
         // 启动真实生产：优先驱动流程引擎（视觉流程）真实生产，否则退回相机自检
         StartRealProduction();
 
-        // 监控通道统一由机台「运行」控制：全部启动取图（不再单独启停）
-        foreach (var c in Channels)
-            if (!c.IsRunning) c.Start();
+        // 监控通道统一由机台「运行」控制：进入运行态，图像由流程引擎推送
+        EnsureChannelsRunning();
 
         // UI 定时刷新（后台线程跑流程，UI 线程按节拍刷新画面与统计，避免卡顿）
         if (!_uiTimer.IsEnabled) _uiTimer.Start();
