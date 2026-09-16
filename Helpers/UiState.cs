@@ -28,6 +28,12 @@ public static class UiState
     private static DispatcherTimer? _periodicTimer;
     private static bool _hooksDone;
 
+    /// <summary>最近一次成功落盘的时间；MainWindow 状态栏据此提示「已自动保存」。</summary>
+    public static DateTime LastSaveTime { get; private set; } = DateTime.MinValue;
+
+    /// <summary>每次成功落盘后触发（UI 线程），用于刷新保存状态提示。</summary>
+    public static event Action? Saved;
+
     private static string FilePath => Path.Combine(AppPaths.DataDirectory, "ui_state.json");
 
     private static Dictionary<string, JsonObject> Store
@@ -248,6 +254,8 @@ public static class UiState
 
     public static void FlushNow()
     {
+        LastSaveTime = DateTime.Now;
+        try { Saved?.Invoke(); } catch { /* 订阅方异常不阻断落盘 */ }
         JsonObject root;
         lock (_lock)
         {

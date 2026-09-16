@@ -103,7 +103,26 @@
             </Grid>
         </Border>
 
-        <!-- 内容区（iOS 内缩 16） -->
+        <!-- 底部状态栏：提示自动保存 + 当前页面，确认工程内容已落盘（必须在 ContentHost 之前停靠，最后子元素才填充内容区） -->
+        <Border DockPanel.Dock="Bottom" Height="30" Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0">
+            <Grid Margin="16,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse Width="8" Height="8" Fill="{StaticResource SuccessBrush}" Margin="0,0,7,0" />
+                    <TextBlock x:Name="SaveStatusText" Text="配置自动保存中" FontSize="12"
+                               Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                </StackPanel>
+                <TextBlock Grid.Column="2" x:Name="PageNameText" Text="项目" FontSize="12"
+                           Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+            </Grid>
+        </Border>
+
+        <!-- 内容区（iOS 内缩 16），作为最后子元素填充剩余空间 -->
         <ContentControl x:Name="ContentHost" Margin="16" />
     </DockPanel>
 </Window>

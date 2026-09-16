@@ -14,6 +14,8 @@
 
     <UserControl.Resources>
         <local:IntToBoolConverter x:Key="IntToBoolConverter" />
+        <local:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+        <local:FlowEmptyToVisibilityConverter x:Key="FlowEmptyToVisibilityConverter" />
 
         <!-- 步骤引导卡：每个步骤类型顶部一张，用一句话说清"做什么 / 怎么用" -->
         <Style x:Key="AppleGuideCard" TargetType="Border">
@@ -195,6 +197,28 @@
                             </Style>
                         </ListBox.Resources>
                     </ListBox>
+
+                    <!-- 空状态提示：未选中流程 -->
+                    <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}"
+                            Visibility="{Binding SelectedFlow, Converter={StaticResource NullToVisibilityConverter}}">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24">
+                            <TextBlock Text="📋 还没有选中流程" Style="{StaticResource AppleLabel}" FontSize="14" HorizontalAlignment="Center" />
+                            <TextBlock Text="左侧点「添加逻辑视觉」新建一个视觉流程，或选中已有流程开始编辑。"
+                                       Style="{StaticResource AppleSubLabel}" TextWrapping="Wrap" HorizontalAlignment="Center"
+                                       Margin="0,6,0,0" MaxWidth="340" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 空状态提示：流程无步骤 -->
+                    <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}"
+                            Visibility="{Binding SelectedFlow, Converter={StaticResource FlowEmptyToVisibilityConverter}}">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24">
+                            <TextBlock Text="➕ 这个流程还没有步骤" Style="{StaticResource AppleLabel}" FontSize="14" HorizontalAlignment="Center" />
+                            <TextBlock Text="点上方工具栏「➕ 添加」加入步骤；右侧「工具箱」先选工具类型。"
+                                       Style="{StaticResource AppleSubLabel}" TextWrapping="Wrap" HorizontalAlignment="Center"
+                                       Margin="0,6,0,0" MaxWidth="340" />
+                        </StackPanel>
+                    </Border>
                 </Grid>
             </Border>
 
@@ -305,6 +329,24 @@
                         </Style>
                     </TextBlock.Style>
                 </TextBlock>
+
+                <!-- 未选中步骤时的引导提示 -->
+                <Border Margin="0,0,0,12">
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedStep}" Value="{x:Null}">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="步骤属性" />
+                        <TextBlock Style="{StaticResource AppleGuideText}" Text="在中间步骤列表选中一个步骤，这里会显示它的参数；右侧「工具箱」切换工具可即时改写选中步骤。" TextWrapping="Wrap" Margin="14,0,14,4" />
+                    </StackPanel>
+                </Border>
 
                 <!-- ========== 图像采集 ========== -->
                 <Border>
