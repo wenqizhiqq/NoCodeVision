@@ -378,7 +378,13 @@
                             </Style.Triggers>
                         </Style>
                     </Border.Style>
-                    <StackPanel>
+                    <!-- 参数列固定 300px 在左，图像列在右 -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="300" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="📷 图像采集" /> — 给后续步骤提供一张图</TextBlock>
@@ -459,8 +465,11 @@
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding SelectedStep.ImageSource, FallbackValue='未选择图片'}" Margin="16,4,16,4" TextTrimming="CharacterEllipsis" />
-                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI（在采集到的图上拖拽绘制）" Margin="16,8,16,4" />
-                        <ctrl:RoiImageView Height="220" Margin="14,0,14,10"
+                        </StackPanel>
+                        <!-- 右：ROI 图像列 -->
+                        <StackPanel Grid.Column="1" Margin="14,0,14,0">
+                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI（在右侧图上拖拽绘制）" Margin="0,8,0,4" />
+                        <ctrl:RoiImageView Height="280" Margin="0,0,0,10"
                                            SourceImage="{Binding CurrentImageSource}"
                                            RoiX="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=10}"
                                            RoiY="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=10}"
@@ -485,7 +494,8 @@
                                 <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiH, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
                             </StackPanel>
                         </UniformGrid>
-                    </StackPanel>
+                        </StackPanel>
+                    </Grid>
                 </Border>
 
                 <!-- ========== 模板匹配 ========== -->
@@ -500,7 +510,13 @@
                             </Style.Triggers>
                         </Style>
                     </Border.Style>
-                    <StackPanel>
+                    <!-- 参数左 300px，源图右 -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="300"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🎯 模板匹配" /> — 在图里找到目标的位置</TextBlock>
@@ -508,61 +524,46 @@
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="模板匹配" />
-                        <Grid Margin="14,0,14,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="源图（从图像采集传入，ROI 拖拽绘制模板区域）" Margin="0,8,0,4" />
-                                <ctrl:RoiImageView Height="220"
-                                                   SourceImage="{Binding CurrentImageSource}"
-                                                   RoiX="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=10}"
-                                                   RoiY="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=10}"
-                                                   RoiW="{Binding SelectedStep.RoiW, Mode=TwoWay, FallbackValue=120}"
-                                                   RoiH="{Binding SelectedStep.RoiH, Mode=TwoWay, FallbackValue=80}"
-                                                   Overlays="{Binding MatchOverlays}" />
+                        <!-- 模板预览（参数列） -->
+                        <StackPanel Margin="0,0,8,0">
+                            <TextBlock Style="{StaticResource AppleSubLabel}" Text="模板预览" Margin="0,8,0,4" />
+                            <Border Width="140" Height="150" Background="{StaticResource PreviewBgBrush}" CornerRadius="10">
+                                <Grid>
+                                    <Image Source="{Binding TemplatePreviewSource}" Width="140" Height="150" Stretch="Uniform">
+                                        <Image.Style>
+                                            <Style TargetType="Image">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding TemplatePreviewSource}" Value="{x:Null}">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Image.Style>
+                                    </Image>
+                                    <Image Source="{Binding TemplateContourOverlay}" Width="140" Height="150" Stretch="Uniform" IsHitTestVisible="False">
+                                        <Image.Style>
+                                            <Style TargetType="Image">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding TemplateContourOverlay}" Value="{x:Null}">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Image.Style>
+                                    </Image>
+                                </Grid>
+                            </Border>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <Button Style="{StaticResource AppleBtn}" Content="确定模板" Command="{Binding ConfirmTemplateCmd}" />
                             </StackPanel>
-                            <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Top" MinWidth="140">
-                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="模板预览" Margin="0,8,0,4" />
-                                <Border Width="140" Height="150" Background="{StaticResource PreviewBgBrush}" CornerRadius="10">
-                                    <Grid>
-                                        <Image Source="{Binding TemplatePreviewSource}" Width="140" Height="150" Stretch="Uniform">
-                                            <Image.Style>
-                                                <Style TargetType="Image">
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding TemplatePreviewSource}" Value="{x:Null}">
-                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Image.Style>
-                                        </Image>
-                                        <Image Source="{Binding TemplateContourOverlay}" Width="140" Height="150" Stretch="Uniform" IsHitTestVisible="False">
-                                            <Image.Style>
-                                                <Style TargetType="Image">
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding TemplateContourOverlay}" Value="{x:Null}">
-                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Image.Style>
-                                        </Image>
-                                    </Grid>
-                                </Border>
-                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                    <Button Style="{StaticResource AppleBtn}" Content="确定模板" Command="{Binding ConfirmTemplateCmd}" />
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                    <Button Style="{StaticResource AppleBtn}" Content="开始匹配" Command="{Binding StartMatchCmd}" />
-                                    <TextBlock Style="{StaticResource AppleSubLabel}" VerticalAlignment="Center" Margin="12,0,0,0"
-                                               Text="{Binding SelectedStep.CostMs, StringFormat='匹配耗时：{0:F1}ms', FallbackValue='匹配耗时：0.0ms'}" />
-                                </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <Button Style="{StaticResource AppleBtn}" Content="开始匹配" Command="{Binding StartMatchCmd}" />
+                                <TextBlock Style="{StaticResource AppleSubLabel}" VerticalAlignment="Center" Margin="12,0,0,0"
+                                           Text="{Binding SelectedStep.CostMs, StringFormat='匹配耗时：{0:F1}ms', FallbackValue='匹配耗时：0.0ms'}" />
                             </StackPanel>
-                        </Grid>
+                        </StackPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="匹配模式" />
@@ -748,7 +749,19 @@
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="模板文件" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.TemplateFile, FallbackValue=''}" />
                         </DockPanel>
-                    </StackPanel>
+                        </StackPanel>
+                        <!-- 右：源图（ROI 拖拽绘制模板区域） -->
+                        <StackPanel Grid.Column="1" Margin="14,0,14,0">
+                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="源图（从图像采集传入，在右侧图上拖拽绘制模板区域）" Margin="0,8,0,4" />
+                        <ctrl:RoiImageView Height="300" Margin="0,0,0,10"
+                                           SourceImage="{Binding CurrentImageSource}"
+                                           RoiX="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=10}"
+                                           RoiY="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=10}"
+                                           RoiW="{Binding SelectedStep.RoiW, Mode=TwoWay, FallbackValue=120}"
+                                           RoiH="{Binding SelectedStep.RoiH, Mode=TwoWay, FallbackValue=80}"
+                                           Overlays="{Binding MatchOverlays}" />
+                        </StackPanel>
+                    </Grid>
                 </Border>
 
                 <!-- ========== 几何测量 ========== -->
@@ -763,17 +776,13 @@
                             </Style.Triggers>
                         </Style>
                     </Border.Style>
+                    <!-- 参数左 300px，ROI 图像右 -->
                     <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="300"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
 
                         <!-- 1. 测量摘要：明确回答「测量了什么」 -->
                         <Border Grid.Row="0" Background="{StaticResource AccentSoftBrush}" CornerRadius="10" Padding="14" Margin="16,12,16,10">
@@ -896,17 +905,21 @@
                             </DockPanel>
                         </Grid>
 
-                        <!-- 5. ROI 视图 + 详细提示 -->
-                        <TextBlock Grid.Row="5" Style="{StaticResource AppleSubLabel}" Text="ROI 预览（在图上拖拽绘制区域，测量算法只在该区域内搜索边缘）" Margin="16,8,16,4" />
-                        <ctrl:RoiImageView Grid.Row="6" Height="240" Margin="14,0,14,10"
-                                           SourceImage="{Binding CurrentImageSource}"
-                                           RoiX="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=10}"
-                                           RoiY="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=10}"
-                                           RoiW="{Binding SelectedStep.RoiW, Mode=TwoWay, FallbackValue=120}"
-                                           RoiH="{Binding SelectedStep.RoiH, Mode=TwoWay, FallbackValue=80}"
-                                           Overlays="{Binding MatchOverlays}"
-                                           Measures="{Binding MeasureAnnotations}" />
-                        <TextBlock Grid.Row="7" Style="{StaticResource AppleSubLabel}" Text="提示：切换左上角工具可框选 ROI / 拉线段测距 / 标圆测半径；运行后「实测值/判定」会在此显示结果。" Margin="16,0,16,8" />
+                        <!-- 5. ROI 预览说明（图像在右侧） -->
+                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI 预览：在右侧图中拖拽绘制区域，测量算法只在该区域内搜索边缘。" Margin="16,8,16,4" />
+                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="提示：切换左上角工具可框选 ROI / 拉线段测距 / 标圆测半径；运行后「实测值/判定」在上方摘要显示。" Margin="16,0,16,8" />
+                        </StackPanel>
+                        <!-- 右：ROI 图像 -->
+                        <StackPanel Grid.Column="1" Margin="14,0,14,0">
+                            <ctrl:RoiImageView Height="300" Margin="0,12,0,10"
+                                               SourceImage="{Binding CurrentImageSource}"
+                                               RoiX="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=10}"
+                                               RoiY="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=10}"
+                                               RoiW="{Binding SelectedStep.RoiW, Mode=TwoWay, FallbackValue=120}"
+                                               RoiH="{Binding SelectedStep.RoiH, Mode=TwoWay, FallbackValue=80}"
+                                               Overlays="{Binding MatchOverlays}"
+                                               Measures="{Binding MeasureAnnotations}" />
+                        </StackPanel>
                     </Grid>
                 </Border>
 
@@ -1037,31 +1050,20 @@
                             </Style.Triggers>
                         </Style>
                     </Border.Style>
-                    <StackPanel>
+                    <!-- 参数左 300px，缺陷预览图右 -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="300"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🔍 缺陷检测" /> — 和标准图比，找出不一样的地方</TextBlock>
                                 <TextBlock Style="{StaticResource AppleGuideText}" Text="先载入一张标准图，调好差异阈值等参数，点「开始检测缺陷」；红色区域即为可疑缺陷。" />
                             </StackPanel>
                         </Border>
-                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="缺陷检测预览" />
-                        <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="10" Background="{StaticResource SurfaceBrush}" Height="280" Margin="0,0,0,12">
-                            <Grid>
-                                <TextBlock Text="未加载流程图片" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding CurrentImageSource}" Value="{x:Null}">
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                                <ctrl:RoiImageView SourceImage="{Binding CurrentImageSource}" Overlays="{Binding MatchOverlays}" DefectOverlay="{Binding DefectOverlayImage}" />
-                            </Grid>
-                        </Border>
+                        <!-- 缺陷检测预览图见右侧列 -->
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="缺陷参数" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="差异阈值" />
@@ -1152,7 +1154,29 @@
         <Button Content="开始检测缺陷" Style="{StaticResource AppleBtn}"
                 Margin="0,12,0,0" HorizontalAlignment="Stretch"
                 Command="{Binding RunDefectCmd}" />
-                    </StackPanel>
+                        </StackPanel>
+                        <!-- 右：缺陷检测预览图 -->
+                        <StackPanel Grid.Column="1" Margin="14,0,14,0">
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="缺陷检测预览" />
+                        <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="10" Background="{StaticResource SurfaceBrush}" Height="300" Margin="0,0,0,12">
+                            <Grid>
+                                <TextBlock Text="未加载流程图片" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CurrentImageSource}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <ctrl:RoiImageView SourceImage="{Binding CurrentImageSource}" Overlays="{Binding MatchOverlays}" DefectOverlay="{Binding DefectOverlayImage}" />
+                            </Grid>
+                        </Border>
+                        </StackPanel>
+                    </Grid>
                 </Border>
 
                 <!-- ========== 轴运动 ========== -->

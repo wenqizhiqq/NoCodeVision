@@ -91,7 +91,7 @@
     <!-- 与参考图一致的紧凑视觉流程面板：窄列靠左 -->
     <Border Background="{StaticResource SurfaceBrush}" CornerRadius="14"
             BorderBrush="{StaticResource LineBrush}" BorderThickness="1"
-            Width="400" HorizontalAlignment="Left" Padding="12">
+            Width="200" HorizontalAlignment="Left" Padding="10">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
