@@ -3190,7 +3190,6 @@ public class FlowViewModel : ViewModelBase
 
 
 
-
     public string[] StepFunctions { get; } = { "图像采集", "模板匹配", "几何测量", "逻辑判断", "结果输出", "缺陷检测", "Lua脚本", "轴运动", "IO控制", "气缸动作", "等待延时", "通讯指令", "颜色检测", "目标计数", "条码识别", "字符识别", "条件分支", "循环", "子流程", "变量计算", "数据保存", "消息提示" };
 
     public string[] PreprocessTypes { get; } = { "灰度化", "二值化", "高斯模糊", "中值滤波", "边缘检测" };
@@ -4089,6 +4088,84 @@ public class FlowViewModel : ViewModelBase
 
     public string NewStepFunction { get => _newStepFunction; set => SetField(ref _newStepFunction, value); }
 
+    // ===== 工具箱：右侧页面按分类（视觉/运控/通讯）选工具，➕添加 按所选工具新增步骤 =====
+    public string[] ToolCategories { get; } = { "视觉", "运控", "通讯" };
+
+    public ObservableCollection<string> ToolOptions { get; } = new();
+
+    private string _selectedToolCategory = "视觉";
+
+    public string SelectedToolCategory
+    {
+        get => _selectedToolCategory;
+        set { if (SetField(ref _selectedToolCategory, value)) RebuildToolOptions(); }
+    }
+
+    private string _selectedTool = "图像采集";
+
+    public string SelectedTool
+    {
+        get => _selectedTool;
+        set
+        {
+            if (SetField(ref _selectedTool, value)) ApplyToolToSelectedStep();
+        }
+    }
+
+    /// <summary>工具切换后立即生效：若当前有选中步骤，马上把它切换成该工具，右侧属性页随之即时切换。</summary>
+    private void ApplyToolToSelectedStep()
+    {
+        if (_selectedStep == null || string.IsNullOrEmpty(_selectedTool)) return;
+        var (icon, type) = ToolToIconType(_selectedTool);
+        if (_selectedStep.StepType == type) return;
+        _selectedStep.Function = _selectedTool;
+        _selectedStep.Icon = icon;
+        _selectedStep.StepType = type;
+        _selectedStep.ParamSummary = "-";
+    }
+
+    /// <summary>工具名 → (图标, StepType) 统一映射。</summary>
+    private static (string Icon, string Type) ToolToIconType(string tool) => tool switch
+    {
+        "图像采集" => ("📷", "ImageCapture"),
+        "模板匹配" => ("🎯", "TemplateMatch"),
+        "几何测量" => ("📐", "Measure"),
+        "逻辑判断" => ("✅", "Logic"),
+        "结果输出" => ("📤", "Output"),
+        "缺陷检测" => ("🔍", "Defect"),
+        "Lua脚本" => ("📝", "Lua"),
+        "轴运动" => ("🦾", "AxisMove"),
+        "IO控制" => ("🔌", "IOControl"),
+        "气缸动作" => ("🟢", "Cylinder"),
+        "等待延时" => ("⏱", "Wait"),
+        "通讯指令" => ("📡", "Comm"),
+        "颜色检测" => ("🎨", "Color"),
+        "目标计数" => ("🔢", "Count"),
+        "条码识别" => ("🔖", "Code"),
+        "字符识别" => ("🔤", "Ocr"),
+        "条件分支" => ("🔀", "Branch"),
+        "循环" => ("🔁", "Loop"),
+        "子流程" => ("📑", "SubFlow"),
+        "变量计算" => ("🧮", "Calc"),
+        "数据保存" => ("💾", "Save"),
+        "消息提示" => ("💬", "Notify"),
+        _ => ("➕", "Other")
+    };
+
+    private void RebuildToolOptions()
+    {
+        ToolOptions.Clear();
+        var options = _selectedToolCategory switch
+        {
+            "运控" => new[] { "轴运动", "IO控制", "气缸动作", "等待延时" },
+            "通讯" => new[] { "通讯指令" },
+            _ => new[] { "图像采集", "模板匹配", "缺陷检测", "几何测量" },
+        };
+        foreach (var t in options) ToolOptions.Add(t);
+        if (!ToolOptions.Contains(SelectedTool))
+            SelectedTool = ToolOptions.FirstOrDefault() ?? "";
+    }
+
 
 
     private string _activePropTab = "图像";
@@ -4300,13 +4377,9 @@ public class FlowViewModel : ViewModelBase
 
     public ICommand AddScriptFlowCmd { get; }
 
-    public ICommand AddMotionFlowCmd { get; }
+        public ICommand AddMotionFlowCmd { get; }
 
-    public ICommand AddNodeGraphFlowCmd { get; }
-
-    public ICommand AddSimpleVisionFlowCmd { get; }
-
-    public ICommand RenameFlowCmd { get; }
+        public ICommand RenameFlowCmd { get; }
 
     public ICommand ClearCmd { get; }
 
@@ -4418,6 +4491,8 @@ public class FlowViewModel : ViewModelBase
 
             Instance = this;
 
+            RebuildToolOptions(); // 初始化工具箱（视觉分类）
+
             ProjectViewModel.Instance?.LoadCurrentProject();
 
             if (!LoadState())
@@ -4528,7 +4603,7 @@ public class FlowViewModel : ViewModelBase
 
             var next = _selectedFlow.Steps.Count + 1;
 
-            var (icon, type) = _newStepFunction switch
+            var (icon, type) = SelectedTool switch
 
             {
 
@@ -4586,9 +4661,9 @@ public class FlowViewModel : ViewModelBase
 
                 Index = next,
 
-                Function = _newStepFunction,
+                Function = SelectedTool,
 
-                Name = $"{_newStepFunction}{next}",
+                Name = $"{SelectedTool}{next}",
 
                 ParamSummary = "-",
 
@@ -4652,34 +4727,6 @@ public class FlowViewModel : ViewModelBase
                 Name = $"运控流程-{next}",
                 Icon = "🕹",
                 Steps = CreateMotionPipeline()
-            };
-            Flows.Add(flow);
-            SelectedFlow = flow;
-            SelectedStep = flow.Steps.FirstOrDefault();
-        }, _ => true);
-
-        AddNodeGraphFlowCmd = new RelayCommand(_ =>
-        {
-            var next = Flows.Count + 1;
-            var flow = new VisionFlow
-            {
-                Name = $"节点图流程-{next}",
-                Icon = "🕸",
-                Steps = CreateStandardPipeline()
-            };
-            Flows.Add(flow);
-            SelectedFlow = flow;
-            SelectedStep = flow.Steps.FirstOrDefault();
-        }, _ => true);
-
-        AddSimpleVisionFlowCmd = new RelayCommand(_ =>
-        {
-            var next = Flows.Count + 1;
-            var flow = new VisionFlow
-            {
-                Name = $"简单视觉流程-{next}",
-                Icon = "👁",
-                Steps = CreateSimpleVisionPipeline()
             };
             Flows.Add(flow);
             SelectedFlow = flow;
