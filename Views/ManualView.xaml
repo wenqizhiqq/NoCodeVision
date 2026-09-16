@@ -49,7 +49,7 @@
             <!-- 简介 -->
             <Border Style="{StaticResource AppleHintBubble}">
                 <TextBlock FontSize="12.5" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap">
-                    <Run Text="NoCodeVision 是一款" /><Run Text="无代码视觉软件" FontWeight="Bold" /><Run Text="，采用 Apple / iOS 风格界面（圆角、半透明、淡蓝主色、紧凑布局）。无需编写代码，即可通过表格化配置完成 相机采集、视觉检测、运控联动、通讯交互与流程编排，面向工业自动化视觉检测场景。" />
+                    <Run Text="NoCodeVision 是一款" /><Run Text="无代码视觉软件" FontWeight="Bold" /><Run Text="，采用 Apple / iOS 风格界面（圆角、半透明、淡蓝主色、紧凑布局）。无需编写代码，即可通过表格化配置完成 相机采集、视觉检测、运控联动、通讯交互与流程编排，面向工业自动化视觉检测场景。温启志：18719361399，地址：东莞长安" />
                 </TextBlock>
             </Border>
 

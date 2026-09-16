@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -195,6 +196,8 @@ public class OperatorRunViewModel : OperatorViewModel
     #region 字段
 
     private readonly SynchronizationContext? _uiCtx = SynchronizationContext.Current;
+    private readonly DispatcherTimer _uiTimer = new() { Interval = TimeSpan.FromMilliseconds(100) }; // 后台线程跑流程，UI 定时刷新
+    private FlowProductResult? _pendingResult; // 后台线程写入、UI 定时器消费的最新单件结果
     private CancellationTokenSource? _cts;
     private readonly ManualResetEventSlim _pauseGate = new(true); // true=放行（运行），false=暂停
     private Task? _loopTask;
@@ -237,6 +240,8 @@ public class OperatorRunViewModel : OperatorViewModel
 
         InitCameraMonitor();
         InitProductionStats();
+
+        _uiTimer.Tick += (_, _) => OnUiTimerTick();
     }
 
     #region 多通道视觉监控（操作员页右侧，通道数来自项目相机配置）
@@ -539,6 +544,9 @@ public class OperatorRunViewModel : OperatorViewModel
         // 监控通道统一由机台「运行」控制：全部启动取图（不再单独启停）
         foreach (var c in Channels)
             if (!c.IsRunning) c.Start();
+
+        // UI 定时刷新（后台线程跑流程，UI 线程按节拍刷新画面与统计，避免卡顿）
+        if (!_uiTimer.IsEnabled) _uiTimer.Start();
     }
 
     /// <summary>启动真实生产：优先驱动流程引擎（视觉流程）真实生产，否则退回相机自检（真实取图 + 外部注入的 InspectionHook）。</summary>
@@ -555,7 +563,13 @@ public class OperatorRunViewModel : OperatorViewModel
             {
                 _flowCts = new CancellationTokenSource();
                 _flowStartedByOp = true;
-                _ = FlowViewModel.Instance.RunAllFlowsLoopAsync(_flowCts.Token);
+                // 在后台线程跑流程循环，避免 RunStep 的视觉计算阻塞 UI 线程
+                _ = Task.Run(async () =>
+                {
+                    try { await FlowViewModel.Instance.RunAllFlowsLoopAsync(_flowCts.Token); }
+                    catch (OperationCanceledException) { }
+                    catch (Exception ex) { AppendLog("流程运行异常：" + ex.Message); }
+                });
             }
         }
         else
@@ -566,27 +580,35 @@ public class OperatorRunViewModel : OperatorViewModel
         }
     }
 
-    /// <summary>消费流程引擎真实单件结果：更新产量/良率统计与多通道实时图像，并下发 PLC 结果。</summary>
+    /// <summary>后台流程线程回调：仅暂存最新单件结果（写字段，无 UI 操作），由 UI 定时器统一刷新界面。</summary>
     private void OnFlowProductInspected(FlowProductResult e)
     {
         if (_state != MachineState.Running) return;
-        _uiCtx?.Post(_ =>
-        {
-            Total++;
-            if (e.IsOk) Ok++; else Ng++;
-            LastResult = e.IsOk ? "OK" : "NG";
-            if (Channels.Count > 0)
-            {
-                var ch = Channels[_chRot % Channels.Count];
-                ch.LastImage = e.Image;
-                ch.MatchScore = e.Score;
-                ch.DefectCount = e.DefectCount;
-                ch.Status = e.IsOk ? "通过" : "失败";
-                ch.FrameCount++;
-                _chRot++;
-            }
-        }, null);
+        _pendingResult = e;
         _ = EnsureCommAndSendAsync(e.IsOk ? "RESULT:OK" : "RESULT:NG");
+    }
+
+    /// <summary>UI 定时器节拍：把后台线程暂存的最新结果刷新到绑定属性，避免流程线程直接触碰 UI 造成卡顿。</summary>
+    private void OnUiTimerTick()
+    {
+        var e = _pendingResult;
+        if (e == null) return;
+        _pendingResult = null;
+
+        if (_state != MachineState.Running) return;
+        Total++;
+        if (e.IsOk) Ok++; else Ng++;
+        LastResult = e.IsOk ? "OK" : "NG";
+        if (Channels.Count > 0)
+        {
+            var ch = Channels[_chRot % Channels.Count];
+            ch.LastImage = e.Image;
+            ch.MatchScore = e.Score;
+            ch.DefectCount = e.DefectCount;
+            ch.Status = e.IsOk ? "通过" : "失败";
+            ch.FrameCount++;
+            _chRot++;
+        }
     }
 
     private void Resume()
@@ -620,6 +642,7 @@ public class OperatorRunViewModel : OperatorViewModel
         // 监控通道统一由机台「停止」控制：全部停止取图
         foreach (var c in Channels)
             if (c.IsRunning) c.Stop();
+        _uiTimer.Stop();
         State = MachineState.Idle;
     }
 
@@ -639,6 +662,7 @@ public class OperatorRunViewModel : OperatorViewModel
         // 急停同时停止全部监控通道
         foreach (var c in Channels)
             if (c.IsRunning) c.Stop();
+        _uiTimer.Stop();
         AppendLog("⛔ 急停！");
     }
 
@@ -655,11 +679,15 @@ public class OperatorRunViewModel : OperatorViewModel
         OnPropertyChanged(nameof(RunDurationText));
         _ = EnsureCommAndSendAsync("MACHINE:RESET");
         try { HardwareManager.Instance.Motion.Connect(); } catch { }
-        // 复位流程：只运行一次（主流程由「运行」循环驱动，与复位流程无关）
+        // 复位流程：只运行一次（主流程由「运行」循环驱动，与复位流程无关），后台线程执行避免卡顿
         if (FlowViewModel.Instance != null)
         {
             AppendLog("执行复位流程（一次）…");
-            _ = FlowViewModel.Instance.RunResetFlowsOnceAsync(System.Threading.CancellationToken.None);
+            _ = Task.Run(async () =>
+            {
+                try { await FlowViewModel.Instance.RunResetFlowsOnceAsync(CancellationToken.None); }
+                catch (Exception ex) { AppendLog("复位流程异常：" + ex.Message); }
+            });
         }
         AppendLog("已复位");
     }

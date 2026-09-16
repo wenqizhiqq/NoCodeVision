@@ -514,11 +514,11 @@ namespace NoCodeVision.ViewModels
 
     public class MotionControlViewModel : ViewModelBase
     {
-        public string[] Tabs { get; } = { "轴", "IO", "气缸", "轴点位表", "料盘", "控制器" };
+        public string[] Tabs { get; } = { "控制器", "轴", "IO", "气缸", "轴点位表", "料盘" };
         /// <summary>共享单例：供工程师调试页等其它页面访问同一份轴/IO/气缸数据。</summary>
         public static MotionControlViewModel? Instance { get; private set; }
         public string SelectedTab { get => _selectedTab; set => SetField(ref _selectedTab, value); }
-        private string _selectedTab = "轴";
+        private string _selectedTab = "控制器";
 
         public ObservableCollection<MotionRow> Axes { get; }
         public ObservableCollection<MotionRow> IoPoints { get; }

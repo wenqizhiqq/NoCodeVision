@@ -5642,7 +5642,7 @@ public class FlowViewModel : ViewModelBase
 
         {
 
-            await RunSingleFlowStepsAsync(_selectedFlow, _cts.Token);
+            await Task.Run(() => RunSingleFlowStepsAsync(_selectedFlow, _cts.Token));
 
         }
 
@@ -7105,7 +7105,7 @@ public class OperatorViewModel : ViewModelBase
 
             if (fvm == null) { Status = "流程引擎不可用"; }
 
-            else { await fvm.RunAllFlowsLoopAsync(_runCts.Token); }
+            else { await Task.Run(() => fvm.RunAllFlowsLoopAsync(_runCts.Token)); }
 
         }
 

@@ -30,22 +30,36 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- 顶部一行 tab -->
+        <!-- 顶部一行 tab + 操作提示（› 引导） -->
         <Border Grid.Row="0" Style="{StaticResource AppleGroupCard}" Padding="10" Margin="0,0,0,12">
-            <ListBox ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}"
-                     BorderThickness="0" Background="Transparent">
-                <ListBox.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal" />
-                    </ItemsPanelTemplate>
-                </ListBox.ItemsPanel>
-                <ListBox.ItemContainerStyle>
-                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource ApplePillListItem}">
-                        <Setter Property="Padding" Value="14,6" />
-                        <Setter Property="Margin" Value="0,0,8,0" />
-                    </Style>
-                </ListBox.ItemContainerStyle>
-            </ListBox>
+            <DockPanel LastChildFill="True">
+                <ListBox DockPanel.Dock="Left" ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}"
+                         BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource ApplePillListItem}">
+                            <Setter Property="Padding" Value="14,6" />
+                            <Setter Property="Margin" Value="0,0,8,0" />
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                </ListBox>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,2,0">
+                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="操作：" VerticalAlignment="Center" />
+                    <TextBlock Text="›" FontSize="15" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"
+                               VerticalAlignment="Center" Margin="4,0" />
+                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="点上方切换模块" VerticalAlignment="Center" />
+                    <TextBlock Text="›" FontSize="15" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"
+                               VerticalAlignment="Center" Margin="4,0" />
+                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="左侧列表选项目" VerticalAlignment="Center" />
+                    <TextBlock Text="›" FontSize="15" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"
+                               VerticalAlignment="Center" Margin="4,0" />
+                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="右侧编辑参数" VerticalAlignment="Center" />
+                </StackPanel>
+            </DockPanel>
         </Border>
 
         <!-- 下方左右分栏：左列表，右属性 -->
