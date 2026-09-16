@@ -38,8 +38,15 @@
         <DataTemplate x:Key="FlowItemTemplate">
             <DockPanel LastChildFill="True" Margin="0,2,0,2">
                 <ctrl:AppleIconTile Glyph="{Binding Icon}" TileSize="28" Margin="0,0,10,0" VerticalAlignment="Center" />
+                <ComboBox DockPanel.Dock="Right" Style="{StaticResource AppleComboBoxInline}" Width="74" FontSize="10"
+                          VerticalAlignment="Center" Margin="0,0,2,0" ToolTip="主流程循环运行；复位流程在点「复位」时只运行一次"
+                          SelectedValue="{Binding FlowRole}" SelectedValuePath="Tag">
+                    <ComboBoxItem Content="主流程" Tag="Main" />
+                    <ComboBoxItem Content="复位流程" Tag="Reset" />
+                </ComboBox>
                 <TextBlock Style="{StaticResource AppleSubLabel}" DockPanel.Dock="Right"
-                           Text="{Binding Steps.Count, StringFormat='{}{0} 步'}" Foreground="{StaticResource TextSecondaryBrush}" />
+                           Text="{Binding Steps.Count, StringFormat='{}{0} 步'}" Foreground="{StaticResource TextSecondaryBrush}"
+                           VerticalAlignment="Center" Margin="0,0,8,0" />
                 <TextBlock Style="{StaticResource AppleLabel}" Text="{Binding Name}" Margin="0,0,12,0" />
             </DockPanel>
         </DataTemplate>

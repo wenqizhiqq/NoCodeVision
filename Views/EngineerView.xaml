@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:ctrl="clr-namespace:NoCodeVision.Views.Controls"
+             xmlns:views="clr-namespace:NoCodeVision.Views"
              mc:Ignorable="d">
 <!-- 温启志：18719361399  混淆: 温c启x志f：c1v8r7y1k9j3l6n1g3j9w9 -->
 
@@ -229,6 +230,10 @@
                                  Style="{StaticResource AppleListBox}" BorderThickness="0" />
                     </StackPanel>
                 </Border>
+
+                <!-- 智能中心（内嵌） -->
+                <TextBlock Style="{StaticResource iOSTitle}" Text="智能中心" />
+                <views:SmartCenterView DataContext="{Binding SmartVm, RelativeSource={RelativeSource AncestorType=UserControl}}" />
 
             </StackPanel>
         </ScrollViewer>

@@ -287,8 +287,6 @@ public class OperatorRunViewModel : OperatorViewModel
     public ICommand Layout12Cmd { get; private set; }
     public ICommand Layout23Cmd { get; private set; }
     public ICommand Layout34Cmd { get; private set; }
-    public ICommand CameraStartAllCmd { get; private set; }
-    public ICommand CameraStopAllCmd { get; private set; }
 
     private readonly DispatcherTimer _camTimer = new()
     {
@@ -301,8 +299,6 @@ public class OperatorRunViewModel : OperatorViewModel
         Layout12Cmd = new RelayCommand(_ => { IsAutoFit = false; _manualRows = 1; _manualCols = 2; ApplyManualLayout(); });
         Layout23Cmd = new RelayCommand(_ => { IsAutoFit = false; _manualRows = 2; _manualCols = 3; ApplyManualLayout(); });
         Layout34Cmd = new RelayCommand(_ => { IsAutoFit = false; _manualRows = 3; _manualCols = 4; ApplyManualLayout(); });
-        CameraStartAllCmd = new RelayCommand(_ => { foreach (var c in Channels) if (!c.IsRunning) c.Start(); });
-        CameraStopAllCmd = new RelayCommand(_ => { foreach (var c in Channels) if (c.IsRunning) c.Stop(); });
 
         GridModeCmd = new RelayCommand(_ => EnterGridMode());
         SpotlightModeCmd = new RelayCommand(_ => EnterSpotlightMode());
@@ -539,6 +535,10 @@ public class OperatorRunViewModel : OperatorViewModel
 
         // 启动真实生产：优先驱动流程引擎（视觉流程）真实生产，否则退回相机自检
         StartRealProduction();
+
+        // 监控通道统一由机台「运行」控制：全部启动取图（不再单独启停）
+        foreach (var c in Channels)
+            if (!c.IsRunning) c.Start();
     }
 
     /// <summary>启动真实生产：优先驱动流程引擎（视觉流程）真实生产，否则退回相机自检（真实取图 + 外部注入的 InspectionHook）。</summary>
@@ -617,6 +617,9 @@ public class OperatorRunViewModel : OperatorViewModel
         OnPropertyChanged(nameof(RunDurationText));
         _ = EnsureCommAndSendAsync("MACHINE:STOP");
         try { HardwareManager.Instance.Camera.Stop(); } catch { }
+        // 监控通道统一由机台「停止」控制：全部停止取图
+        foreach (var c in Channels)
+            if (c.IsRunning) c.Stop();
         State = MachineState.Idle;
     }
 
@@ -633,6 +636,9 @@ public class OperatorRunViewModel : OperatorViewModel
         OnPropertyChanged(nameof(RunDurationText));
         _ = EnsureCommAndSendAsync("MACHINE:ESTOP");
         try { HardwareManager.Instance.Camera.Stop(); } catch { }
+        // 急停同时停止全部监控通道
+        foreach (var c in Channels)
+            if (c.IsRunning) c.Stop();
         AppendLog("⛔ 急停！");
     }
 
@@ -649,6 +655,12 @@ public class OperatorRunViewModel : OperatorViewModel
         OnPropertyChanged(nameof(RunDurationText));
         _ = EnsureCommAndSendAsync("MACHINE:RESET");
         try { HardwareManager.Instance.Motion.Connect(); } catch { }
+        // 复位流程：只运行一次（主流程由「运行」循环驱动，与复位流程无关）
+        if (FlowViewModel.Instance != null)
+        {
+            AppendLog("执行复位流程（一次）…");
+            _ = FlowViewModel.Instance.RunResetFlowsOnceAsync(System.Threading.CancellationToken.None);
+        }
         AppendLog("已复位");
     }
 

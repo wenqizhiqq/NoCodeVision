@@ -916,6 +916,18 @@ public class VisionFlow : ViewModelBase
 
     public string FlowKind { get; set; } = "Normal";
 
+    private string _flowRole = "Main";
+
+    /// <summary>流程角色：Main=主流程（操作员「运行」后不断循环）；Reset=复位流程（点「复位」时只运行一次）。</summary>
+    public string FlowRole
+    {
+        get => _flowRole;
+        set { if (SetField(ref _flowRole, value)) OnPropertyChanged(nameof(RoleText)); }
+    }
+
+    /// <summary>流程角色显示文本。</summary>
+    public string RoleText => FlowRole == "Reset" ? "复位流程" : "主流程";
+
     public string ScriptContent { get; set; } = "-- 脚本流程示例：视觉 + 运控 + 计算\n-- 1) 视觉：采集图像并匹配模板\nlocal ok = vision.grab()                  -- 抓取一帧图像\nlocal score = vision.match(\"tpl_A.png\") -- 模板匹配，返回相似度 0~1\nprint(\"匹配分数: \" .. tostring(score))\n\n-- 2) 计算：判定是否合格，并换算位移量\nlocal threshold = 0.85\nlocal pass = score >= threshold\nlocal dx = (score - threshold) * 100     -- 分数差 → 位移量(px)\nlocal dist = math.sqrt(dx * dx)           -- 用 math 做计算\nprint(\"是否合格: \" .. tostring(pass) .. \"  位移量: \" .. tostring(dist))\n\n-- 3) 运控：合格则驱动 PLC/轴动作，不合格报警\nif pass then\n    plc.write(200, 1)                     -- 触发运动 / 输出\n    plc.write(201, math.floor(dist))      -- 下发放大后的位移量\n    print(\"运控：已发送到位指令\")\nelse\n    plc.write(200, 0)                     -- 复位 / 报警\n    print(\"运控：未达标，已停止\")\nend\n\nsleep(50)\n";
 
     public ObservableCollection<VisionFlowStep> Steps { get; set; } = new();
@@ -5498,13 +5510,17 @@ public class FlowViewModel : ViewModelBase
 
 
 
-    /// <summary>循环运行全部流程：不停跑完所有流程，直到取消（停止按钮）才跳出循环。</summary>
+    /// <summary>循环运行全部主流程：不停跑完所有主流程（复位流程不参与循环），直到取消（停止按钮）才跳出循环。</summary>
 
     public async Task RunAllFlowsLoopAsync(CancellationToken ct)
 
     {
 
         if (Flows == null || Flows.Count == 0) { Status = "无可用流程"; return; }
+
+        var mainFlows = Flows.Where(f => f.FlowRole != "Reset").ToList();
+
+        if (mainFlows.Count == 0) { Status = "无可用主流程"; return; }
 
         IsRunning = true;
 
@@ -5522,7 +5538,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                foreach (var flow in Flows)
+                foreach (var flow in mainFlows)
 
                 {
 
@@ -5549,6 +5565,54 @@ public class FlowViewModel : ViewModelBase
             IsPaused = false;
 
             Status = ct.IsCancellationRequested ? "已停止 · 全部流程循环" : "完成 · 全部流程循环";
+
+        }
+
+    }
+
+    /// <summary>运行全部复位流程各一次（操作员点「复位」时调用，不循环）。</summary>
+
+    public async Task RunResetFlowsOnceAsync(CancellationToken ct)
+
+    {
+
+        if (Flows == null || Flows.Count == 0) return;
+
+        var resetFlows = Flows.Where(f => f.FlowRole == "Reset").ToList();
+
+        if (resetFlows.Count == 0) { Status = "无复位流程"; return; }
+
+        Status = "运行中 · 复位流程";
+
+        _sharedImage?.Dispose();
+
+        _sharedImage = null;
+
+        try
+
+        {
+
+            foreach (var flow in resetFlows)
+
+            {
+
+                if (ct.IsCancellationRequested) break;
+
+                await RunSingleFlowStepsAsync(flow, ct);
+
+            }
+
+            Status = "完成 · 复位流程";
+
+        }
+
+        finally
+
+        {
+
+            _sharedImage?.Dispose();
+
+            _sharedImage = null;
 
         }
 
