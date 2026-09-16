@@ -3100,11 +3100,13 @@ public class FlowViewModel : ViewModelBase
 
         {
 
+            // —— 分支示例：如果(匹配成功) → 几何测量；否则(匹配失败) 跳过几何测量直接进通讯 ——
+
             new VisionFlowStep
 
             {
 
-                Index = 1, Function = "图像采集", Name = "采集图像", ParamSummary = "打开文件", Timeout = 5000, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始"
+                Index = 1, Function = "图像采集", Name = "采集图像", ParamSummary = "打开文件", Timeout = 5000, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始", LogicRelation = "如果"
 
             },
 
@@ -3112,7 +3114,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                Index = 2, Function = "模板匹配", Name = "模板匹配", ParamSummary = "tpl / score≥0.85", Timeout = 3000, ActualValue = "未匹配", Icon = "🎯", StepType = "TemplateMatch", MatchMode = "灰度匹配", ScoreThreshold = 0.85, RoiX = 80, RoiY = 60, RoiW = 160, RoiH = 120, StatusText = "未开始"
+                Index = 2, Function = "模板匹配", Name = "模板匹配", ParamSummary = "tpl / score≥0.85", Timeout = 3000, ActualValue = "未匹配", Icon = "🎯", StepType = "TemplateMatch", MatchMode = "灰度匹配", ScoreThreshold = 0.85, RoiX = 80, RoiY = 60, RoiW = 160, RoiH = 120, StatusText = "未开始", LogicRelation = "如果"
 
             },
 
@@ -3120,7 +3122,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                Index = 3, Function = "缺陷检测", Name = "缺陷检测", ParamSummary = "差异比对 / 阈值45", Timeout = 3000, ActualValue = "未检测", Icon = "🔍", StepType = "Defect", StatusText = "未开始"
+                Index = 3, Function = "几何测量", Name = "几何测量", ParamSummary = "圆径 / 12.00±0.05", Timeout = 2000, ActualValue = "未测量", Icon = "📐", StepType = "Measure", MeasureType = "圆径", NominalValue = 12.0, Tolerance = 0.05, StatusText = "未开始", LogicRelation = "如果"
 
             },
 
@@ -3128,7 +3130,17 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                Index = 4, Function = "几何测量", Name = "几何测量", ParamSummary = "圆径 / 12.00±0.05", Timeout = 2000, ActualValue = "未测量", Icon = "📐", StepType = "Measure", MeasureType = "圆径", NominalValue = 12.0, Tolerance = 0.05, StatusText = "未开始"
+                Index = 4, Function = "通讯发送", Name = "通讯发送(合格)", ParamSummary = "PLC-串口 / M100=1", Timeout = 1000, ActualValue = "未发送", Icon = "📡", StepType = "Comm", CommChannel = "PLC-串口", CommCmd = "发送", CommContent = "M100=1", CommEncoding = "ASCII", StatusText = "未开始", LogicRelation = "否则"
+
+            },
+
+            // —— 循环示例：如果(循环头,默认不成立) → 循环体；否则 退出循环 ——
+
+            new VisionFlowStep
+
+            {
+
+                Index = 5, Function = "缺陷检测", Name = "缺陷检测", ParamSummary = "差异比对 / 阈值45", Timeout = 3000, ActualValue = "未检测", Icon = "🔍", StepType = "Defect", StatusText = "未开始", LogicRelation = "如果"
 
             },
 
@@ -3136,7 +3148,31 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                Index = 5, Function = "通讯发送", Name = "通讯发送", ParamSummary = "PLC-串口 / M100=1", Timeout = 1000, ActualValue = "未发送", Icon = "📡", StepType = "Comm", CommChannel = "PLC-串口", CommCmd = "发送", CommContent = "M100=1", CommEncoding = "ASCII", StatusText = "未开始"
+                Index = 6, Function = "逻辑判断", Name = "循环条件", ParamSummary = "算子:大于 / 输入值:0.85", Timeout = 1000, ActualValue = "0", Icon = "✅", StepType = "Logic", LogicRelation = "如果", Operator = "大于", InputValue = "0.85", StatusText = "未开始"
+
+            },
+
+            new VisionFlowStep
+
+            {
+
+                Index = 7, Function = "等待延时", Name = "循环体", ParamSummary = "200ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", LogicRelation = "循环", StatusText = "未开始"
+
+            },
+
+            new VisionFlowStep
+
+            {
+
+                Index = 8, Function = "通讯发送", Name = "退出循环", ParamSummary = "PLC-串口 / M200=0", Timeout = 1000, ActualValue = "未发送", Icon = "📡", StepType = "Comm", CommChannel = "PLC-串口", CommCmd = "发送", CommContent = "M200=0", CommEncoding = "ASCII", StatusText = "未开始", LogicRelation = "否则"
+
+            },
+
+            new VisionFlowStep
+
+            {
+
+                Index = 9, Function = "结果输出", Name = "结果输出", ParamSummary = "PLC / OK", Timeout = 1000, ActualValue = "-", Icon = "📤", StepType = "Output", OutputAddress = "PLC_D200", OutputValue = 1, StatusText = "未开始", LogicRelation = "跳出"
 
             },
 
@@ -3148,42 +3184,66 @@ public class FlowViewModel : ViewModelBase
 
 
 
-    /// <summary>运控流程预设：轴运动 → IO控制 → 气缸动作 → 等待延时。</summary>
+    /// <summary>运控流程预设：轴运动 → IO控制 → 气缸动作 → 等待延时，并带逻辑列示例(如果/否则/循环)。</summary>
     private static ObservableCollection<VisionFlowStep> CreateMotionPipeline()
     {
         return new ObservableCollection<VisionFlowStep>
         {
             new VisionFlowStep
             {
-                Index = 1, Function = "轴运动", Name = "轴运动", ParamSummary = "X轴 回原 → 移动 100mm", Timeout = 10000, ActualValue = "未运动", Icon = "🧭", StepType = "AxisMove", StatusText = "未开始"
+                Index = 1, Function = "轴运动", Name = "轴运动", ParamSummary = "X轴 回原 → 移动 100mm", Timeout = 10000, ActualValue = "未运动", Icon = "🦾", StepType = "AxisMove", StatusText = "未开始", LogicRelation = "如果"
             },
             new VisionFlowStep
             {
-                Index = 2, Function = "IO控制", Name = "IO控制", ParamSummary = "OUT0 = ON", Timeout = 1000, ActualValue = "未执行", Icon = "🔌", StepType = "IoControl", StatusText = "未开始"
+                Index = 2, Function = "IO控制", Name = "IO控制", ParamSummary = "OUT0 = ON", Timeout = 1000, ActualValue = "未执行", Icon = "🔌", StepType = "IoControl", StatusText = "未开始", LogicRelation = "如果"
             },
             new VisionFlowStep
             {
-                Index = 3, Function = "气缸动作", Name = "气缸动作", ParamSummary = "夹爪 伸出", Timeout = 2000, ActualValue = "未动作", Icon = "🗜", StepType = "CylinderAction", StatusText = "未开始"
+                Index = 3, Function = "气缸动作", Name = "气缸动作", ParamSummary = "夹爪 伸出", Timeout = 2000, ActualValue = "未动作", Icon = "🟢", StepType = "CylinderAction", StatusText = "未开始", LogicRelation = "如果"
             },
             new VisionFlowStep
             {
-                Index = 4, Function = "等待延时", Name = "等待延时", ParamSummary = "200ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", StatusText = "未开始"
+                Index = 4, Function = "等待延时", Name = "未到位处理", ParamSummary = "200ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", StatusText = "未开始", LogicRelation = "否则"
+            },
+            new VisionFlowStep
+            {
+                Index = 5, Function = "逻辑判断", Name = "重试条件", ParamSummary = "算子:大于 / 输入值:0.85", Timeout = 1000, ActualValue = "0", Icon = "✅", StepType = "Logic", LogicRelation = "如果", Operator = "大于", InputValue = "0.85", StatusText = "未开始"
+            },
+            new VisionFlowStep
+            {
+                Index = 6, Function = "等待延时", Name = "重试循环体", ParamSummary = "100ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", LogicRelation = "循环", StatusText = "未开始"
+            },
+            new VisionFlowStep
+            {
+                Index = 7, Function = "通讯发送", Name = "退出重试", ParamSummary = "PLC-串口 / M200=0", Timeout = 1000, ActualValue = "未发送", Icon = "📡", StepType = "Comm", CommChannel = "PLC-串口", CommCmd = "发送", CommContent = "M200=0", CommEncoding = "ASCII", StatusText = "未开始", LogicRelation = "否则"
             },
         };
     }
 
-    /// <summary>简单视觉流程预设：图像采集 → 模板匹配。</summary>
+    /// <summary>简单视觉流程预设：图像采集 → 模板匹配，并带逻辑列示例(如果/循环/否则)。</summary>
     private static ObservableCollection<VisionFlowStep> CreateSimpleVisionPipeline()
     {
         return new ObservableCollection<VisionFlowStep>
         {
             new VisionFlowStep
             {
-                Index = 1, Function = "图像采集", Name = "采集图像", ParamSummary = "打开文件", Timeout = 5000, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始"
+                Index = 1, Function = "图像采集", Name = "采集图像", ParamSummary = "打开文件", Timeout = 5000, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始", LogicRelation = "如果"
             },
             new VisionFlowStep
             {
-                Index = 2, Function = "模板匹配", Name = "模板匹配", ParamSummary = "tpl / score≥0.85", Timeout = 3000, ActualValue = "未匹配", Icon = "🎯", StepType = "TemplateMatch", MatchMode = "灰度匹配", ScoreThreshold = 0.85, RoiX = 80, RoiY = 60, RoiW = 160, RoiH = 120, StatusText = "未开始"
+                Index = 2, Function = "模板匹配", Name = "模板匹配", ParamSummary = "tpl / score≥0.85", Timeout = 3000, ActualValue = "未匹配", Icon = "🎯", StepType = "TemplateMatch", MatchMode = "灰度匹配", ScoreThreshold = 0.85, RoiX = 80, RoiY = 60, RoiW = 160, RoiH = 120, StatusText = "未开始", LogicRelation = "如果"
+            },
+            new VisionFlowStep
+            {
+                Index = 3, Function = "逻辑判断", Name = "循环条件", ParamSummary = "算子:大于 / 输入值:0.85", Timeout = 1000, ActualValue = "0", Icon = "✅", StepType = "Logic", LogicRelation = "如果", Operator = "大于", InputValue = "0.85", StatusText = "未开始"
+            },
+            new VisionFlowStep
+            {
+                Index = 4, Function = "等待延时", Name = "循环体", ParamSummary = "200ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", LogicRelation = "循环", StatusText = "未开始"
+            },
+            new VisionFlowStep
+            {
+                Index = 5, Function = "通讯发送", Name = "退出循环", ParamSummary = "PLC-串口 / M200=0", Timeout = 1000, ActualValue = "未发送", Icon = "📡", StepType = "Comm", CommChannel = "PLC-串口", CommCmd = "发送", CommContent = "M200=0", CommEncoding = "ASCII", StatusText = "未开始", LogicRelation = "否则"
             },
         };
     }
@@ -4759,6 +4819,16 @@ public class FlowViewModel : ViewModelBase
 
             if (_selectedFlow == null || _selectedStep == null) return;
 
+            var r = System.Windows.MessageBox.Show(
+
+                $"确认删除步骤「{_selectedStep.Function}」？",
+
+                "删除确认", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question,
+
+                System.Windows.MessageBoxResult.No);
+
+            if (r != System.Windows.MessageBoxResult.Yes) return;
+
             _selectedFlow.Steps.Remove(_selectedStep);
 
             Reindex(_selectedFlow);
@@ -5233,6 +5303,16 @@ public class FlowViewModel : ViewModelBase
 
             {
 
+                var r = System.Windows.MessageBox.Show(
+
+                    $"确认清空流程「{_selectedFlow.Name}」的全部 {_selectedFlow.Steps.Count} 个步骤？",
+
+                    "清空确认", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning,
+
+                    System.Windows.MessageBoxResult.No);
+
+                if (r != System.Windows.MessageBoxResult.Yes) return;
+
                 _selectedFlow.Steps.Clear();
 
                 Reindex(_selectedFlow);
@@ -5626,7 +5706,17 @@ public class FlowViewModel : ViewModelBase
 
 
 
-            cursor = NextStepIndex(cursor);
+            var next = NextStepIndex(flow, cursor);
+
+            // 前向跳行：中间未执行的行标记「已跳过」，直观显示逻辑跳行效果
+
+            if (next > cursor + 1)
+
+                for (int s = cursor + 1; s < next && s < flow.Steps.Count; s++)
+
+                    flow.Steps[s].StatusText = "已跳过";
+
+            cursor = next;
 
         }
 
@@ -6673,7 +6763,17 @@ public class FlowViewModel : ViewModelBase
 
     {
 
-        var steps = _selectedFlow?.Steps;
+        return NextStepIndex(_selectedFlow, i);
+
+    }
+
+    /// <summary>根据逻辑列决定下一行：如果/并且/或者 条件不成立跳到「否则」（没有则整块跳过）；循环 跳回最近「如果」；跳出 越过最近「循环」行。</summary>
+
+    private int NextStepIndex(VisionFlow? flow, int i)
+
+    {
+
+        var steps = flow?.Steps;
 
         if (steps == null || i < 0 || i >= steps.Count) return i + 1;
 
@@ -6685,13 +6785,25 @@ public class FlowViewModel : ViewModelBase
 
             case "如果":
 
+            case "并且":
+
+            case "或者":
+
                 if (EvalLogic(step)) return i + 1;
+
+                // 条件不成立：跳到最近一个「否则」行
 
                 for (int j = i + 1; j < steps.Count; j++)
 
                     if (steps[j].LogicRelation == "否则") return j;
 
-                return i + 1;
+                // 没有「否则」：跳过整个条件块（后续连续的 并且/或者 行）
+
+                for (int j = i + 1; j < steps.Count; j++)
+
+                    if (steps[j].LogicRelation != "并且" && steps[j].LogicRelation != "或者") return j;
+
+                return steps.Count;
 
             case "否则":
 
@@ -6699,19 +6811,37 @@ public class FlowViewModel : ViewModelBase
 
             case "循环":
 
+            {
+
+                // 向上找最近的「如果/循环」作为循环头
+
                 for (int k = i - 1; k >= 0; k--)
 
                     if (steps[k].LogicRelation == "如果" || steps[k].LogicRelation == "循环") return k;
 
                 return 0;
 
+            }
+
             case "跳出":
+
+            {
+
+                // 跳出最近循环：越过其后最近的「循环」行
 
                 for (int j = i + 1; j < steps.Count; j++)
 
-                    if (steps[j].LogicRelation == "如果" || steps[j].LogicRelation == "否则" || steps[j].LogicRelation == "循环") return j + 1;
+                    if (steps[j].LogicRelation == "循环") return j + 1;
+
+                // 无循环则越过下一个块行
+
+                for (int j = i + 1; j < steps.Count; j++)
+
+                    if (steps[j].LogicRelation == "如果" || steps[j].LogicRelation == "否则") return j + 1;
 
                 return steps.Count;
+
+            }
 
             default:
 
@@ -6723,6 +6853,8 @@ public class FlowViewModel : ViewModelBase
 
 
 
+    /// <summary>条件求值：本步实测值(ActualValue) 按「运算」列与「输入值」列比较；输入值为空时按本步状态是否成功判断。</summary>
+
     private bool EvalLogic(VisionFlowStep step)
 
     {
@@ -6731,35 +6863,83 @@ public class FlowViewModel : ViewModelBase
 
         {
 
-            double score = 0;
+            var op = string.IsNullOrWhiteSpace(step.Operator) ? "大于等于" : step.Operator;
 
-            var av = step.ActualValue ?? "";
+            var rightRaw = (step.InputValue ?? "").Trim();
 
-            var m = System.Text.RegularExpressions.Regex.Match(av, "score\\s*([0-9.]+)");
+            var leftRaw = step.ActualValue ?? "";
 
-            if (m.Success) double.TryParse(m.Groups[1].Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out score);
+            // 输入值未填：按本步运行状态判断（成功/合格/通过/正常 = 条件成立）
 
-            else
+            if (rightRaw.Length == 0)
 
             {
 
-                var nums = System.Text.RegularExpressions.Regex.Matches(av, "[0-9]+(?:\\.[0-9]+)?");
+                var st = step.StatusText ?? "";
 
-                if (nums.Count > 0) double.TryParse(nums[nums.Count - 1].Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out score);
+                return st.Contains("成功") || st.Contains("合格") || st.Contains("通过")
+
+                    || st.Contains("正常") || st.Contains("完成") || st.Contains("OK");
 
             }
 
-            var expr = (step.LogicExpression ?? "true").Replace("score", score.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            var lm = System.Text.RegularExpressions.Regex.Match(leftRaw, "[-+]?[0-9]*\\.?[0-9]+");
 
-            var res = new System.Data.DataTable().Compute(expr, null);
+            var rm = System.Text.RegularExpressions.Regex.Match(rightRaw, "[-+]?[0-9]*\\.?[0-9]+");
 
-            if (res is bool b) return b;
+            // 两侧都能取到数字 → 数值比较
 
-            if (res is int ii) return ii != 0;
+            if (lm.Success && rm.Success)
 
-            if (res is double dd) return dd != 0;
+            {
 
-            return false;
+                double l = double.Parse(lm.Value, System.Globalization.CultureInfo.InvariantCulture);
+
+                double r = double.Parse(rm.Value, System.Globalization.CultureInfo.InvariantCulture);
+
+                switch (op)
+
+                {
+
+                    case "大于": return l > r;
+
+                    case "小于": return l < r;
+
+                    case "等于": return System.Math.Abs(l - r) < 1e-9;
+
+                    case "大于等于": return l >= r;
+
+                    case "小于等于": return l <= r;
+
+                    case "不等于": return System.Math.Abs(l - r) >= 1e-9;
+
+                    default: return leftRaw.Contains(rightRaw);
+
+                }
+
+            }
+
+            // 否则按文本比较
+
+            switch (op)
+
+            {
+
+                case "包含": return leftRaw.Contains(rightRaw);
+
+                case "不包含": return !leftRaw.Contains(rightRaw);
+
+                case "开头为": return leftRaw.StartsWith(rightRaw);
+
+                case "结尾为": return leftRaw.EndsWith(rightRaw);
+
+                case "等于": return leftRaw.Trim() == rightRaw;
+
+                case "不等于": return leftRaw.Trim() != rightRaw;
+
+                default: return false;
+
+            }
 
         }
 
