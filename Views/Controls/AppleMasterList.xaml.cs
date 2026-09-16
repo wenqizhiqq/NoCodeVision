@@ -36,6 +36,10 @@ public partial class AppleMasterList : UserControl
         DependencyProperty.Register(nameof(AddCommand), typeof(ICommand), typeof(AppleMasterList),
             new PropertyMetadata(null));
 
+    public static readonly DependencyProperty AddTextProperty =
+        DependencyProperty.Register(nameof(AddText), typeof(string), typeof(AppleMasterList),
+            new PropertyMetadata("添加"));
+
     public static readonly DependencyProperty DeleteCommandProperty =
         DependencyProperty.Register(nameof(DeleteCommand), typeof(ICommand), typeof(AppleMasterList),
             new PropertyMetadata(null));
@@ -74,6 +78,13 @@ public partial class AppleMasterList : UserControl
     {
         get => (ICommand)GetValue(AddCommandProperty);
         set => SetValue(AddCommandProperty, value);
+    }
+
+    /// <summary>「添加」按钮显示文本（不同页面可定制，如「添加逻辑视觉」）。</summary>
+    public string AddText
+    {
+        get => (string)GetValue(AddTextProperty);
+        set => SetValue(AddTextProperty, value);
     }
 
     public ICommand DeleteCommand

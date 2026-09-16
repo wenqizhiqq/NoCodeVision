@@ -3148,6 +3148,49 @@ public class FlowViewModel : ViewModelBase
 
 
 
+    /// <summary>运控流程预设：轴运动 → IO控制 → 气缸动作 → 等待延时。</summary>
+    private static ObservableCollection<VisionFlowStep> CreateMotionPipeline()
+    {
+        return new ObservableCollection<VisionFlowStep>
+        {
+            new VisionFlowStep
+            {
+                Index = 1, Function = "轴运动", Name = "轴运动", ParamSummary = "X轴 回原 → 移动 100mm", Timeout = 10000, ActualValue = "未运动", Icon = "🧭", StepType = "AxisMove", StatusText = "未开始"
+            },
+            new VisionFlowStep
+            {
+                Index = 2, Function = "IO控制", Name = "IO控制", ParamSummary = "OUT0 = ON", Timeout = 1000, ActualValue = "未执行", Icon = "🔌", StepType = "IoControl", StatusText = "未开始"
+            },
+            new VisionFlowStep
+            {
+                Index = 3, Function = "气缸动作", Name = "气缸动作", ParamSummary = "夹爪 伸出", Timeout = 2000, ActualValue = "未动作", Icon = "🗜", StepType = "CylinderAction", StatusText = "未开始"
+            },
+            new VisionFlowStep
+            {
+                Index = 4, Function = "等待延时", Name = "等待延时", ParamSummary = "200ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", StatusText = "未开始"
+            },
+        };
+    }
+
+    /// <summary>简单视觉流程预设：图像采集 → 模板匹配。</summary>
+    private static ObservableCollection<VisionFlowStep> CreateSimpleVisionPipeline()
+    {
+        return new ObservableCollection<VisionFlowStep>
+        {
+            new VisionFlowStep
+            {
+                Index = 1, Function = "图像采集", Name = "采集图像", ParamSummary = "打开文件", Timeout = 5000, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始"
+            },
+            new VisionFlowStep
+            {
+                Index = 2, Function = "模板匹配", Name = "模板匹配", ParamSummary = "tpl / score≥0.85", Timeout = 3000, ActualValue = "未匹配", Icon = "🎯", StepType = "TemplateMatch", MatchMode = "灰度匹配", ScoreThreshold = 0.85, RoiX = 80, RoiY = 60, RoiW = 160, RoiH = 120, StatusText = "未开始"
+            },
+        };
+    }
+
+
+
+
     public string[] StepFunctions { get; } = { "图像采集", "模板匹配", "几何测量", "逻辑判断", "结果输出", "缺陷检测", "Lua脚本", "轴运动", "IO控制", "气缸动作", "等待延时", "通讯指令", "颜色检测", "目标计数", "条码识别", "字符识别", "条件分支", "循环", "子流程", "变量计算", "数据保存", "消息提示" };
 
     public string[] PreprocessTypes { get; } = { "灰度化", "二值化", "高斯模糊", "中值滤波", "边缘检测" };
@@ -4257,6 +4300,12 @@ public class FlowViewModel : ViewModelBase
 
     public ICommand AddScriptFlowCmd { get; }
 
+    public ICommand AddMotionFlowCmd { get; }
+
+    public ICommand AddNodeGraphFlowCmd { get; }
+
+    public ICommand AddSimpleVisionFlowCmd { get; }
+
     public ICommand RenameFlowCmd { get; }
 
     public ICommand ClearCmd { get; }
@@ -4435,7 +4484,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                Name = $"新流程-{next}",
+                Name = $"逻辑视觉流程-{next}",
 
                 Icon = "🔀",
 
@@ -4591,6 +4640,50 @@ public class FlowViewModel : ViewModelBase
 
             SelectedFlow = flow;
 
+        }, _ => true);
+
+
+
+        AddMotionFlowCmd = new RelayCommand(_ =>
+        {
+            var next = Flows.Count + 1;
+            var flow = new VisionFlow
+            {
+                Name = $"运控流程-{next}",
+                Icon = "🕹",
+                Steps = CreateMotionPipeline()
+            };
+            Flows.Add(flow);
+            SelectedFlow = flow;
+            SelectedStep = flow.Steps.FirstOrDefault();
+        }, _ => true);
+
+        AddNodeGraphFlowCmd = new RelayCommand(_ =>
+        {
+            var next = Flows.Count + 1;
+            var flow = new VisionFlow
+            {
+                Name = $"节点图流程-{next}",
+                Icon = "🕸",
+                Steps = CreateStandardPipeline()
+            };
+            Flows.Add(flow);
+            SelectedFlow = flow;
+            SelectedStep = flow.Steps.FirstOrDefault();
+        }, _ => true);
+
+        AddSimpleVisionFlowCmd = new RelayCommand(_ =>
+        {
+            var next = Flows.Count + 1;
+            var flow = new VisionFlow
+            {
+                Name = $"简单视觉流程-{next}",
+                Icon = "👁",
+                Steps = CreateSimpleVisionPipeline()
+            };
+            Flows.Add(flow);
+            SelectedFlow = flow;
+            SelectedStep = flow.Steps.FirstOrDefault();
         }, _ => true);
 
 

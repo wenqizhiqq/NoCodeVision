@@ -29,7 +29,7 @@
                 <Button Style="{StaticResource AppleBtn}" Command="{Binding AddCommand, ElementName=Root}" Margin="0,0,8,8">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="➕" FontSize="13" Margin="0,0,6,0" />
-                        <TextBlock Text="添加" />
+                        <TextBlock Text="{Binding AddText, ElementName=Root, FallbackValue=添加}" />
                     </StackPanel>
                 </Button>
                 <Button Style="{StaticResource AppleBtnSecondary}" Command="{Binding DeleteCommand, ElementName=Root}" Margin="0,0,8,8">

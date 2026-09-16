@@ -102,11 +102,15 @@
         <ctrl:AppleMasterList Grid.Column="0" Header="流程方案" HeaderIcon="🔀"
                               ItemsSource="{Binding Flows}" SelectedItem="{Binding SelectedFlow}"
                               AddCommand="{Binding AddFlowCmd}" DeleteCommand="{Binding DeleteFlowCmd}"
+                              AddText="添加逻辑视觉"
                               ItemTemplate="{StaticResource FlowItemTemplate}">
             <ctrl:MasterListBehaviors.FooterContent>
                 <StackPanel Orientation="Horizontal" Margin="8,0,0,0">
                     <Button Style="{StaticResource AppleBtn}" Content="📝 添加脚本流程" Command="{Binding AddScriptFlowCmd}" VerticalAlignment="Center" />
                     <Button Style="{StaticResource AppleBtnSecondary}" Content="✏️ 重命名" Command="{Binding RenameFlowCmd}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                    <Button Style="{StaticResource AppleBtn}" Content="🕹 添加运控" Command="{Binding AddMotionFlowCmd}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                    <Button Style="{StaticResource AppleBtn}" Content="🕸 添加节点图" Command="{Binding AddNodeGraphFlowCmd}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                    <Button Style="{StaticResource AppleBtn}" Content="👁 添加简单视觉" Command="{Binding AddSimpleVisionFlowCmd}" VerticalAlignment="Center" Margin="8,0,0,0" />
                 </StackPanel>
             </ctrl:MasterListBehaviors.FooterContent>
         </ctrl:AppleMasterList>
