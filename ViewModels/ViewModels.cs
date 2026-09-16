@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using System.Collections.Generic;
 
@@ -3101,6 +3101,34 @@ public class FlowViewModel : ViewModelBase
 
             },
 
+
+            // 示例：图像采集(真实图) → 模板匹配(ROI区域自动取模板) → ROI内缺陷检测 → 几何测量(孔径) → 结果通讯
+            new VisionFlow
+            {
+                Name = "示例·零件检测A", Icon = "🧪",
+                Steps = new ObservableCollection<VisionFlowStep>
+                {
+                    new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集零件图", ParamSummary = "打开文件 part_a.png", Timeout = 5000, CostMs = 12.3, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = @"D:\wqz\code\NoCodeVision\SampleImages\part_a.png", StatusText = "未开始" },
+                    new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "ROI定位基准", ParamSummary = "ROI(240,160,160,120) / score≥0.70", Timeout = 3000, CostMs = 8.7, ActualValue = "未匹配", Icon = "🎯", StepType = "TemplateMatch", MatchMode = "灰度匹配", ImageSource = @"D:\wqz\code\NoCodeVision\SampleImages\part_a.png", RoiX = 240, RoiY = 160, RoiW = 160, RoiH = 120, ScoreThreshold = 0.70, StatusText = "未开始" },
+                    new VisionFlowStep { Index = 3, Function = "缺陷检测", Name = "ROI内缺陷比对", ParamSummary = "差异比对 / 阈值45", Timeout = 3000, CostMs = 6.5, ActualValue = "未检测", Icon = "🔍", StepType = "Defect", DiffThreshold = 45, MinAreaFrac = 0.004, StatusText = "未开始" },
+                    new VisionFlowStep { Index = 4, Function = "几何测量", Name = "测量孔径", ParamSummary = "圆径 / 68±5", Timeout = 2000, CostMs = 5.4, ActualValue = "未测量", Icon = "📐", StepType = "Measure", MeasureType = "圆径", NominalValue = 68, Tolerance = 5, RoiX = 436, RoiY = 326, RoiW = 68, RoiH = 68, StatusText = "未开始" },
+                    new VisionFlowStep { Index = 5, Function = "通讯发送", Name = "结果通讯", ParamSummary = "PLC-串口 / RESULT=OK", Timeout = 1000, CostMs = 0.5, ActualValue = "未发送", Icon = "📡", StepType = "Comm", CommChannel = "PLC-串口", CommCmd = "发送", CommContent = "RESULT=OK", CommEncoding = "ASCII", StatusText = "未开始" },
+                }
+            },
+
+            // 示例：第二张真实图，同样流水线（不同底色/标记），用于对比演示
+            new VisionFlow
+            {
+                Name = "示例·零件检测B", Icon = "🧫",
+                Steps = new ObservableCollection<VisionFlowStep>
+                {
+                    new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集零件图", ParamSummary = "打开文件 part_b.png", Timeout = 5000, CostMs = 13.1, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = @"D:\wqz\code\NoCodeVision\SampleImages\part_b.png", StatusText = "未开始" },
+                    new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "ROI定位基准", ParamSummary = "ROI(240,160,160,120) / score≥0.70", Timeout = 3000, CostMs = 9.2, ActualValue = "未匹配", Icon = "🎯", StepType = "TemplateMatch", MatchMode = "灰度匹配", ImageSource = @"D:\wqz\code\NoCodeVision\SampleImages\part_b.png", RoiX = 240, RoiY = 160, RoiW = 160, RoiH = 120, ScoreThreshold = 0.70, StatusText = "未开始" },
+                    new VisionFlowStep { Index = 3, Function = "缺陷检测", Name = "ROI内缺陷比对", ParamSummary = "差异比对 / 阈值45", Timeout = 3000, CostMs = 6.8, ActualValue = "未检测", Icon = "🔍", StepType = "Defect", DiffThreshold = 45, MinAreaFrac = 0.004, StatusText = "未开始" },
+                    new VisionFlowStep { Index = 4, Function = "几何测量", Name = "测量孔径", ParamSummary = "圆径 / 68±5", Timeout = 2000, CostMs = 5.6, ActualValue = "未测量", Icon = "📐", StepType = "Measure", MeasureType = "圆径", NominalValue = 68, Tolerance = 5, RoiX = 436, RoiY = 326, RoiW = 68, RoiH = 68, StatusText = "未开始" },
+                    new VisionFlowStep { Index = 5, Function = "通讯发送", Name = "结果通讯", ParamSummary = "PLC-串口 / RESULT=OK", Timeout = 1000, CostMs = 0.5, ActualValue = "未发送", Icon = "📡", StepType = "Comm", CommChannel = "PLC-串口", CommCmd = "发送", CommContent = "RESULT=OK", CommEncoding = "ASCII", StatusText = "未开始" },
+                }
+            },
         };
 
     }
