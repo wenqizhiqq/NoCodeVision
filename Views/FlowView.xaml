@@ -107,7 +107,7 @@
                     <Button Style="{StaticResource AppleBtn}" Content="📝 添加脚本流程" Command="{Binding AddScriptFlowCmd}" VerticalAlignment="Center" Margin="0,0,8,8" />
                     <Button Style="{StaticResource AppleBtnSecondary}" Content="✏️ 重命名" Command="{Binding RenameFlowCmd}" VerticalAlignment="Center" Margin="0,0,8,8" />
                     <Button Style="{StaticResource AppleBtn}" Content="🕹 添加运控" Command="{Binding AddMotionFlowCmd}" VerticalAlignment="Center" Margin="0,0,8,8" />
-                    <Button Style="{StaticResource AppleBtn}" Content="🖼 添加视觉流程" Command="{Binding AddVisualFlowCmd}" VerticalAlignment="Center" Margin="0,0,8,8" />
+                    <!--<Button Style="{StaticResource AppleBtn}" Content="🖼 添加视觉流程" Command="{Binding AddVisualFlowCmd}" VerticalAlignment="Center" Margin="0,0,8,8" />-->
                 </WrapPanel>
             </ctrl:MasterListBehaviors.FooterContent>
         </ctrl:AppleMasterList>
