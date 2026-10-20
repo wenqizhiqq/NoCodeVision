@@ -3454,6 +3454,8 @@ public class FlowViewModel : ViewModelBase
 
             _stepCursor = 0;
 
+            ResetNodeGraphStepping();
+
             NodeGraph.Bind(value);
 
             // 切换流程时重置脚本调试状态
@@ -5343,6 +5345,16 @@ public class FlowViewModel : ViewModelBase
 
             if (_selectedFlow == null || _selectedFlow.Steps.Count == 0) return;
 
+            if (_selectedFlow.FlowKind == "NodeGraph")
+
+            {
+
+                StepNodeGraphOnce(_selectedFlow);
+
+                return;
+
+            }
+
             if (_stepCursor >= _selectedFlow.Steps.Count) { _stepCursor = 0; _sharedImage?.Dispose(); _sharedImage = null; }
 
             var step = _selectedFlow.Steps[_stepCursor];
@@ -5913,11 +5925,9 @@ public class FlowViewModel : ViewModelBase
 
         _curProductDefects = 0;
 
-        var hasIncoming = new HashSet<string>(flow.Links.Select(l => l.ToId));
+        var roots = GraphRoots(flow);
 
-        var roots = steps.Where(s => !hasIncoming.Contains(s.NodeId)).ToList();
-
-        if (roots.Count == 0) roots.Add(steps[0]);
+        ResetNodeGraphStepping();
 
         int guard = 0;
 
@@ -5988,6 +5998,94 @@ public class FlowViewModel : ViewModelBase
         }
 
         return pick == null ? null : flow.Steps.FirstOrDefault(s => s.NodeId == pick.ToId);
+
+    }
+
+
+
+    /// <summary>节点图的入口：没有任何入线的节点；全图都有入线（成环）时退化为第一个节点。</summary>
+
+    private static List<VisionFlowStep> GraphRoots(VisionFlow flow)
+
+    {
+
+        var hasIncoming = new HashSet<string>(flow.Links.Select(l => l.ToId));
+
+        var roots = flow.Steps.Where(s => !hasIncoming.Contains(s.NodeId)).ToList();
+
+        if (roots.Count == 0 && flow.Steps.Count > 0) roots.Add(flow.Steps[0]);
+
+        return roots;
+
+    }
+
+
+
+    private VisionFlowStep? _graphStepCursor;
+
+    private int _graphRootIndex;
+
+
+
+    private void ResetNodeGraphStepping()
+
+    {
+
+        _graphStepCursor = null;
+
+        _graphRootIndex = 0;
+
+    }
+
+
+
+    /// <summary>节点图单步：沿连线一节点一节点往下走，一条链走完自动切到下一条入口链。</summary>
+
+    private void StepNodeGraphOnce(VisionFlow flow)
+
+    {
+
+        if (_graphStepCursor == null)
+
+        {
+
+            var roots = GraphRoots(flow);
+
+            if (roots.Count == 0) return;
+
+            if (_graphRootIndex >= roots.Count) _graphRootIndex = 0;
+
+            _graphStepCursor = roots[_graphRootIndex];
+
+        }
+
+        var step = _graphStepCursor;
+
+        SelectedStep = step;
+
+        RunStep(step, new RotatedTemplateMatcher());
+
+        var next = NextGraphNode(flow, step);
+
+        if (next == null)
+
+        {
+
+            _graphRootIndex++;
+
+            _graphStepCursor = null;
+
+        }
+
+        else
+
+        {
+
+            _graphStepCursor = next;
+
+        }
+
+        Status = "单步完成 · 第" + step.Index + "步 " + step.Name;
 
     }
 

@@ -105,14 +105,21 @@
 
     </UserControl.Resources>
 
-    <Grid>
+    <!-- 左右两条边界线：把中间工作区和「流程方案」列表、右侧属性页分开 -->
+    <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="1,0" Padding="12,0">
+      <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="172" />
+            <ColumnDefinition Width="176" />
+            <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
         <!-- 左：算子库（按住拖到右侧画布即生成节点） -->
-        <Border Grid.Column="0" Style="{StaticResource AppleGroupCard}" Margin="0,0,8,0" Padding="10,8">
+        <Border Grid.Column="0" Grid.Row="0" Style="{StaticResource AppleGroupCard}" Padding="10,8">
             <DockPanel>
                 <TextBlock DockPanel.Dock="Top" Style="{StaticResource AppleSectionHeader}" Text="算子库" />
                 <TextBlock DockPanel.Dock="Top"
@@ -148,8 +155,12 @@
             </DockPanel>
         </Border>
 
+        <!-- 算子库与画布之间的分隔线 -->
+        <Rectangle Grid.Column="1" Grid.Row="0" Width="1" Margin="10,8" HorizontalAlignment="Center"
+                   Fill="{StaticResource LineBrush}" />
+
         <!-- 中：节点图画布 -->
-        <nodify:NodifyEditor x:Name="Editor" Grid.Column="1"
+        <nodify:NodifyEditor x:Name="Editor" Grid.Column="2" Grid.Row="0"
                              AllowDrop="True"
                              Drop="OnCanvasDrop"
                              DragOver="OnCanvasDragOver"
@@ -174,7 +185,7 @@
         </nodify:NodifyEditor>
 
         <!-- 空画布引导 -->
-        <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+        <Border Grid.Column="2" Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
             <Border.Style>
                 <Style TargetType="Border">
                     <Setter Property="Visibility" Value="Collapsed" />
@@ -198,5 +209,21 @@
                            Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,0" />
             </StackPanel>
         </Border>
-    </Grid>
+
+        <!-- 底部运行控制条：与「流程」页工具栏复用同一套命令（节点图按连线顺序执行） -->
+        <Border Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="1"
+                Style="{StaticResource AppleGroupCard}" Padding="14,10" Margin="0,12,0,0">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Style="{StaticResource AppleBtn}" Content="▶▶ 运行" Command="{Binding RunCmd}" VerticalAlignment="Center" />
+                <Button Style="{StaticResource AppleBtn}" Content="▶ 单步运行" Command="{Binding StepRunCmd}" Margin="10,0,0,0" VerticalAlignment="Center" />
+                <Button Style="{StaticResource AppleBtn}" Content="{Binding PauseResumeText}" Command="{Binding PauseResumeCmd}" Margin="10,0,0,0" VerticalAlignment="Center" />
+                <Button Style="{StaticResource AppleBtn}" Content="⏹ 停止" Command="{Binding StopCmd}" Margin="10,0,0,0" VerticalAlignment="Center" />
+                <Rectangle Width="1" Height="24" Fill="{StaticResource LineBrush}" Margin="12,0" VerticalAlignment="Center" />
+                <Border Style="{StaticResource AppleStatusPill}" Background="{StaticResource AccentSoftBrush}" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Status}" FontSize="12" Foreground="{StaticResource AccentBrush}" />
+                </Border>
+            </StackPanel>
+        </Border>
+      </Grid>
+    </Border>
 </UserControl>
