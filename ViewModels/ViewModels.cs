@@ -1234,17 +1234,17 @@ public class ProjectExample
             case "ex_cam_mqtt":
             {
                 var s = new List<VisionFlowStep>();
-                var c1 = MkStep(1, "图像采集", "采集图像", "ImageCapture", captureMode, "采", 5000); c1.CaptureMode = captureMode; s.Add(c1);
+                var c1 = MkStep(1, "拍张照片", "采集图像", "ImageCapture", captureMode, "采", 5000); c1.CaptureMode = captureMode; s.Add(c1);
                 s.Add(MkStep(2, "图像预处理", "增强去噪", "Preprocess", "灰度化/滤波/二值", "处"));
-                var m1 = MkStep(3, "模板匹配", "定位基准", "TemplateMatch", "灰度匹配 / score>=0.85", "匹"); m1.MatchMode = "灰度匹配"; m1.ScoreThreshold = 0.85; m1.RoiX = 80; m1.RoiY = 60; m1.RoiW = 160; m1.RoiH = 120; s.Add(m1);
-                var g1 = MkStep(4, "几何测量", "测量孔径", "Measure", "圆径 / 12.00±0.05", "测"); g1.MeasureType = "圆径"; g1.NominalValue = 12.0; g1.Tolerance = 0.05; s.Add(g1);
-                s.Add(MkStep(5, "缺陷检测", "缺陷检测", "Defect", "差异比对 / 阈值45", "缺"));
+                var m1 = MkStep(3, "图里找图案", "定位基准", "TemplateMatch", "灰度匹配 / score>=0.85", "匹"); m1.MatchMode = "灰度匹配"; m1.ScoreThreshold = 0.85; m1.RoiX = 80; m1.RoiY = 60; m1.RoiW = 160; m1.RoiH = 120; s.Add(m1);
+                var g1 = MkStep(4, "量尺寸", "测量孔径", "Measure", "圆径 / 12.00±0.05", "测"); g1.MeasureType = "圆径"; g1.NominalValue = 12.0; g1.Tolerance = 0.05; s.Add(g1);
+                s.Add(MkStep(5, "挑瑕疵", "缺陷检测", "Defect", "差异比对 / 阈值45", "缺"));
                 var o1 = MkStep(6, "通讯发送", "结果外发", "Comm", "MQTT 发送结果", "发"); o1.CommChannel = "MQTT"; o1.CommCmd = "发送"; o1.CommContent = "{\"result\":\"$(Result)\"}"; o1.CommEncoding = "ASCII"; s.Add(o1);
-                s.Add(MkStep(7, "结果输出", "输出结果", "Output", "输出到结果表", "出"));
+                s.Add(MkStep(7, "报结果", "输出结果", "Output", "输出到结果表", "出"));
                 flows.Add(MkFlow("主检测流程", s));
 
                 var s2 = new List<VisionFlowStep>();
-                var c2 = MkStep(1, "图像采集", "采集模板图", "ImageCapture", captureMode, "采", 5000); c2.CaptureMode = captureMode; s2.Add(c2);
+                var c2 = MkStep(1, "拍张照片", "采集模板图", "ImageCapture", captureMode, "采", 5000); c2.CaptureMode = captureMode; s2.Add(c2);
                 s2.Add(MkStep(2, "ROI设置", "标定区域", "RoiSet", "ROI 80,60,160,120", "区"));
                 s2.Add(MkStep(3, "模板保存", "保存模板", "TemplateSave", "保存灰度模板", "模"));
                 s2.Add(MkStep(4, "参数校验", "校验参数", "Verify", "校验匹配阈值", "验"));
@@ -1256,17 +1256,17 @@ public class ProjectExample
                 var s = new List<VisionFlowStep>();
                 var c1 = MkStep(1, "打开文件", "读取样本", "ImageOpen", "打开文件夹", "文", 3000); c1.CaptureMode = "打开文件"; s.Add(c1);
                 s.Add(MkStep(2, "图像增强", "增强对比", "Preprocess", "直方图均衡/滤波", "处"));
-                s.Add(MkStep(3, "缺陷检测", "差异比对", "Defect", "模板差异比对 / 阈值40", "缺"));
+                s.Add(MkStep(3, "挑瑕疵", "差异比对", "Defect", "模板差异比对 / 阈值40", "缺"));
                 s.Add(MkStep(4, "合格判定", "判定结果", "Judge", "score>=0.9 合格", "判"));
                 s.Add(MkStep(5, "计数统计", "良品计数", "Count", "良/不良计数", "数"));
-                s.Add(MkStep(6, "结果输出", "输出结果", "Output", "输出到结果表", "出"));
+                s.Add(MkStep(6, "报结果", "输出结果", "Output", "输出到结果表", "出"));
                 flows.Add(MkFlow("批量检测流程", s));
 
                 var s2 = new List<VisionFlowStep>();
                 s2.Add(MkStep(1, "读取结果", "汇总数据", "ReadResult", "读取结果表", "读"));
                 s2.Add(MkStep(2, "良率统计", "计算良率", "Statistics", "良率/CPK 统计", "统"));
                 var o2 = MkStep(3, "通讯发送", "网口上报", "Comm", "网口发送汇总", "发"); o2.CommChannel = "网口"; o2.CommCmd = "发送"; o2.CommContent = "{\"yield\":\"$(Yield)\"}"; o2.CommEncoding = "ASCII"; s2.Add(o2);
-                s2.Add(MkStep(4, "结果输出", "输出报告", "Output", "输出统计报告", "出"));
+                s2.Add(MkStep(4, "报结果", "输出报告", "Output", "输出统计报告", "出"));
                 flows.Add(MkFlow("汇总统计流程", s2));
                 break;
             }
@@ -1274,10 +1274,10 @@ public class ProjectExample
             {
                 var s = new List<VisionFlowStep>();
                 var c1 = MkStep(1, "硬件触发", "飞拍采集", "ImageCapture", "硬触发/飞拍", "采", 2000); c1.CaptureMode = "采集相机"; s.Add(c1);
-                var m1 = MkStep(2, "模板匹配", "飞拍定位", "TemplateMatch", "灰度匹配 / score>=0.8", "匹"); m1.MatchMode = "灰度匹配"; m1.ScoreThreshold = 0.8; m1.RoiX = 60; m1.RoiY = 40; m1.RoiW = 200; m1.RoiH = 150; s.Add(m1);
-                var g1 = MkStep(3, "几何测量", "测量位置", "Measure", "中心坐标/角度", "测"); g1.MeasureType = "位置"; s.Add(g1);
+                var m1 = MkStep(2, "图里找图案", "飞拍定位", "TemplateMatch", "灰度匹配 / score>=0.8", "匹"); m1.MatchMode = "灰度匹配"; m1.ScoreThreshold = 0.8; m1.RoiX = 60; m1.RoiY = 40; m1.RoiW = 200; m1.RoiH = 150; s.Add(m1);
+                var g1 = MkStep(3, "量尺寸", "测量位置", "Measure", "中心坐标/角度", "测"); g1.MeasureType = "位置"; s.Add(g1);
                 var o1 = MkStep(4, "通讯发送", "PLC 坐标", "Comm", "串口下发坐标", "发"); o1.CommChannel = "串口"; o1.CommCmd = "发送"; o1.CommContent = "X=$(X),Y=$(Y),A=$(Angle)"; o1.CommEncoding = "ASCII"; s.Add(o1);
-                s.Add(MkStep(5, "结果输出", "输出结果", "Output", "输出到结果表", "出"));
+                s.Add(MkStep(5, "报结果", "输出结果", "Output", "输出到结果表", "出"));
                 flows.Add(MkFlow("飞拍检测流程", s));
 
                 var s2 = new List<VisionFlowStep>();
@@ -1290,11 +1290,11 @@ public class ProjectExample
             case "ex_cam_udp":
             {
                 var s = new List<VisionFlowStep>();
-                var c1 = MkStep(1, "图像采集", "采集图像", "ImageCapture", captureMode, "采", 5000); c1.CaptureMode = captureMode; s.Add(c1);
+                var c1 = MkStep(1, "拍张照片", "采集图像", "ImageCapture", captureMode, "采", 5000); c1.CaptureMode = captureMode; s.Add(c1);
                 s.Add(MkStep(2, "ROI设置", "测量区域", "RoiSet", "ROI 50,50,200,120", "区"));
-                var g1 = MkStep(3, "几何测量", "圆径测量", "Measure", "圆径 / 12.00±0.05", "测"); g1.MeasureType = "圆径"; g1.NominalValue = 12.0; g1.Tolerance = 0.05; s.Add(g1);
-                var g2 = MkStep(4, "几何测量", "边距测量", "Measure", "边距 / 45.0±0.1", "测"); g2.MeasureType = "边距"; g2.NominalValue = 45.0; g2.Tolerance = 0.1; s.Add(g2);
-                var g3 = MkStep(5, "几何测量", "角度测量", "Measure", "角度 / 90±0.5", "测"); g3.MeasureType = "角度"; g3.NominalValue = 90.0; g3.Tolerance = 0.5; s.Add(g3);
+                var g1 = MkStep(3, "量尺寸", "圆径测量", "Measure", "圆径 / 12.00±0.05", "测"); g1.MeasureType = "圆径"; g1.NominalValue = 12.0; g1.Tolerance = 0.05; s.Add(g1);
+                var g2 = MkStep(4, "量尺寸", "边距测量", "Measure", "边距 / 45.0±0.1", "测"); g2.MeasureType = "边距"; g2.NominalValue = 45.0; g2.Tolerance = 0.1; s.Add(g2);
+                var g3 = MkStep(5, "量尺寸", "角度测量", "Measure", "角度 / 90±0.5", "测"); g3.MeasureType = "角度"; g3.NominalValue = 90.0; g3.Tolerance = 0.5; s.Add(g3);
                 s.Add(MkStep(6, "合格判定", "判定结果", "Judge", "全部公差内合格", "判"));
                 var o1 = MkStep(7, "通讯发送", "UDP 广播", "Comm", "UDP 广播测量值", "发"); o1.CommChannel = "UDP"; o1.CommCmd = "发送"; o1.CommContent = "{\"d\":$(Dia),\"e\":$(Edge)}"; o1.CommEncoding = "ASCII"; s.Add(o1);
                 flows.Add(MkFlow("尺寸测量流程", s));
@@ -1302,20 +1302,20 @@ public class ProjectExample
                 var s2 = new List<VisionFlowStep>();
                 s2.Add(MkStep(1, "数据采集", "采集样本", "ReadResult", "读取测量值", "读"));
                 s2.Add(MkStep(2, "SPC统计", "CPK 计算", "Statistics", "均值/CPK/趋势", "统"));
-                s2.Add(MkStep(3, "结果输出", "输出趋势", "Output", "输出 SPC 报告", "出"));
+                s2.Add(MkStep(3, "报结果", "输出趋势", "Output", "输出 SPC 报告", "出"));
                 flows.Add(MkFlow("SPC统计流程", s2));
                 break;
             }
             case "ex_ocr_mqtt":
             {
                 var s = new List<VisionFlowStep>();
-                var c1 = MkStep(1, "图像采集", "采集图像", "ImageCapture", captureMode, "采", 5000); c1.CaptureMode = captureMode; s.Add(c1);
+                var c1 = MkStep(1, "拍张照片", "采集图像", "ImageCapture", captureMode, "采", 5000); c1.CaptureMode = captureMode; s.Add(c1);
                 s.Add(MkStep(2, "ROI设置", "字符区域", "RoiSet", "ROI 30,20,200,40", "区"));
-                s.Add(MkStep(3, "字符识别", "OCR 识别", "Ocr", "识别批次号", "字"));
+                s.Add(MkStep(3, "认文字", "OCR 识别", "Ocr", "识别批次号", "字"));
                 s.Add(MkStep(4, "二维码", "读取二维码", "QrCode", "读取 QR/条码", "码"));
                 s.Add(MkStep(5, "MES校验", "比对校验", "MesCheck", "与 MES 比对", "校"));
                 var o1 = MkStep(6, "通讯发送", "MQTT 回传", "Comm", "MQTT 回传识别", "发"); o1.CommChannel = "MQTT"; o1.CommCmd = "发送"; o1.CommContent = "{\"sn\":\"$(SN)\"}"; o1.CommEncoding = "ASCII"; s.Add(o1);
-                s.Add(MkStep(7, "结果输出", "输出结果", "Output", "输出到结果表", "出"));
+                s.Add(MkStep(7, "报结果", "输出结果", "Output", "输出到结果表", "出"));
                 flows.Add(MkFlow("OCR识别流程", s));
 
                 var s2 = new List<VisionFlowStep>();
@@ -1329,10 +1329,10 @@ public class ProjectExample
                 var s = new List<VisionFlowStep>();
                 var c1 = MkStep(1, "硬件触发", "采集图像", "ImageCapture", "硬触发采集", "采", 2000); c1.CaptureMode = "采集相机"; s.Add(c1);
                 s.Add(MkStep(2, "颜色识别", "颜色分析", "ColorDetect", "HSV 颜色分类", "色"));
-                s.Add(MkStep(3, "缺陷检测", "缺陷检测", "Defect", "表面缺陷比对", "缺"));
+                s.Add(MkStep(3, "挑瑕疵", "缺陷检测", "Defect", "表面缺陷比对", "缺"));
                 s.Add(MkStep(4, "等级判定", "分级", "Judge", "按等级分级", "判"));
                 var o1 = MkStep(5, "通讯发送", "分拣指令", "Comm", "网口下发分拣", "发"); o1.CommChannel = "网口"; o1.CommCmd = "发送"; o1.CommContent = "{\"grade\":$(Grade)}"; o1.CommEncoding = "ASCII"; s.Add(o1);
-                s.Add(MkStep(6, "结果输出", "输出结果", "Output", "输出到结果表", "出"));
+                s.Add(MkStep(6, "报结果", "输出结果", "Output", "输出到结果表", "出"));
                 flows.Add(MkFlow("分拣检测流程", s));
 
                 var s2 = new List<VisionFlowStep>();
@@ -1344,24 +1344,24 @@ public class ProjectExample
             case "ex_multi_cam":
             {
                 var sl = new List<VisionFlowStep>();
-                var cl = MkStep(1, "图像采集", "左相机采集", "ImageCapture", "Camera_L", "采", 5000); cl.CaptureMode = "采集相机"; sl.Add(cl);
+                var cl = MkStep(1, "拍张照片", "左相机采集", "ImageCapture", "Camera_L", "采", 5000); cl.CaptureMode = "采集相机"; sl.Add(cl);
                 sl.Add(MkStep(2, "ROI设置", "左区", "RoiSet", "ROI 0,0,400,300", "区"));
-                sl.Add(MkStep(3, "模板匹配", "左局部匹配", "TemplateMatch", "灰度匹配 / 左半幅", "匹"));
-                sl.Add(MkStep(4, "缺陷检测", "左缺陷", "Defect", "左半幅缺陷", "缺"));
+                sl.Add(MkStep(3, "图里找图案", "左局部匹配", "TemplateMatch", "灰度匹配 / 左半幅", "匹"));
+                sl.Add(MkStep(4, "挑瑕疵", "左缺陷", "Defect", "左半幅缺陷", "缺"));
                 flows.Add(MkFlow("左相机流程", sl));
 
                 var sr = new List<VisionFlowStep>();
-                var cr = MkStep(1, "图像采集", "右相机采集", "ImageCapture", "Camera_R", "采", 5000); cr.CaptureMode = "采集相机"; sr.Add(cr);
+                var cr = MkStep(1, "拍张照片", "右相机采集", "ImageCapture", "Camera_R", "采", 5000); cr.CaptureMode = "采集相机"; sr.Add(cr);
                 sr.Add(MkStep(2, "ROI设置", "右区", "RoiSet", "ROI 400,0,400,300", "区"));
-                sr.Add(MkStep(3, "模板匹配", "右局部匹配", "TemplateMatch", "灰度匹配 / 右半幅", "匹"));
-                sr.Add(MkStep(4, "缺陷检测", "右缺陷", "Defect", "右半幅缺陷", "缺"));
+                sr.Add(MkStep(3, "图里找图案", "右局部匹配", "TemplateMatch", "灰度匹配 / 右半幅", "匹"));
+                sr.Add(MkStep(4, "挑瑕疵", "右缺陷", "Defect", "右半幅缺陷", "缺"));
                 flows.Add(MkFlow("右相机流程", sr));
 
                 var sp = new List<VisionFlowStep>();
                 sp.Add(MkStep(1, "图像拼接", "全景合成", "Stitch", "左右拼接全景", "拼"));
-                sp.Add(MkStep(2, "缺陷检测", "全景缺陷", "Defect", "全景缺陷比对", "缺"));
+                sp.Add(MkStep(2, "挑瑕疵", "全景缺陷", "Defect", "全景缺陷比对", "缺"));
                 var op = MkStep(3, "通讯发送", "MQTT 上报", "Comm", "MQTT 上报结果", "发"); op.CommChannel = "MQTT"; op.CommCmd = "发送"; op.CommContent = "{\"panel\":\"$(Result)\"}"; op.CommEncoding = "ASCII"; sp.Add(op);
-                sp.Add(MkStep(4, "结果输出", "输出结果", "Output", "输出到结果表", "出"));
+                sp.Add(MkStep(4, "报结果", "输出结果", "Output", "输出到结果表", "出"));
                 flows.Add(MkFlow("拼接判定流程", sp));
                 break;
             }
@@ -1372,7 +1372,7 @@ public class ProjectExample
                 s.Add(MkStep(2, "目标检测", "检测目标", "Detect", "轮廓/模板检测", "检"));
                 s.Add(MkStep(3, "计数", "目标计数", "Count", "计数目标数量", "数"));
                 s.Add(MkStep(4, "正反面", "正反面判定", "FlipCheck", "判定正反面", "翻"));
-                s.Add(MkStep(5, "结果输出", "输出结果", "Output", "输出到结果表", "出"));
+                s.Add(MkStep(5, "报结果", "输出结果", "Output", "输出到结果表", "出"));
                 flows.Add(MkFlow("计数流程", s));
 
                 var s2 = new List<VisionFlowStep>();
@@ -1385,14 +1385,14 @@ public class ProjectExample
             case "ex_calib_local":
             {
                 var s = new List<VisionFlowStep>();
-                var c1 = MkStep(1, "图像采集", "采集标准件", "ImageCapture", captureMode, "采", 5000); c1.CaptureMode = captureMode; s.Add(c1);
+                var c1 = MkStep(1, "拍张照片", "采集标准件", "ImageCapture", captureMode, "采", 5000); c1.CaptureMode = captureMode; s.Add(c1);
                 s.Add(MkStep(2, "ROI标定", "标定区域", "RoiSet", "ROI 标定基准", "区"));
                 s.Add(MkStep(3, "模板保存", "保存模板", "TemplateSave", "保存基准模板", "模"));
                 s.Add(MkStep(4, "参数固化", "固化参数", "Verify", "固化标定参数", "验"));
                 flows.Add(MkFlow("模板采集流程", s));
 
                 var s2 = new List<VisionFlowStep>();
-                var c2 = MkStep(1, "图像采集", "采集验证", "ImageCapture", captureMode, "采", 5000); c2.CaptureMode = captureMode; s2.Add(c2);
+                var c2 = MkStep(1, "拍张照片", "采集验证", "ImageCapture", captureMode, "采", 5000); c2.CaptureMode = captureMode; s2.Add(c2);
                 s2.Add(MkStep(2, "匹配验证", "匹配验证", "TemplateMatch", "灰度匹配验证", "匹"));
                 s2.Add(MkStep(3, "误差统计", "误差统计", "Statistics", "统计定位误差", "统"));
                 s2.Add(MkStep(4, "报告输出", "输出报告", "Report", "输出标定报告", "报"));
@@ -1708,6 +1708,8 @@ public class ProjectViewModel : ViewModelBase
             FlowViewModel.Instance.Flows.Clear();
 
             foreach (var f in p.Flows) FlowViewModel.Instance.Flows.Add(CloneFlow(f));
+
+            FlowViewModel.NormalizeStepNames(FlowViewModel.Instance.Flows);
 
         }
 
@@ -3088,15 +3090,15 @@ public class FlowViewModel : ViewModelBase
 
                 {
 
-                    new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集左视野", ParamSummary = "打开文件", Timeout = 5000, CostMs = 12.3, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始" },
+                    new VisionFlowStep { Index = 1, Function = "拍张照片", Name = "采集左视野", ParamSummary = "打开文件", Timeout = 5000, CostMs = 12.3, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始" },
 
-                    new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "定位基准", ParamSummary = "tpl_A / score≥0.85", Timeout = 3000, CostMs = 8.7, ActualValue = "(120,88)", Icon = "🎯", StepType = "TemplateMatch", ImageSource = "tpl_A.png", TemplateFile = "tpl_A.png", RoiX=80, RoiY=60, RoiW=160, RoiH=120, ScoreThreshold=0.85, StatusText = "匹配成功" },
+                    new VisionFlowStep { Index = 2, Function = "图里找图案", Name = "定位基准", ParamSummary = "tpl_A / score≥0.85", Timeout = 3000, CostMs = 8.7, ActualValue = "(120,88)", Icon = "🎯", StepType = "TemplateMatch", ImageSource = "tpl_A.png", TemplateFile = "tpl_A.png", RoiX=80, RoiY=60, RoiW=160, RoiH=120, ScoreThreshold=0.85, StatusText = "匹配成功" },
 
-                    new VisionFlowStep { Index = 3, Function = "几何测量", Name = "测量孔径", ParamSummary = "圆径 / 12.00±0.05", Timeout = 2000, CostMs = 5.4, ActualValue = "12.03", Icon = "📐", StepType = "Measure", StatusText = "尺寸合格" },
+                    new VisionFlowStep { Index = 3, Function = "量尺寸", Name = "测量孔径", ParamSummary = "圆径 / 12.00±0.05", Timeout = 2000, CostMs = 5.4, ActualValue = "12.03", Icon = "📐", StepType = "Measure", StatusText = "尺寸合格" },
 
-                    new VisionFlowStep { Index = 4, Function = "逻辑判断", Name = "判定合格", ParamSummary = "孔径 OK", Timeout = 1000, CostMs = 0.2, ActualValue = "Pass", Icon = "✅", StepType = "Logic", StatusText = "通过" },
+                    new VisionFlowStep { Index = 4, Function = "判一下对不对", Name = "判定合格", ParamSummary = "孔径 OK", Timeout = 1000, CostMs = 0.2, ActualValue = "Pass", Icon = "✅", StepType = "Logic", StatusText = "通过" },
 
-                    new VisionFlowStep { Index = 5, Function = "结果输出", Name = "输出结果", ParamSummary = "PLC_D200=1", Timeout = 1000, CostMs = 0.5, ActualValue = "Done", Icon = "📤", StepType = "Output", StatusText = "已完成" },
+                    new VisionFlowStep { Index = 5, Function = "报结果", Name = "输出结果", ParamSummary = "PLC_D200=1", Timeout = 1000, CostMs = 0.5, ActualValue = "Done", Icon = "📤", StepType = "Output", StatusText = "已完成" },
 
                 }
 
@@ -3112,9 +3114,9 @@ public class FlowViewModel : ViewModelBase
 
                 {
 
-                    new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集顶视野", ParamSummary = "打开文件", Timeout = 5000, CostMs = 15.1, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始" },
+                    new VisionFlowStep { Index = 1, Function = "拍张照片", Name = "采集顶视野", ParamSummary = "打开文件", Timeout = 5000, CostMs = 15.1, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始" },
 
-                    new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "找中心点", ParamSummary = "tpl_center / score≥0.80", Timeout = 3000, CostMs = 9.2, ActualValue = "(512,384)", Icon = "🎯", StepType = "TemplateMatch", ImageSource = "tpl_center.png", TemplateFile = "tpl_center.png", RoiX=200, RoiY=150, RoiW=180, RoiH=140, ScoreThreshold=0.80, StatusText = "匹配成功" },
+                    new VisionFlowStep { Index = 2, Function = "图里找图案", Name = "找中心点", ParamSummary = "tpl_center / score≥0.80", Timeout = 3000, CostMs = 9.2, ActualValue = "(512,384)", Icon = "🎯", StepType = "TemplateMatch", ImageSource = "tpl_center.png", TemplateFile = "tpl_center.png", RoiX=200, RoiY=150, RoiW=180, RoiH=140, ScoreThreshold=0.80, StatusText = "匹配成功" },
 
                 }
 
@@ -3130,9 +3132,9 @@ public class FlowViewModel : ViewModelBase
 
                 {
 
-                    new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集检测图", ParamSummary = "打开文件", Timeout = 5000, CostMs = 12.3, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始" },
+                    new VisionFlowStep { Index = 1, Function = "拍张照片", Name = "采集检测图", ParamSummary = "打开文件", Timeout = 5000, CostMs = 12.3, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始" },
 
-                    new VisionFlowStep { Index = 2, Function = "几何测量", Name = "测量边距", ParamSummary = "距离 / 45.0±0.1", Timeout = 2000, CostMs = 6.8, ActualValue = "45.02", Icon = "📐", StepType = "Measure", MeasureType="边距", RoiX=50, RoiY=50, RoiW=200, RoiH=100, StatusText = "尺寸合格" },
+                    new VisionFlowStep { Index = 2, Function = "量尺寸", Name = "测量边距", ParamSummary = "距离 / 45.0±0.1", Timeout = 2000, CostMs = 6.8, ActualValue = "45.02", Icon = "📐", StepType = "Measure", MeasureType="边距", RoiX=50, RoiY=50, RoiW=200, RoiH=100, StatusText = "尺寸合格" },
 
                 }
 
@@ -3145,10 +3147,10 @@ public class FlowViewModel : ViewModelBase
                 Name = "示例·零件检测A", Icon = "🧪",
                 Steps = new ObservableCollection<VisionFlowStep>
                 {
-                    new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集零件图", ParamSummary = "打开文件 part_a.png", Timeout = 5000, CostMs = 12.3, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = @"D:\wqz\code\NoCodeVision\SampleImages\part_a.png", StatusText = "未开始" },
-                    new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "ROI定位基准", ParamSummary = "ROI(240,160,160,120) / score≥0.70", Timeout = 3000, CostMs = 8.7, ActualValue = "未匹配", Icon = "🎯", StepType = "TemplateMatch", MatchMode = "灰度匹配", ImageSource = @"D:\wqz\code\NoCodeVision\SampleImages\part_a.png", RoiX = 240, RoiY = 160, RoiW = 160, RoiH = 120, ScoreThreshold = 0.70, StatusText = "未开始" },
-                    new VisionFlowStep { Index = 3, Function = "缺陷检测", Name = "ROI内缺陷比对", ParamSummary = "差异比对 / 阈值45", Timeout = 3000, CostMs = 6.5, ActualValue = "未检测", Icon = "🔍", StepType = "Defect", DiffThreshold = 45, MinAreaFrac = 0.004, StatusText = "未开始" },
-                    new VisionFlowStep { Index = 4, Function = "几何测量", Name = "测量孔径", ParamSummary = "圆径 / 68±5", Timeout = 2000, CostMs = 5.4, ActualValue = "未测量", Icon = "📐", StepType = "Measure", MeasureType = "圆径", NominalValue = 68, Tolerance = 5, RoiX = 436, RoiY = 326, RoiW = 68, RoiH = 68, StatusText = "未开始" },
+                    new VisionFlowStep { Index = 1, Function = "拍张照片", Name = "采集零件图", ParamSummary = "打开文件 part_a.png", Timeout = 5000, CostMs = 12.3, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = @"D:\wqz\code\NoCodeVision\SampleImages\part_a.png", StatusText = "未开始" },
+                    new VisionFlowStep { Index = 2, Function = "图里找图案", Name = "ROI定位基准", ParamSummary = "ROI(240,160,160,120) / score≥0.70", Timeout = 3000, CostMs = 8.7, ActualValue = "未匹配", Icon = "🎯", StepType = "TemplateMatch", MatchMode = "灰度匹配", ImageSource = @"D:\wqz\code\NoCodeVision\SampleImages\part_a.png", RoiX = 240, RoiY = 160, RoiW = 160, RoiH = 120, ScoreThreshold = 0.70, StatusText = "未开始" },
+                    new VisionFlowStep { Index = 3, Function = "挑瑕疵", Name = "ROI内缺陷比对", ParamSummary = "差异比对 / 阈值45", Timeout = 3000, CostMs = 6.5, ActualValue = "未检测", Icon = "🔍", StepType = "Defect", DiffThreshold = 45, MinAreaFrac = 0.004, StatusText = "未开始" },
+                    new VisionFlowStep { Index = 4, Function = "量尺寸", Name = "测量孔径", ParamSummary = "圆径 / 68±5", Timeout = 2000, CostMs = 5.4, ActualValue = "未测量", Icon = "📐", StepType = "Measure", MeasureType = "圆径", NominalValue = 68, Tolerance = 5, RoiX = 436, RoiY = 326, RoiW = 68, RoiH = 68, StatusText = "未开始" },
                     new VisionFlowStep { Index = 5, Function = "通讯发送", Name = "结果通讯", ParamSummary = "PLC-串口 / RESULT=OK", Timeout = 1000, CostMs = 0.5, ActualValue = "未发送", Icon = "📡", StepType = "Comm", CommChannel = "PLC-串口", CommCmd = "发送", CommContent = "RESULT=OK", CommEncoding = "ASCII", StatusText = "未开始" },
                 }
             },
@@ -3159,10 +3161,10 @@ public class FlowViewModel : ViewModelBase
                 Name = "示例·零件检测B", Icon = "🧫",
                 Steps = new ObservableCollection<VisionFlowStep>
                 {
-                    new VisionFlowStep { Index = 1, Function = "图像采集", Name = "采集零件图", ParamSummary = "打开文件 part_b.png", Timeout = 5000, CostMs = 13.1, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = @"D:\wqz\code\NoCodeVision\SampleImages\part_b.png", StatusText = "未开始" },
-                    new VisionFlowStep { Index = 2, Function = "模板匹配", Name = "ROI定位基准", ParamSummary = "ROI(240,160,160,120) / score≥0.70", Timeout = 3000, CostMs = 9.2, ActualValue = "未匹配", Icon = "🎯", StepType = "TemplateMatch", MatchMode = "灰度匹配", ImageSource = @"D:\wqz\code\NoCodeVision\SampleImages\part_b.png", RoiX = 240, RoiY = 160, RoiW = 160, RoiH = 120, ScoreThreshold = 0.70, StatusText = "未开始" },
-                    new VisionFlowStep { Index = 3, Function = "缺陷检测", Name = "ROI内缺陷比对", ParamSummary = "差异比对 / 阈值45", Timeout = 3000, CostMs = 6.8, ActualValue = "未检测", Icon = "🔍", StepType = "Defect", DiffThreshold = 45, MinAreaFrac = 0.004, StatusText = "未开始" },
-                    new VisionFlowStep { Index = 4, Function = "几何测量", Name = "测量孔径", ParamSummary = "圆径 / 68±5", Timeout = 2000, CostMs = 5.6, ActualValue = "未测量", Icon = "📐", StepType = "Measure", MeasureType = "圆径", NominalValue = 68, Tolerance = 5, RoiX = 436, RoiY = 326, RoiW = 68, RoiH = 68, StatusText = "未开始" },
+                    new VisionFlowStep { Index = 1, Function = "拍张照片", Name = "采集零件图", ParamSummary = "打开文件 part_b.png", Timeout = 5000, CostMs = 13.1, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = @"D:\wqz\code\NoCodeVision\SampleImages\part_b.png", StatusText = "未开始" },
+                    new VisionFlowStep { Index = 2, Function = "图里找图案", Name = "ROI定位基准", ParamSummary = "ROI(240,160,160,120) / score≥0.70", Timeout = 3000, CostMs = 9.2, ActualValue = "未匹配", Icon = "🎯", StepType = "TemplateMatch", MatchMode = "灰度匹配", ImageSource = @"D:\wqz\code\NoCodeVision\SampleImages\part_b.png", RoiX = 240, RoiY = 160, RoiW = 160, RoiH = 120, ScoreThreshold = 0.70, StatusText = "未开始" },
+                    new VisionFlowStep { Index = 3, Function = "挑瑕疵", Name = "ROI内缺陷比对", ParamSummary = "差异比对 / 阈值45", Timeout = 3000, CostMs = 6.8, ActualValue = "未检测", Icon = "🔍", StepType = "Defect", DiffThreshold = 45, MinAreaFrac = 0.004, StatusText = "未开始" },
+                    new VisionFlowStep { Index = 4, Function = "量尺寸", Name = "测量孔径", ParamSummary = "圆径 / 68±5", Timeout = 2000, CostMs = 5.6, ActualValue = "未测量", Icon = "📐", StepType = "Measure", MeasureType = "圆径", NominalValue = 68, Tolerance = 5, RoiX = 436, RoiY = 326, RoiW = 68, RoiH = 68, StatusText = "未开始" },
                     new VisionFlowStep { Index = 5, Function = "通讯发送", Name = "结果通讯", ParamSummary = "PLC-串口 / RESULT=OK", Timeout = 1000, CostMs = 0.5, ActualValue = "未发送", Icon = "📡", StepType = "Comm", CommChannel = "PLC-串口", CommCmd = "发送", CommContent = "RESULT=OK", CommEncoding = "ASCII", StatusText = "未开始" },
                 }
             },
@@ -3188,7 +3190,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                Index = 1, Function = "图像采集", Name = "采集图像", ParamSummary = "打开文件", Timeout = 5000, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始", LogicRelation = "如果"
+                Index = 1, Function = "拍张照片", Name = "采集图像", ParamSummary = "打开文件", Timeout = 5000, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始", LogicRelation = "如果"
 
             },
 
@@ -3196,7 +3198,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                Index = 2, Function = "模板匹配", Name = "模板匹配", ParamSummary = "tpl / score≥0.85", Timeout = 3000, ActualValue = "未匹配", Icon = "🎯", StepType = "TemplateMatch", MatchMode = "灰度匹配", ScoreThreshold = 0.85, RoiX = 80, RoiY = 60, RoiW = 160, RoiH = 120, StatusText = "未开始", LogicRelation = "如果"
+                Index = 2, Function = "图里找图案", Name = "模板匹配", ParamSummary = "tpl / score≥0.85", Timeout = 3000, ActualValue = "未匹配", Icon = "🎯", StepType = "TemplateMatch", MatchMode = "灰度匹配", ScoreThreshold = 0.85, RoiX = 80, RoiY = 60, RoiW = 160, RoiH = 120, StatusText = "未开始", LogicRelation = "如果"
 
             },
 
@@ -3204,7 +3206,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                Index = 3, Function = "几何测量", Name = "几何测量", ParamSummary = "圆径 / 12.00±0.05", Timeout = 2000, ActualValue = "未测量", Icon = "📐", StepType = "Measure", MeasureType = "圆径", NominalValue = 12.0, Tolerance = 0.05, StatusText = "未开始", LogicRelation = "如果"
+                Index = 3, Function = "量尺寸", Name = "几何测量", ParamSummary = "圆径 / 12.00±0.05", Timeout = 2000, ActualValue = "未测量", Icon = "📐", StepType = "Measure", MeasureType = "圆径", NominalValue = 12.0, Tolerance = 0.05, StatusText = "未开始", LogicRelation = "如果"
 
             },
 
@@ -3222,7 +3224,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                Index = 5, Function = "缺陷检测", Name = "缺陷检测", ParamSummary = "差异比对 / 阈值45", Timeout = 3000, ActualValue = "未检测", Icon = "🔍", StepType = "Defect", StatusText = "未开始", LogicRelation = "如果"
+                Index = 5, Function = "挑瑕疵", Name = "缺陷检测", ParamSummary = "差异比对 / 阈值45", Timeout = 3000, ActualValue = "未检测", Icon = "🔍", StepType = "Defect", StatusText = "未开始", LogicRelation = "如果"
 
             },
 
@@ -3230,7 +3232,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                Index = 6, Function = "逻辑判断", Name = "循环条件", ParamSummary = "算子:大于 / 输入值:0.85", Timeout = 1000, ActualValue = "0", Icon = "✅", StepType = "Logic", LogicRelation = "如果", Operator = "大于", InputValue = "0.85", StatusText = "未开始"
+                Index = 6, Function = "判一下对不对", Name = "循环条件", ParamSummary = "算子:大于 / 输入值:0.85", Timeout = 1000, ActualValue = "0", Icon = "✅", StepType = "Logic", LogicRelation = "如果", Operator = "大于", InputValue = "0.85", StatusText = "未开始"
 
             },
 
@@ -3238,7 +3240,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                Index = 7, Function = "等待延时", Name = "循环体", ParamSummary = "200ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", LogicRelation = "循环", StatusText = "未开始"
+                Index = 7, Function = "等一会", Name = "循环体", ParamSummary = "200ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", LogicRelation = "循环", StatusText = "未开始"
 
             },
 
@@ -3254,7 +3256,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                Index = 9, Function = "结果输出", Name = "结果输出", ParamSummary = "PLC / OK", Timeout = 1000, ActualValue = "-", Icon = "📤", StepType = "Output", OutputAddress = "PLC_D200", OutputValue = 1, StatusText = "未开始", LogicRelation = "跳出"
+                Index = 9, Function = "报结果", Name = "结果输出", ParamSummary = "PLC / OK", Timeout = 1000, ActualValue = "-", Icon = "📤", StepType = "Output", OutputAddress = "PLC_D200", OutputValue = 1, StatusText = "未开始", LogicRelation = "跳出"
 
             },
 
@@ -3273,27 +3275,27 @@ public class FlowViewModel : ViewModelBase
         {
             new VisionFlowStep
             {
-                Index = 1, Function = "轴运动", Name = "轴运动", ParamSummary = "X轴 回原 → 移动 100mm", Timeout = 10000, ActualValue = "未运动", Icon = "🦾", StepType = "AxisMove", StatusText = "未开始", LogicRelation = "如果"
+                Index = 1, Function = "动轴", Name = "轴运动", ParamSummary = "X轴 回原 → 移动 100mm", Timeout = 10000, ActualValue = "未运动", Icon = "🦾", StepType = "AxisMove", StatusText = "未开始", LogicRelation = "如果"
             },
             new VisionFlowStep
             {
-                Index = 2, Function = "IO控制", Name = "IO控制", ParamSummary = "OUT0 = ON", Timeout = 1000, ActualValue = "未执行", Icon = "🔌", StepType = "IoControl", StatusText = "未开始", LogicRelation = "如果"
+                Index = 2, Function = "开关电", Name = "IO控制", ParamSummary = "OUT0 = ON", Timeout = 1000, ActualValue = "未执行", Icon = "🔌", StepType = "IoControl", StatusText = "未开始", LogicRelation = "如果"
             },
             new VisionFlowStep
             {
-                Index = 3, Function = "气缸动作", Name = "气缸动作", ParamSummary = "夹爪 伸出", Timeout = 2000, ActualValue = "未动作", Icon = "🟢", StepType = "CylinderAction", StatusText = "未开始", LogicRelation = "如果"
+                Index = 3, Function = "伸缩气缸", Name = "气缸动作", ParamSummary = "夹爪 伸出", Timeout = 2000, ActualValue = "未动作", Icon = "🟢", StepType = "CylinderAction", StatusText = "未开始", LogicRelation = "如果"
             },
             new VisionFlowStep
             {
-                Index = 4, Function = "等待延时", Name = "未到位处理", ParamSummary = "200ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", StatusText = "未开始", LogicRelation = "否则"
+                Index = 4, Function = "等一会", Name = "未到位处理", ParamSummary = "200ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", StatusText = "未开始", LogicRelation = "否则"
             },
             new VisionFlowStep
             {
-                Index = 5, Function = "逻辑判断", Name = "重试条件", ParamSummary = "算子:大于 / 输入值:0.85", Timeout = 1000, ActualValue = "0", Icon = "✅", StepType = "Logic", LogicRelation = "如果", Operator = "大于", InputValue = "0.85", StatusText = "未开始"
+                Index = 5, Function = "判一下对不对", Name = "重试条件", ParamSummary = "算子:大于 / 输入值:0.85", Timeout = 1000, ActualValue = "0", Icon = "✅", StepType = "Logic", LogicRelation = "如果", Operator = "大于", InputValue = "0.85", StatusText = "未开始"
             },
             new VisionFlowStep
             {
-                Index = 6, Function = "等待延时", Name = "重试循环体", ParamSummary = "100ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", LogicRelation = "循环", StatusText = "未开始"
+                Index = 6, Function = "等一会", Name = "重试循环体", ParamSummary = "100ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", LogicRelation = "循环", StatusText = "未开始"
             },
             new VisionFlowStep
             {
@@ -3309,19 +3311,19 @@ public class FlowViewModel : ViewModelBase
         {
             new VisionFlowStep
             {
-                Index = 1, Function = "图像采集", Name = "采集图像", ParamSummary = "打开文件", Timeout = 5000, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始", LogicRelation = "如果"
+                Index = 1, Function = "拍张照片", Name = "采集图像", ParamSummary = "打开文件", Timeout = 5000, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始", LogicRelation = "如果"
             },
             new VisionFlowStep
             {
-                Index = 2, Function = "模板匹配", Name = "模板匹配", ParamSummary = "tpl / score≥0.85", Timeout = 3000, ActualValue = "未匹配", Icon = "🎯", StepType = "TemplateMatch", MatchMode = "灰度匹配", ScoreThreshold = 0.85, RoiX = 80, RoiY = 60, RoiW = 160, RoiH = 120, StatusText = "未开始", LogicRelation = "如果"
+                Index = 2, Function = "图里找图案", Name = "模板匹配", ParamSummary = "tpl / score≥0.85", Timeout = 3000, ActualValue = "未匹配", Icon = "🎯", StepType = "TemplateMatch", MatchMode = "灰度匹配", ScoreThreshold = 0.85, RoiX = 80, RoiY = 60, RoiW = 160, RoiH = 120, StatusText = "未开始", LogicRelation = "如果"
             },
             new VisionFlowStep
             {
-                Index = 3, Function = "逻辑判断", Name = "循环条件", ParamSummary = "算子:大于 / 输入值:0.85", Timeout = 1000, ActualValue = "0", Icon = "✅", StepType = "Logic", LogicRelation = "如果", Operator = "大于", InputValue = "0.85", StatusText = "未开始"
+                Index = 3, Function = "判一下对不对", Name = "循环条件", ParamSummary = "算子:大于 / 输入值:0.85", Timeout = 1000, ActualValue = "0", Icon = "✅", StepType = "Logic", LogicRelation = "如果", Operator = "大于", InputValue = "0.85", StatusText = "未开始"
             },
             new VisionFlowStep
             {
-                Index = 4, Function = "等待延时", Name = "循环体", ParamSummary = "200ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", LogicRelation = "循环", StatusText = "未开始"
+                Index = 4, Function = "等一会", Name = "循环体", ParamSummary = "200ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", LogicRelation = "循环", StatusText = "未开始"
             },
             new VisionFlowStep
             {
@@ -3332,7 +3334,7 @@ public class FlowViewModel : ViewModelBase
 
 
 
-    public string[] StepFunctions { get; } = { "图像采集", "模板匹配", "几何测量", "逻辑判断", "结果输出", "缺陷检测", "Lua脚本", "轴运动", "IO控制", "气缸动作", "等待延时", "通讯指令", "颜色检测", "目标计数", "条码识别", "字符识别", "条件分支", "循环", "子流程", "变量计算", "数据保存", "消息提示" };
+    public string[] StepFunctions { get; } = { "拍张照片", "图里找图案", "量尺寸", "判一下对不对", "报结果", "挑瑕疵", "写段代码", "动轴", "开关电", "伸缩气缸", "等一会", "发数据", "看颜色", "数有几个", "扫条码", "认文字", "走哪一条", "重复做", "调子流程", "算个数", "存文件", "弹提示" };
 
     public string[] PreprocessTypes { get; } = { "灰度化", "二值化", "高斯模糊", "中值滤波", "边缘检测" };
 
@@ -4230,7 +4232,7 @@ public class FlowViewModel : ViewModelBase
 
 
 
-    private string _newStepFunction = "模板匹配";
+    private string _newStepFunction = "图里找图案";
 
     public string NewStepFunction { get => _newStepFunction; set => SetField(ref _newStepFunction, value); }
 
@@ -4247,7 +4249,7 @@ public class FlowViewModel : ViewModelBase
         set { if (SetField(ref _selectedToolCategory, value)) RebuildToolOptions(); }
     }
 
-    private string _selectedTool = "图像采集";
+    private string _selectedTool = "拍张照片";
 
     public string SelectedTool
     {
@@ -4273,39 +4275,57 @@ public class FlowViewModel : ViewModelBase
     /// <summary>工具名 → (图标, StepType) 统一映射。</summary>
     internal static (string Icon, string Type) ToolToIconType(string tool) => tool switch
     {
-        "图像采集" => ("📷", "ImageCapture"),
-        "模板匹配" => ("🎯", "TemplateMatch"),
-        "几何测量" => ("📐", "Measure"),
-        "逻辑判断" => ("✅", "Logic"),
-        "结果输出" => ("📤", "Output"),
-        "缺陷检测" => ("🔍", "Defect"),
-        "Lua脚本" => ("📝", "Lua"),
-        "轴运动" => ("🦾", "AxisMove"),
-        "IO控制" => ("🔌", "IOControl"),
-        "气缸动作" => ("🟢", "Cylinder"),
-        "等待延时" => ("⏱", "Wait"),
-        "通讯指令" => ("📡", "Comm"),
-        "颜色检测" => ("🎨", "Color"),
-        "目标计数" => ("🔢", "Count"),
-        "条码识别" => ("🔖", "Code"),
-        "字符识别" => ("🔤", "Ocr"),
-        "条件分支" => ("🔀", "Branch"),
-        "循环" => ("🔁", "Loop"),
-        "子流程" => ("📑", "SubFlow"),
-        "变量计算" => ("🧮", "Calc"),
-        "数据保存" => ("💾", "Save"),
-        "消息提示" => ("💬", "Notify"),
+        "拍张照片" => ("📷", "ImageCapture"),
+        "图里找图案" => ("🎯", "TemplateMatch"),
+        "量尺寸" => ("📐", "Measure"),
+        "判一下对不对" => ("✅", "Logic"),
+        "报结果" => ("📤", "Output"),
+        "挑瑕疵" => ("🔍", "Defect"),
+        "写段代码" => ("📝", "Lua"),
+        "动轴" => ("🦾", "AxisMove"),
+        "开关电" => ("🔌", "IOControl"),
+        "伸缩气缸" => ("🟢", "Cylinder"),
+        "等一会" => ("⏱", "Wait"),
+        "发数据" => ("📡", "Comm"),
+        "看颜色" => ("🎨", "Color"),
+        "数有几个" => ("🔢", "Count"),
+        "扫条码" => ("🔖", "Code"),
+        "认文字" => ("🔤", "Ocr"),
+        "走哪一条" => ("🔀", "Branch"),
+        "重复做" => ("🔁", "Loop"),
+        "调子流程" => ("📑", "SubFlow"),
+        "算个数" => ("🧮", "Calc"),
+        "存文件" => ("💾", "Save"),
+        "弹提示" => ("💬", "Notify"),
         _ => ("➕", "Other")
     };
+
+    /// <summary>改名前存下来的 flows.json / .ncv 里还是旧算子名，载入时统一换成通俗名称，免得一个页面两种叫法。</summary>
+    private static readonly Dictionary<string, string> LegacyToolNames = new()
+    {
+        ["图像采集"] = "拍张照片", ["模板匹配"] = "图里找图案", ["缺陷检测"] = "挑瑕疵", ["几何测量"] = "量尺寸",
+        ["颜色检测"] = "看颜色", ["目标计数"] = "数有几个", ["条码识别"] = "扫条码", ["字符识别"] = "认文字",
+        ["逻辑判断"] = "判一下对不对", ["条件分支"] = "走哪一条", ["循环"] = "重复做", ["变量计算"] = "算个数",
+        ["等待延时"] = "等一会", ["子流程"] = "调子流程", ["Lua脚本"] = "写段代码", ["轴运动"] = "动轴",
+        ["IO控制"] = "开关电", ["气缸动作"] = "伸缩气缸", ["结果输出"] = "报结果", ["数据保存"] = "存文件",
+        ["消息提示"] = "弹提示", ["通讯指令"] = "发数据",
+    };
+
+    internal static void NormalizeStepNames(IEnumerable<VisionFlow> flows)
+    {
+        foreach (var f in flows)
+            foreach (var s in f.Steps)
+                if (LegacyToolNames.TryGetValue(s.Function ?? "", out var plain)) s.Function = plain;
+    }
 
     private void RebuildToolOptions()
     {
         ToolOptions.Clear();
         var options = _selectedToolCategory switch
         {
-            "运控" => new[] { "轴运动", "IO控制", "气缸动作", "等待延时" },
-            "通讯" => new[] { "通讯指令" },
-            _ => new[] { "图像采集", "模板匹配", "缺陷检测", "几何测量" },
+            "运控" => new[] { "动轴", "开关电", "伸缩气缸", "等一会" },
+            "通讯" => new[] { "发数据" },
+            _ => new[] { "拍张照片", "图里找图案", "挑瑕疵", "量尺寸" },
         };
         foreach (var t in options) ToolOptions.Add(t);
         if (!ToolOptions.Contains(SelectedTool))
@@ -4762,49 +4782,49 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                "图像采集" => ("📷", "ImageCapture"),
+                "拍张照片" => ("📷", "ImageCapture"),
 
-                "模板匹配" => ("🎯", "TemplateMatch"),
+                "图里找图案" => ("🎯", "TemplateMatch"),
 
-                "几何测量" => ("📐", "Measure"),
+                "量尺寸" => ("📐", "Measure"),
 
-                "逻辑判断" => ("✅", "Logic"),
+                "判一下对不对" => ("✅", "Logic"),
 
-                "结果输出" => ("📤", "Output"),
+                "报结果" => ("📤", "Output"),
 
-                "缺陷检测" => ("🔍", "Defect"),
+                "挑瑕疵" => ("🔍", "Defect"),
 
-                "Lua脚本" => ("📝", "Lua"),
+                "写段代码" => ("📝", "Lua"),
 
-                "轴运动" => ("🦾", "AxisMove"),
+                "动轴" => ("🦾", "AxisMove"),
 
-                "IO控制" => ("🔌", "IOControl"),
+                "开关电" => ("🔌", "IOControl"),
 
-                "气缸动作" => ("🟢", "Cylinder"),
+                "伸缩气缸" => ("🟢", "Cylinder"),
 
-                "等待延时" => ("⏱", "Wait"),
+                "等一会" => ("⏱", "Wait"),
 
-                "通讯指令" => ("📡", "Comm"),
+                "发数据" => ("📡", "Comm"),
 
-                "颜色检测" => ("🎨", "Color"),
+                "看颜色" => ("🎨", "Color"),
 
-                "目标计数" => ("🔢", "Count"),
+                "数有几个" => ("🔢", "Count"),
 
-                "条码识别" => ("🔖", "Code"),
+                "扫条码" => ("🔖", "Code"),
 
-                "字符识别" => ("🔤", "Ocr"),
+                "认文字" => ("🔤", "Ocr"),
 
-                "条件分支" => ("🔀", "Branch"),
+                "走哪一条" => ("🔀", "Branch"),
 
-                "循环" => ("🔁", "Loop"),
+                "重复做" => ("🔁", "Loop"),
 
-                "子流程" => ("📑", "SubFlow"),
+                "调子流程" => ("📑", "SubFlow"),
 
-                "变量计算" => ("🧮", "Calc"),
+                "算个数" => ("🧮", "Calc"),
 
-                "数据保存" => ("💾", "Save"),
+                "存文件" => ("💾", "Save"),
 
-                "消息提示" => ("💬", "Notify"),
+                "弹提示" => ("💬", "Notify"),
 
                 _ => ("➕", "Other")
 
@@ -6578,6 +6598,8 @@ public class FlowViewModel : ViewModelBase
             var flows = JsonSerializer.Deserialize<List<VisionFlow>>(json);
 
             if (flows == null || flows.Count == 0) return false;
+
+            NormalizeStepNames(flows);
 
             _flows = new ObservableCollection<VisionFlow>(flows);
 
