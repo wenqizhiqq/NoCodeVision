@@ -238,6 +238,24 @@ public class VisionFlowStep : ViewModelBase
 
 
 
+    /// <summary>节点图里的稳定标识：连线靠它寻址，删除/排序步骤都不会错位。</summary>
+    public string NodeId { get; set; } = Guid.NewGuid().ToString("N");
+
+
+
+    /// <summary>节点图画布坐标（仅节点图流程使用；普通流程恒为 0）。</summary>
+    public double NodeX { get => _nodeX; set => SetField(ref _nodeX, value); }
+
+    private double _nodeX;
+
+
+
+    public double NodeY { get => _nodeY; set => SetField(ref _nodeY, value); }
+
+    private double _nodeY;
+
+
+
     public string ImageSource { get => _imageSource; set => SetField(ref _imageSource, value); }
 
     private string _imageSource = "";
@@ -933,6 +951,25 @@ public class VisionFlow : ViewModelBase
     public string ScriptContent { get; set; } = "-- 脚本流程示例：视觉 + 运控 + 计算\n-- 1) 视觉：采集图像并匹配模板\nlocal ok = vision.grab()                  -- 抓取一帧图像\nlocal score = vision.match(\"tpl_A.png\") -- 模板匹配，返回相似度 0~1\nprint(\"匹配分数: \" .. tostring(score))\n\n-- 2) 计算：判定是否合格，并换算位移量\nlocal threshold = 0.85\nlocal pass = score >= threshold\nlocal dx = (score - threshold) * 100     -- 分数差 → 位移量(px)\nlocal dist = math.sqrt(dx * dx)           -- 用 math 做计算\nprint(\"是否合格: \" .. tostring(pass) .. \"  位移量: \" .. tostring(dist))\n\n-- 3) 运控：合格则驱动 PLC/轴动作，不合格报警\nif pass then\n    plc.write(200, 1)                     -- 触发运动 / 输出\n    plc.write(201, math.floor(dist))      -- 下发放大后的位移量\n    print(\"运控：已发送到位指令\")\nelse\n    plc.write(200, 0)                     -- 复位 / 报警\n    print(\"运控：未达标，已停止\")\nend\n\nsleep(50)\n";
 
     public ObservableCollection<VisionFlowStep> Steps { get; set; } = new();
+
+    /// <summary>节点图流程的连线（普通流程恒为空）。随 Steps 一起存进 flows.json / .ncv 工程。</summary>
+    public ObservableCollection<FlowNodeLink> Links { get; set; } = new();
+
+}
+
+
+
+/// <summary>节点图的一条连线：从某节点的一个输出口连到另一节点。端口为空串表示默认出口。</summary>
+
+public class FlowNodeLink
+
+{
+
+    public string FromId { get; set; } = "";
+
+    public string FromPort { get; set; } = "";
+
+    public string ToId { get; set; } = "";
 
 }
 
@@ -3417,6 +3454,8 @@ public class FlowViewModel : ViewModelBase
 
             _stepCursor = 0;
 
+            NodeGraph.Bind(value);
+
             // 切换流程时重置脚本调试状态
 
             ScriptOutput = "";
@@ -4230,7 +4269,7 @@ public class FlowViewModel : ViewModelBase
     }
 
     /// <summary>工具名 → (图标, StepType) 统一映射。</summary>
-    private static (string Icon, string Type) ToolToIconType(string tool) => tool switch
+    internal static (string Icon, string Type) ToolToIconType(string tool) => tool switch
     {
         "图像采集" => ("📷", "ImageCapture"),
         "模板匹配" => ("🎯", "TemplateMatch"),
@@ -4488,6 +4527,9 @@ public class FlowViewModel : ViewModelBase
 
     public ICommand AddNodeGraphFlowCmd { get; }
 
+    /// <summary>节点图流程的编辑模型（画布上的节点/连线），与 SelectedFlow.Steps、SelectedFlow.Links 双向同步。</summary>
+    public NodeGraphViewModel NodeGraph { get; }
+
         public ICommand RenameFlowCmd { get; }
 
     public ICommand ClearCmd { get; }
@@ -4599,6 +4641,8 @@ public class FlowViewModel : ViewModelBase
         {
 
             Instance = this;
+
+            NodeGraph = new NodeGraphViewModel(this);
 
             RebuildToolOptions(); // 初始化工具箱（视觉分类）
 
@@ -4867,11 +4911,10 @@ public class FlowViewModel : ViewModelBase
             {
                 Name = $"节点图流程-{next}",
                 Icon = "🕸",
-                Steps = CreateStandardPipeline()
+                FlowKind = "NodeGraph"
             };
             Flows.Add(flow);
             SelectedFlow = flow;
-            SelectedStep = flow.Steps.FirstOrDefault();
         }, _ => true);
 
 
@@ -5748,6 +5791,18 @@ public class FlowViewModel : ViewModelBase
 
         var matcher = new RotatedTemplateMatcher();
 
+        if (flow.FlowKind == "NodeGraph")
+
+        {
+
+            await RunNodeGraphStepsAsync(flow, matcher, ct);
+
+            PublishProductResult(flow);
+
+            return;
+
+        }
+
         int cursor = 0;
 
         int guard = 0;
@@ -5802,20 +5857,137 @@ public class FlowViewModel : ViewModelBase
         }
 
         // 单件产品流程跑完：发布真实结果事件（OK/NG、匹配分数、缺陷数、抓拍图像），供操作员页等消费
+        PublishProductResult(flow);
+
+    }
+
+
+
+    private void PublishProductResult(VisionFlow flow)
+
+    {
+
         try
+
         {
+
             var _prodImg = MatToBitmapSource(_sharedImage);
+
             ProductInspected?.Invoke(new FlowProductResult
+
             {
+
                 IsOk = _curProductOk,
+
                 Score = _curProductScore,
+
                 DefectCount = _curProductDefects,
+
                 Image = _prodImg,
+
                 FlowName = flow.Name,
+
                 Timestamp = DateTime.Now
+
             });
+
         }
+
         catch { }
+
+    }
+
+
+
+    /// <summary>节点图流程执行：从「无入线」的节点起，沿连线推进；条件节点按真/假出口选边，出口没连线则该链结束。</summary>
+
+    private async Task RunNodeGraphStepsAsync(VisionFlow flow, RotatedTemplateMatcher matcher, CancellationToken ct)
+
+    {
+
+        var steps = flow.Steps;
+
+        _curProductOk = true;
+
+        _curProductScore = 0;
+
+        _curProductDefects = 0;
+
+        var hasIncoming = new HashSet<string>(flow.Links.Select(l => l.ToId));
+
+        var roots = steps.Where(s => !hasIncoming.Contains(s.NodeId)).ToList();
+
+        if (roots.Count == 0) roots.Add(steps[0]);
+
+        int guard = 0;
+
+        int maxIter = steps.Count * 20 + 50;
+
+        foreach (var root in roots)
+
+        {
+
+            var cur = root;
+
+            while (cur != null && !ct.IsCancellationRequested && guard++ < maxIter)
+
+            {
+
+                while (IsPaused && !ct.IsCancellationRequested) await Task.Delay(120, ct);
+
+                if (ct.IsCancellationRequested) break;
+
+                SelectedStep = cur;
+
+                Status = $"运行中 · {flow.Name} · 第{cur.Index}步 {cur.Name} · {DateTime.Now:HH:mm:ss}";
+
+                RunStep(cur, matcher);
+
+                await Task.Delay(StepPaceMs, ct);
+
+                cur = NextGraphNode(flow, cur);
+
+            }
+
+        }
+
+    }
+
+
+
+    private VisionFlowStep? NextGraphNode(VisionFlow flow, VisionFlowStep step)
+
+    {
+
+        var outs = flow.Links.Where(l => l.FromId == step.NodeId).ToList();
+
+        if (outs.Count == 0) return null;
+
+        FlowNodeLink? pick;
+
+        if (step.StepType is "Branch" or "Logic" or "Loop")
+
+        {
+
+            bool ok = EvalLogic(step);
+
+            pick = ok
+
+                ? outs.FirstOrDefault(l => l.FromPort == "真") ?? outs.FirstOrDefault(l => l.FromPort != "假")
+
+                : outs.FirstOrDefault(l => l.FromPort == "假");
+
+        }
+
+        else
+
+        {
+
+            pick = outs[0];
+
+        }
+
+        return pick == null ? null : flow.Steps.FirstOrDefault(s => s.NodeId == pick.ToId);
 
     }
 
@@ -6423,6 +6595,8 @@ public class FlowViewModel : ViewModelBase
 
         flow.Steps.CollectionChanged += FlowStepsChanged;
 
+        flow.Links.CollectionChanged += FlowLinksChanged;
+
         foreach (var s in flow.Steps) WireStep(s);
 
     }
@@ -6435,9 +6609,15 @@ public class FlowViewModel : ViewModelBase
 
         flow.Steps.CollectionChanged -= FlowStepsChanged;
 
+        flow.Links.CollectionChanged -= FlowLinksChanged;
+
         foreach (var s in flow.Steps) UnwireStep(s);
 
     }
+
+
+
+    private void FlowLinksChanged(object? sender, NotifyCollectionChangedEventArgs e) => RequestSave();
 
 
 

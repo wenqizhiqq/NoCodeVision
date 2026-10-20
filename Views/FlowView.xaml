@@ -141,6 +141,20 @@
             </views:VisualFlowView.Style>
         </views:VisualFlowView>
 
+        <!-- 节点图流程视图（FlowKind=NodeGraph：左侧算子库拖到中间画布，右侧仍是同一套步骤属性页） -->
+        <views:NodeGraphFlowView Grid.Column="1" Margin="16,0" DataContext="{Binding}">
+            <views:NodeGraphFlowView.Style>
+                <Style TargetType="UserControl">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding SelectedFlow.FlowKind}" Value="NodeGraph">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </views:NodeGraphFlowView.Style>
+        </views:NodeGraphFlowView>
+
         <!-- 中间：流程步骤（普通流程显示） -->
         <Grid Grid.Column="1" Margin="16,0">
             <Grid.Style>
@@ -151,6 +165,9 @@
                             <Setter Property="Visibility" Value="Collapsed" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding SelectedFlow.FlowKind}" Value="Visual">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding SelectedFlow.FlowKind}" Value="NodeGraph">
                             <Setter Property="Visibility" Value="Collapsed" />
                         </DataTrigger>
                     </Style.Triggers>
@@ -303,7 +320,16 @@
             </ScrollViewer.Style>
             <StackPanel>
                 <!-- 工具箱：一行下拉框（分类 + 工具）；切换工具即改写当前选中步骤，右侧属性面板同步切换 -->
-                <Border Style="{StaticResource AppleGroupCard}" Margin="0,0,0,12">
+                <Border Margin="0,0,0,12">
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedFlow.FlowKind}" Value="NodeGraph">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
                     <StackPanel>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="工具箱" />
                         <Grid Margin="12,4,12,6">
