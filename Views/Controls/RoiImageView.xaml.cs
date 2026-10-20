@@ -24,12 +24,12 @@ namespace NoCodeVision.Views.Controls
         public RoiImageView()
         {
             InitializeComponent();
-            SizeChanged += (_, _) => UpdateScale();
+            SizeChanged += (_, _) => UpdateFit();
             Loaded += (_, _) =>
             {
                 if (Measures == null) Measures = new ObservableCollection<MeasureItem>();
                 UpdateModeButtons();
-                UpdateScale();
+                UpdateFit();
             };
         }
 
@@ -102,7 +102,15 @@ namespace NoCodeVision.Views.Controls
         private static void OnDefectOverlayChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (d is RoiImageView v)
+            {
                 v.DefectLayer.Source = v.DefectOverlay;
+                // 与主图同样按像素钉尺寸（1 像素 = 1 DIP），保证缺陷叠加层与底图严格对齐
+                if (v.DefectOverlay is System.Windows.Media.Imaging.BitmapSource bs && bs.PixelWidth > 0)
+                {
+                    v.DefectLayer.Width = bs.PixelWidth;
+                    v.DefectLayer.Height = bs.PixelHeight;
+                }
+            }
         }
 
         #endregion
@@ -155,41 +163,127 @@ namespace NoCodeVision.Views.Controls
 
         #endregion
 
-        #region 缩放 / 平移（LayoutTransform 统一处理）
+        #region 视图变换：中键滚轮缩放（光标锚点）+ 中键拖动平移 + 复位适配
+        //
+        // 结构：图像按原生像素画在 PixelCanvas 里，PixelCanvas 挂 LayoutTransform(Scale+Translate)：
+        //     屏幕坐标 = scale × 图像像素坐标 + translate
+        // 缩放/平移只改这两个值；ROI/测量/叠加框都画在图像像素坐标里，天然跟随变换。
+        //
+        // 事件挂在 UserControl 的 Preview 级：光标在图像上或四周暗区都响应，
+        // 并抢在外层 ScrollViewer 之前处理滚轮；左键绘制走 PixelCanvas 自己的冒泡事件，互不干扰。
 
-        private double _fitScale = 1.0;   // 适配控件所需的缩放
-        private double _zoomFactor = 1.0; // 用户在适配基础上的额外滚轮缩放
+        private const double ZoomStep = 1.2;  // 每格滚轮的缩放倍率
+        private double _fitScale = 1.0;       // 适配显示区的缩放比例
+        private double _zoomFactor = 1.0;     // 用户在适配基础上的额外倍数（限制 0.5~10）
+        private bool _userTransformed;        // 用户手动缩放/平移过 → 尺寸变化时不再自动复位
+        private bool _panning;                // 中键拖动进行中
+        private Point _panOrigin;             // 拖动起点（Root 坐标）
+        private double _panBaseX, _panBaseY;  // 拖动起点时的平移量
 
-        private void UpdateScale()
+        private double CurrentScale => PixelScale.ScaleX <= 0 ? 1 : PixelScale.ScaleX;
+
+        /// <summary>统一入口：scale 和 translate 永远一起写，不出现半新半旧的中间状态。</summary>
+        private void ApplyTransform(double scale, double transX, double transY)
         {
-            double sw = ImagePixelWidth, sh = ImagePixelHeight;
-            double availW = Root.ActualWidth, availH = Root.ActualHeight;
-            if (sw <= 0 || sh <= 0 || availW <= 0 || availH <= 0) return;
-            _fitScale = Math.Min(availW / sw, availH / sh);
-            double s = _fitScale * _zoomFactor;
-            PixelScale.ScaleX = s;
-            PixelScale.ScaleY = s;
+            PixelScale.ScaleX = PixelScale.ScaleY = scale;
+            PixelTranslate.X = transX;
+            PixelTranslate.Y = transY;
         }
 
-        private void OnMouseWheel(object sender, MouseWheelEventArgs e)
+        /// <summary>
+        /// 屏幕(Root)坐标 → 图像像素坐标：对 screen = scale*local + translate 求逆。
+        /// 不要用 GetPosition(PixelCanvas)，它在 LayoutTransform 元素上不可靠（缩放锚点漂移的根因）。
+        /// </summary>
+        private Point ScreenToImage(Point p)
         {
-            if (ImagePixelWidth <= 0) return;
-            const double factor = 1.15;
-            if (e.Delta > 0) _zoomFactor *= factor;
-            else if (e.Delta < 0) _zoomFactor /= factor;
-            // 限制在 0.5x ~ 10x 之间
-            _zoomFactor = Math.Max(0.5, Math.Min(10.0, _zoomFactor));
-            UpdateScale();
+            double s = CurrentScale;
+            return new Point((p.X - PixelTranslate.X) / s, (p.Y - PixelTranslate.Y) / s);
+        }
+
+        /// <summary>按显示区当前尺寸重算适配比例；用户没手动动过就复位，动过则只更新比例、保留其视图。</summary>
+        private void UpdateFit()
+        {
+            double sw = ImagePixelWidth, sh = ImagePixelHeight;
+            double vw = Root.ActualWidth, vh = Root.ActualHeight;
+            if (sw <= 0 || sh <= 0 || vw <= 0 || vh <= 0) return;
+            _fitScale = Math.Min(vw / sw, vh / sh);
+            if (_userTransformed)
+                PixelScale.ScaleX = PixelScale.ScaleY = _fitScale * _zoomFactor;
+            else
+                FitToView();
+        }
+
+        /// <summary>复位：按当前显示区适配（最大化铺满、不裁切）并居中。</summary>
+        private void FitToView()
+        {
+            double sw = ImagePixelWidth, sh = ImagePixelHeight;
+            double vw = Root.ActualWidth, vh = Root.ActualHeight;
+            if (sw <= 0 || sh <= 0 || vw <= 0 || vh <= 0) return;
+            _fitScale = Math.Min(vw / sw, vh / sh);
+            _zoomFactor = 1.0;
+            double s = _fitScale;
+            ApplyTransform(s, (vw - sw * s) / 2, (vh - sh * s) / 2);
+        }
+
+        // —— 中键滚轮：以光标为锚点缩放 ——
+        private void OnViewPreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (ImagePixelWidth <= 0 || Root.ActualWidth <= 0) return;
+            double zoom = _zoomFactor * (e.Delta > 0 ? ZoomStep : 1 / ZoomStep);
+            zoom = Math.Max(0.5, Math.Min(10.0, zoom)); // 相对适配比例 0.5x ~ 10x
+            if (Math.Abs(zoom - _zoomFactor) < 1e-9) { e.Handled = true; return; } // 已到边界
+            _zoomFactor = zoom;
+            double s = _fitScale * zoom;
+
+            // 先取光标下的图像像素（用旧 scale/translate），再让该点缩放后仍停在光标处
+            Point cursor = e.GetPosition(Root);
+            Point anchor = ScreenToImage(cursor);
+            ApplyTransform(s, cursor.X - anchor.X * s, cursor.Y - anchor.Y * s);
+            _userTransformed = true;
             e.Handled = true;
         }
 
-        /// <summary>复位视图：缩放回到适配比例、平移归零，即图片初始显示位置。</summary>
+        // —— 中键按下：开始拖动平移 ——
+        private void OnViewPreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (ImagePixelWidth <= 0 || e.ChangedButton != MouseButton.Middle) return;
+            _panning = true;
+            _panOrigin = e.GetPosition(Root);
+            _panBaseX = PixelTranslate.X;
+            _panBaseY = PixelTranslate.Y;
+            Root.CaptureMouse();
+            _userTransformed = true;
+            e.Handled = true;
+        }
+
+        // —— 中键拖动：平移图像 ——
+        private void OnViewPreviewMouseMove(object sender, MouseEventArgs e)
+        {
+            if (!_panning) return;
+            Point cur = e.GetPosition(Root);
+            PixelTranslate.X = _panBaseX + (cur.X - _panOrigin.X);
+            PixelTranslate.Y = _panBaseY + (cur.Y - _panOrigin.Y);
+            e.Handled = true;
+        }
+
+        // —— 中键松开：结束平移 ——
+        private void OnViewPreviewMouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (!_panning || e.ChangedButton != MouseButton.Middle) return;
+            _panning = false;
+            if (Root.IsMouseCaptured) Root.ReleaseMouseCapture();
+            e.Handled = true;
+        }
+
+        /// <summary>复位按钮：回到适配 + 居中（最大化铺满）。</summary>
         private void OnFitViewClick(object sender, RoutedEventArgs e)
         {
-            _zoomFactor = 1.0;
-            PixelPan.X = 0;
-            PixelPan.Y = 0;
-            UpdateScale();
+            _userTransformed = false;
+            _panning = false;
+            if (Root.IsMouseCaptured) Root.ReleaseMouseCapture();
+            FitToView();
+            if (Root.ActualWidth <= 0 || Root.ActualHeight <= 0) // 布局未就绪时渲染后补一次
+                Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(FitToView));
         }
 
         #endregion
@@ -202,13 +296,21 @@ namespace NoCodeVision.Views.Controls
             {
                 v.Img.Source = v.SourceImage;
                 v.DefectLayer.Source = null;
-                if (v.SourceImage is System.Windows.Media.Imaging.BitmapImage bmp)
+                if (v.SourceImage is System.Windows.Media.Imaging.BitmapSource bmp)
                 {
                     v.ImagePixelWidth = bmp.PixelWidth;
                     v.ImagePixelHeight = bmp.PixelHeight;
                     // 像素画布尺寸 = 图像原生像素尺寸；显示缩放交给 LayoutTransform
                     v.PixelCanvas.Width = bmp.PixelWidth;
                     v.PixelCanvas.Height = bmp.PixelHeight;
+                    // 关键：显式把 Image 钉成「1 像素 = 1 DIP」（配合 XAML 里 Stretch=Fill）。
+                    // 否则 Stretch=None 按图片自带 DPI 渲染（72/144/200 DPI 的图会放大/缩小），
+                    // 实际渲染尺寸和用 PixelWidth 算的 FitView 适配/居中对不上，
+                    // 表现就是「复位后图像不居中、也没有最大化铺满」。
+                    v.Img.Width = bmp.PixelWidth;
+                    v.Img.Height = bmp.PixelHeight;
+                    v.DefectLayer.Width = bmp.PixelWidth;
+                    v.DefectLayer.Height = bmp.PixelHeight;
                     v.Placeholder.Visibility = Visibility.Collapsed;
                 }
                 else
@@ -219,8 +321,9 @@ namespace NoCodeVision.Views.Controls
                     v.PixelCanvas.Height = 0;
                     v.Placeholder.Visibility = Visibility.Visible;
                 }
-                v.UpdateScale();
-                v.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(v.UpdateScale));
+                v._userTransformed = false;
+                v.UpdateFit();
+                v.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(v.UpdateFit));
             }
         }
 
@@ -368,7 +471,7 @@ namespace NoCodeVision.Views.Controls
 
         #endregion
 
-        #region 鼠标交互：左键画 ROI，右键/中键平移，滚轮缩放
+        #region 鼠标交互（PixelCanvas 级）：左键画 ROI / 测量 / 旋转矩形
 
         private bool _roiDragging;
         private bool _rotating;
@@ -378,10 +481,6 @@ namespace NoCodeVision.Views.Controls
         private Point _measureStart;
         private Point _measureCurrent;
         private MeasureItem? _previewMeasure;
-
-        private bool _panDragging;
-        private Point _panStart;
-        private double _panStartX, _panStartY;
 
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -429,15 +528,6 @@ namespace NoCodeVision.Views.Controls
                 UpdateRoiFromPoint(_roiStart, _roiStart);
                 e.Handled = true;
             }
-            else if (e.ChangedButton == MouseButton.Right || e.ChangedButton == MouseButton.Middle)
-            {
-                _panDragging = true;
-                _panStart = e.GetPosition(Root); // 用控件坐标算平移，直观
-                _panStartX = PixelPan.X;
-                _panStartY = PixelPan.Y;
-                PixelCanvas.CaptureMouse();
-                e.Handled = true;
-            }
         }
 
         private void OnMouseMove(object sender, MouseEventArgs e)
@@ -458,16 +548,6 @@ namespace NoCodeVision.Views.Controls
                 double cx = RoiX + RoiW / 2, cy = RoiY + RoiH / 2;
                 double ang = Math.Atan2(c.X - cx, -(c.Y - cy)) * 180.0 / Math.PI;
                 RoiAngle = ang;
-            }
-            else if (_panDragging)
-            {
-                var cur = e.GetPosition(Root);
-                double s = PixelScale.ScaleX;
-                if (s > 0)
-                {
-                    PixelPan.X = _panStartX + (cur.X - _panStart.X) / s;
-                    PixelPan.Y = _panStartY + (cur.Y - _panStart.Y) / s;
-                }
             }
         }
 
@@ -491,11 +571,6 @@ namespace NoCodeVision.Views.Controls
             {
                 _roiDragging = false;
                 RoiTip.Visibility = Visibility.Collapsed;
-                PixelCanvas.ReleaseMouseCapture();
-            }
-            else if (_panDragging && (e.ChangedButton == MouseButton.Right || e.ChangedButton == MouseButton.Middle))
-            {
-                _panDragging = false;
                 PixelCanvas.ReleaseMouseCapture();
             }
         }

@@ -3,7 +3,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             mc:Ignorable="d">
+             mc:Ignorable="d"
+             PreviewMouseWheel="OnViewPreviewMouseWheel"
+             PreviewMouseDown="OnViewPreviewMouseDown"
+             PreviewMouseMove="OnViewPreviewMouseMove"
+             PreviewMouseUp="OnViewPreviewMouseUp">
 <!-- 温启志：18719361399  混淆: 温k启v志y：o1q8e7f1z9b3i6b1p3w9o9 -->
 
 
@@ -31,21 +35,21 @@
     </UserControl.Resources>
 
     <Border Background="{StaticResource PreviewBgBrush}" CornerRadius="12" ClipToBounds="True">
-        <Grid x:Name="Root">
+        <Grid x:Name="Root" Background="Transparent">
             <!-- 像素画布：尺寸 = 图像像素尺寸；整体用 LayoutTransform 缩放以适配显示区。
                  图像、ROI、叠加框都在此坐标系（图像像素）绘制，缩放由 LayoutTransform 统一处理，彻底消除 letterbox 偏移。 -->
-            <Canvas x:Name="PixelCanvas" HorizontalAlignment="Center" VerticalAlignment="Center"
+            <Canvas x:Name="PixelCanvas" HorizontalAlignment="Left" VerticalAlignment="Top"
                     Background="Transparent"
                     MouseDown="OnMouseDown" MouseMove="OnMouseMove"
-                    MouseUp="OnMouseUp" MouseWheel="OnMouseWheel">
+                    MouseUp="OnMouseUp">
                 <Canvas.LayoutTransform>
-                    <ScaleTransform x:Name="PixelScale" ScaleX="1" ScaleY="1" />
+                    <TransformGroup>
+                        <ScaleTransform x:Name="PixelScale" ScaleX="1" ScaleY="1" />
+                        <TranslateTransform x:Name="PixelTranslate" X="0" Y="0" />
+                    </TransformGroup>
                 </Canvas.LayoutTransform>
-                <Canvas.RenderTransform>
-                    <TranslateTransform x:Name="PixelPan" X="0" Y="0" />
-                </Canvas.RenderTransform>
-                <Image x:Name="Img" Stretch="None" />
-                <Image x:Name="DefectLayer" Stretch="None" IsHitTestVisible="False" />
+                <Image x:Name="Img" Stretch="Fill" />
+                <Image x:Name="DefectLayer" Stretch="Fill" IsHitTestVisible="False" />
                 <Canvas x:Name="Layer" IsHitTestVisible="False">
                     <Rectangle x:Name="RoiRect" Stroke="#007AFF" StrokeThickness="2" Fill="#007AFF22"
                                Visibility="Collapsed" RadiusX="2" RadiusY="2" />
@@ -108,8 +112,8 @@
                 <StackPanel>
                     <TextBlock Text="左键：绘制（框选 / 线段 / 圆 / 点 / 旋转矩形）" Foreground="White" FontSize="11" />
                     <TextBlock Text="旋转矩形：先拖出矩形，再拖绿色手柄旋转" Foreground="White" FontSize="11" />
-                    <TextBlock Text="右键/中键拖拽：平移" Foreground="White" FontSize="11" />
-                    <TextBlock Text="滚轮：缩放" Foreground="White" FontSize="11" />
+                    <TextBlock Text="中键拖拽：平移" Foreground="White" FontSize="11" />
+                    <TextBlock Text="滚轮：以光标为中心缩放" Foreground="White" FontSize="11" />
                 </StackPanel>
             </Border>
         </Grid>

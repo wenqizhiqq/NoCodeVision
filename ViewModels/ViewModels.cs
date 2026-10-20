@@ -4486,6 +4486,8 @@ public class FlowViewModel : ViewModelBase
 
         public ICommand AddMotionFlowCmd { get; }
 
+    public ICommand AddNodeGraphFlowCmd { get; }
+
         public ICommand RenameFlowCmd { get; }
 
     public ICommand ClearCmd { get; }
@@ -4850,6 +4852,22 @@ public class FlowViewModel : ViewModelBase
                 Name = $"运控流程-{next}",
                 Icon = "🕹",
                 Steps = CreateMotionPipeline()
+            };
+            Flows.Add(flow);
+            SelectedFlow = flow;
+            SelectedStep = flow.Steps.FirstOrDefault();
+        }, _ => true);
+
+
+
+        AddNodeGraphFlowCmd = new RelayCommand(_ =>
+        {
+            var next = Flows.Count + 1;
+            var flow = new VisionFlow
+            {
+                Name = $"节点图流程-{next}",
+                Icon = "🕸",
+                Steps = CreateStandardPipeline()
             };
             Flows.Add(flow);
             SelectedFlow = flow;
