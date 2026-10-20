@@ -101,23 +101,25 @@ public class NodeGraphViewModel : ViewModelBase
 
         {
 
+            // 事件派发期间不能改集合（双向绑定会回写 SelectedNodes），推到本帧结束后再同步属性面板
+
             if (_syncing) return;
 
-            _syncing = true;
-
-            try
-
-            {
-
-                SelectedNode = SelectedNodes.FirstOrDefault();
-
-                Owner.SelectedStep = SelectedNode?.Step;
-
-            }
-
-            finally { _syncing = false; }
+            Application.Current?.Dispatcher.BeginInvoke(new Action(SyncSelectionToPropertyPanel));
 
         };
+
+    }
+
+
+
+    private void SyncSelectionToPropertyPanel()
+
+    {
+
+        SelectedNode = SelectedNodes.FirstOrDefault();
+
+        Owner.SelectedStep = SelectedNode?.Step;
 
     }
 

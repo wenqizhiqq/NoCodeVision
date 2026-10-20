@@ -158,7 +158,6 @@
                              MinViewportZoom="0.4"
                              MaxViewportZoom="2"
                              ItemsSource="{Binding NodeGraph.Nodes}"
-                             SelectedItem="{Binding NodeGraph.SelectedNode}"
                              SelectedItems="{Binding NodeGraph.SelectedNodes}"
                              Connections="{Binding NodeGraph.Links}"
                              PendingConnection="{Binding NodeGraph.PendingConnection}"
