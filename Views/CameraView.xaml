@@ -133,7 +133,7 @@
                             <TextBlock Style="{StaticResource AppleSectionHeader}" Text="曝光与增益" />
                             <Border Style="{StaticResource SubCard}">
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="曝光" Margin="12,4,12,0" FontWeight="SemiBold" />
+                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="曝光" Margin="12,4,12,0" FontWeight="SemiBold" ToolTip="进光量。画面太暗就调大，太亮就调小" />
                                     <Grid Style="{StaticResource CompactRow}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
@@ -159,14 +159,14 @@
                             </Border>
                             <Border Style="{StaticResource SubCard}">
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="增益" Margin="12,4,12,0" FontWeight="SemiBold" />
+                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="增益" Margin="12,4,12,0" FontWeight="SemiBold" ToolTip="画面信号放大倍数。调高会变亮，但噪点也变多" />
                                     <Grid Style="{StaticResource CompactRow}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="64" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="增益" />
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="增益" ToolTip="画面信号放大倍数。调高会变亮，但噪点也变多" />
                                         <Slider Grid.Column="1" Minimum="0" Maximum="24" TickFrequency="0.1"
                                                 Value="{Binding Gain}" VerticalAlignment="Center" Margin="8,0" />
                                         <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding Gain, StringFormat={}{0:F1}}" />
@@ -177,7 +177,7 @@
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="自动增益" />
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="自动增益" ToolTip="让相机自己决定放大倍数，光线变化大时方便，但画面亮度会跳" />
                                         <CheckBox Grid.Column="1" Style="{StaticResource AppleToggle}"
                                                   IsChecked="{Binding GainAuto, Converter={StaticResource IntToBoolConverter}}" HorizontalAlignment="Left" />
                                     </Grid>
@@ -198,7 +198,7 @@
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="64" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="伽马" />
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="伽马" ToolTip="调整中间调的明暗，画面发灰时调它" />
                                         <Slider Grid.Column="1" Minimum="0.5" Maximum="3" TickFrequency="0.05" Value="{Binding Gamma}" VerticalAlignment="Center" Margin="8,0" />
                                         <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding Gamma, StringFormat={}{0:F2}}" />
                                     </Grid>
@@ -236,7 +236,7 @@
                             </Border>
                             <Border Style="{StaticResource SubCard}">
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="白平衡" Margin="12,4,12,0" FontWeight="SemiBold" />
+                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="白平衡" Margin="12,4,12,0" FontWeight="SemiBold" ToolTip="让白色看起来是白色，避免整张图偏蓝或偏黄" />
                                     <Grid Style="{StaticResource CompactRow}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
@@ -299,7 +299,7 @@
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="触发边沿" />
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="触发边沿" ToolTip="电信号跳变的那一刻拍照：上升沿=由低变高，下降沿=由高变低" />
                                         <ComboBox Grid.Column="1" Style="{StaticResource CompactCombo}" ItemsSource="{Binding TriggerEdges}" SelectedItem="{Binding TriggerEdge}" />
                                     </Grid>
                                     <Grid Style="{StaticResource CompactField}">
@@ -316,7 +316,7 @@
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="64" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="帧率" />
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="帧率" ToolTip="一秒钟能拍多少张图" />
                                         <Slider Grid.Column="1" Minimum="1" Maximum="120" TickFrequency="1" Value="{Binding FrameRate}" VerticalAlignment="Center" Margin="8,0" />
                                         <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding FrameRate, StringFormat={}{0:F1}}" />
                                     </Grid>
@@ -336,7 +336,7 @@
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="超时" />
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="超时" ToolTip="最多等多少毫秒，等不到就判失败" />
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding TimeoutMs}" Width="64" />
                                             <TextBlock Style="{StaticResource AppleUnit}" Text="ms" />
@@ -405,10 +405,10 @@
                     <!-- ROI / 高级 / 保存 -->
                     <Border Style="{StaticResource BlockCard}">
                         <StackPanel>
-                            <TextBlock Style="{StaticResource AppleSectionHeader}" Text="ROI / 高级 / 保存" />
+                            <TextBlock Style="{StaticResource AppleSectionHeader}" Text="ROI / 高级 / 保存" ToolTip="ROI=只看这块区域；高级=相机细节参数；保存=把拍到的图存成文件" />
                             <Border Style="{StaticResource SubCard}">
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI" Margin="12,4,12,0" FontWeight="SemiBold" />
+                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI" Margin="12,4,12,0" FontWeight="SemiBold" ToolTip="只让软件看这个方框里的内容，框外一律忽略" />
                                     <Grid Style="{StaticResource CompactRow}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />

@@ -65,7 +65,7 @@
                         <TextBlock Style="{StaticResource AppleLabel}" Margin="14,8,14,6" Text="端口" />
                         <ListBox ItemsSource="{Binding PortOptions}" SelectedItem="{Binding SelectedConfig.Port}"
                                  Style="{StaticResource ApplePillList}" Margin="10,0,10,10" />
-                        <TextBlock Style="{StaticResource AppleLabel}" Margin="14,4,14,6" Text="波特率" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="14,4,14,6" Text="波特率" ToolTip="串口每秒传多少位。两边必须设成完全一样，否则全是乱码" />
                         <ListBox ItemsSource="{Binding BaudOptions}" SelectedItem="{Binding SelectedConfig.Baud}"
                                  Style="{StaticResource ApplePillList}" Margin="10,0,10,10" />
                         <DockPanel Style="{StaticResource AppleRow}">
@@ -75,19 +75,19 @@
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="校验位" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="校验位" ToolTip="串口自检方式，一般选 None" />
                             <ComboBox Style="{StaticResource AppleComboBox}" DockPanel.Dock="Right"
                                       ItemsSource="{Binding ParityOptions}" SelectedItem="{Binding SelectedConfig.Parity}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="停止位" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="停止位" ToolTip="一帧数据的结束标志，一般选 1" />
                             <ComboBox Style="{StaticResource AppleComboBox}" DockPanel.Dock="Right"
                                       ItemsSource="{Binding StopBitsOptions}" SelectedItem="{Binding SelectedConfig.StopBits}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="流控" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="流控" ToolTip="传输太快时的暂停协商，一般选无" />
                             <ComboBox Style="{StaticResource AppleComboBox}" DockPanel.Dock="Right"
                                       ItemsSource="{Binding FlowOptions}" SelectedItem="{Binding SelectedConfig.Flow}" />
                         </DockPanel>
@@ -177,7 +177,7 @@
                     <StackPanel>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="Modbus-TCP 参数" />
                         <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="从站 IP" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="从站 IP" ToolTip="对方设备（PLC/触摸屏）在网络里的地址" />
                             <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetIp, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
@@ -187,7 +187,7 @@
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="单元 ID" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="单元 ID" ToolTip="一台设备里多个从站时用来区分编号，常见填 1" />
                             <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.UnitId, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <TextBlock Style="{StaticResource AppleSubLabel}" Margin="14,6,14,8" Text="发送命令：r 地址 [数量] 读保持寄存器；w 地址 值… 写；c 地址 0/1 写线圈；i 地址 [数量] 读输入寄存器。" />
@@ -234,12 +234,12 @@
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="发布主题" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="发布主题" ToolTip="MQTT 的频道名：发的主题和对方订阅的主题必须同名才收得到" />
                             <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Topic, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="订阅主题" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="订阅主题" ToolTip="MQTT 的频道名：订阅了才能收到对方发来的消息" />
                             <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.SubTopics, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <TextBlock Style="{StaticResource AppleSubLabel}" Margin="14,6,14,8" Text="连接后自动订阅「订阅主题」（逗号分隔）；发送框内容发布到「发布主题」。" />
@@ -325,17 +325,17 @@
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="机架" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="机架" ToolTip="西门子 PLC 的位置编号，常见 0" />
                             <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Rack, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="槽" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="槽" ToolTip="西门子 PLC 的插槽编号，S7-1200/1500 常见 1 或 0" />
                             <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Slot, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="DB 号" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="DB 号" ToolTip="西门子 PLC 的数据块编号" />
                             <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Db, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <TextBlock Style="{StaticResource AppleSubLabel}" Margin="14,6,14,8" Text="发送命令：r 地址 [数量] 读 DBn.DBW 地址；w 地址 值… 写（n=DB 号）。注：握手帧为通用实现，需实机校对。" />

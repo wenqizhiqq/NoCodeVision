@@ -59,7 +59,7 @@
                     <TextBlock Style="{StaticResource AppleSectionHeader}" Text="一、顶部导航与功能模块" />
                     <StackPanel Style="{StaticResource ManualItem}">
                         <TextBlock Style="{StaticResource ManualItemTitle}" Text="项目" />
-                        <TextBlock Style="{StaticResource ManualItemBody}" Text="管理检测工程（新建 / 打开 / 删除），每个工程包含相机、运控、通讯、变量、流程等配置。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="管理检测项目（新建 / 打开 / 删除），每个项目包含相机、运控、通讯、变量、流程等配置。" />
                     </StackPanel>
                     <Rectangle Style="{StaticResource AppleDivider}" />
                     <StackPanel Style="{StaticResource ManualItem}">
@@ -89,7 +89,7 @@
                     <Rectangle Style="{StaticResource AppleDivider}" />
                     <StackPanel Style="{StaticResource ManualItem}">
                         <TextBlock Style="{StaticResource ManualItemTitle}" Text="工程师" />
-                        <TextBlock Style="{StaticResource ManualItemBody}" Text="工程参数与高级配置入口（含表格化时序确定性编排）。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="项目参数与高级配置入口（含表格化时序确定性编排）。" />
                     </StackPanel>
                     <Rectangle Style="{StaticResource AppleDivider}" />
                     <StackPanel Style="{StaticResource ManualItem}">
@@ -107,7 +107,7 @@
                         <Border Style="{StaticResource ManualStepIndex}" DockPanel.Dock="Left">
                             <TextBlock Text="1" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
-                        <TextBlock Style="{StaticResource ManualStep}" Text="在「项目」页新建工程并打开。" VerticalAlignment="Center" />
+                        <TextBlock Style="{StaticResource ManualStep}" Text="在「项目」页新建项目并打开。" VerticalAlignment="Center" />
                     </DockPanel>
                     <DockPanel LastChildFill="False" Margin="16,4,16,2">
                         <Border Style="{StaticResource ManualStepIndex}" DockPanel.Dock="Left">

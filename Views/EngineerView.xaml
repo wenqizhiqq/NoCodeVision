@@ -58,7 +58,7 @@
                     <Button Style="{StaticResource AppleIconBtn}" Content="使能" Margin="0,0,4,0"
                             Command="{Binding DataContext.EnableAxisCmd, RelativeSource={RelativeSource AncestorType=UserControl}}"
                             CommandParameter="{Binding}" />
-                    <Button Style="{StaticResource AppleIconBtn}" Content="回原" Margin="0,0,4,0"
+                    <Button Style="{StaticResource AppleIconBtn}" Content="回原点" Margin="0,0,4,0"
                             Command="{Binding DataContext.HomeAxisCmd, RelativeSource={RelativeSource AncestorType=UserControl}}"
                             CommandParameter="{Binding}" />
                     <Button Style="{StaticResource AppleIconBtn}" Content="−JOG" Margin="0,0,4,0"
@@ -202,7 +202,7 @@
                     <StackPanel>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="轴调试（真实驱动硬件）" />
                         <DockPanel LastChildFill="False" Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleSubLabel}" DockPanel.Dock="Left" Text="寸动步长" />
+                            <TextBlock Style="{StaticResource AppleSubLabel}" DockPanel.Dock="Left" Text="寸动步长" ToolTip="点一次「寸动」，轴走多远" />
                             <TextBox Style="{StaticResource AppleTextField}" Width="80" Text="{Binding InchStep}" />
                             <TextBlock Style="{StaticResource AppleSubLabel}" DockPanel.Dock="Left" Text="  JOG 步长" Margin="14,0,0,0" />
                             <TextBox Style="{StaticResource AppleTextField}" Width="80" Text="{Binding JogStep}" />

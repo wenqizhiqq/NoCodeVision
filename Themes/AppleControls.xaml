@@ -581,4 +581,24 @@
         <Setter Property="Margin" Value="0,0,0,12" />
     </Style>
 
+    <!-- ===== 新手引导卡：一句话讲清这块是干什么的，全页面通用 ===== -->
+    <Style x:Key="AppleGuideCard" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource AccentSoftBrush}" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="14" />
+        <Setter Property="Margin" Value="16,12,16,10" />
+    </Style>
+    <Style x:Key="AppleGuideTitle" TargetType="TextBlock" BasedOn="{StaticResource AppleLabel}">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style x:Key="AppleGuideText" TargetType="TextBlock" BasedOn="{StaticResource AppleSubLabel}">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="Margin" Value="0,3,0,0" />
+    </Style>
+
 </ResourceDictionary>

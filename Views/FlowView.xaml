@@ -17,25 +17,7 @@
         <local:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
         <local:FlowEmptyToVisibilityConverter x:Key="FlowEmptyToVisibilityConverter" />
 
-        <!-- 步骤引导卡：每个步骤类型顶部一张，用一句话说清"做什么 / 怎么用" -->
-        <Style x:Key="AppleGuideCard" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource AccentSoftBrush}" />
-            <Setter Property="CornerRadius" Value="10" />
-            <Setter Property="Padding" Value="14" />
-            <Setter Property="Margin" Value="16,12,16,10" />
-        </Style>
-        <Style x:Key="AppleGuideTitle" TargetType="TextBlock" BasedOn="{StaticResource AppleLabel}">
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-            <Setter Property="TextWrapping" Value="Wrap" />
-        </Style>
-        <Style x:Key="AppleGuideText" TargetType="TextBlock" BasedOn="{StaticResource AppleSubLabel}">
-            <Setter Property="FontSize" Value="11" />
-            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
-            <Setter Property="TextWrapping" Value="Wrap" />
-            <Setter Property="Margin" Value="0,3,0,0" />
-        </Style>
+        <!-- 引导卡样式（AppleGuideCard / AppleGuideTitle / AppleGuideText）已提到 Themes/AppleControls.xaml 全局复用 -->
 
         <DataTemplate x:Key="FlowItemTemplate">
             <DockPanel LastChildFill="True" Margin="0,2,0,2">
@@ -65,7 +47,8 @@
                 </Grid.ColumnDefinitions>
                 <ComboBox Grid.Column="0" Style="{StaticResource AppleComboBoxInline}" HorizontalAlignment="Stretch"
                           ItemsSource="{Binding DataContext.LogicRelations, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                          SelectedItem="{Binding LogicRelation, FallbackValue='如果'}" VerticalAlignment="Center" Margin="14,0,4,0" />
+                          SelectedItem="{Binding LogicRelation, FallbackValue='满足就做'}" VerticalAlignment="Center" Margin="14,0,4,0"
+                          ToolTip="这一步和上一步的关系：满足就做=条件成立才执行这一步；不满足时=条件不成立才执行；一直重复=回到上面重跑；结束重复=停止重跑往下走；一起做/等它完成=和上一步同时做或等它做完" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,4,0">
                     <ctrl:AppleIconTile Glyph="{Binding Icon}" TileSize="20" />
                     <TextBlock Text="{Binding Function}" Style="{StaticResource AppleLabel}" Margin="6,0,0,0"
@@ -215,7 +198,8 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="65" SharedSizeGroup="StepColTime" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="逻辑" Style="{StaticResource AppleSubLabel}" Margin="14,0,4,0" FontWeight="SemiBold" Height="14" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="0" Text="何时做" Style="{StaticResource AppleSubLabel}" Margin="14,0,4,0" FontWeight="SemiBold" Height="14" VerticalAlignment="Center"
+                                   ToolTip="这一步在什么条件下才执行：满足就做 / 不满足时 / 一直重复 / 结束重复 / 一起做 / 等它完成" />
                         <TextBlock Grid.Column="1" Text="功能" Style="{StaticResource AppleSubLabel}" Margin="10,0,4,0" FontWeight="SemiBold" Height="14" VerticalAlignment="Center" />
                         <TextBlock Grid.Column="2" Text="状态" Style="{StaticResource AppleSubLabel}" Margin="10,0,4,0" FontWeight="SemiBold" Height="14" VerticalAlignment="Center" />
                         <TextBlock Grid.Column="3" Text="运算" Style="{StaticResource AppleSubLabel}" Margin="10,0,4,0" FontWeight="SemiBold" Height="14" VerticalAlignment="Center" />
@@ -430,7 +414,7 @@
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="增益" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="增益" ToolTip="画面信号放大倍数。调高会变亮，但噪点也变多" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Gain, FallbackValue=10}" Width="100" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
@@ -495,7 +479,7 @@
                         </StackPanel>
                         <!-- 右：ROI 图像列 -->
                         <StackPanel Grid.Column="1" Margin="14,0,14,0">
-                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI（在右侧图上拖拽绘制）" Margin="0,8,0,4" />
+                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI（在右侧图上拖拽绘制）" Margin="0,8,0,4" ToolTip="在右边的图上按住鼠标拖出一个框，软件只看框里的内容" />
                         <ctrl:RoiImageView Height="280" Margin="0,0,0,10"
                                            SourceImage="{Binding CurrentImageSource}"
                                            RoiX="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=10}"
@@ -617,7 +601,7 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="60" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="轮廓阈值(1-254)" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="轮廓阈值(1-254)" VerticalAlignment="Center" ToolTip="按外形找图的严格程度，范围 1~254，越大越只看轮廓" />
                                     <Slider Grid.Column="1" Minimum="1" Maximum="254" TickFrequency="1" IsSnapToTickEnabled="True"
                                             Value="{Binding SelectedStep.ContourThreshold}" VerticalAlignment="Center" Margin="8,0" />
                                     <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ContourThreshold, FallbackValue=30}" />
@@ -643,7 +627,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="60" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="金字塔层数" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="金字塔层数" VerticalAlignment="Center" ToolTip="找图的快慢折中：层数多找得快但可能漏找，一般 3~5 层" />
                             <Slider Grid.Column="1" Minimum="0" Maximum="6" TickFrequency="1" IsSnapToTickEnabled="True"
                                     Value="{Binding SelectedStep.PyramidLevel}" VerticalAlignment="Center" Margin="8,0" />
                             <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.PyramidLevel, FallbackValue=3}" />
@@ -743,7 +727,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="60" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="相似度阈值" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="相似度阈值" VerticalAlignment="Center" ToolTip="分数达到多少才算找到了。0~1之间，越大越严格；一般填 0.7~0.85" />
                             <Slider Grid.Column="1" Minimum="0.3" Maximum="1" TickFrequency="0.01" IsSnapToTickEnabled="True"
                                     Value="{Binding SelectedStep.ScoreThreshold}" VerticalAlignment="Center" Margin="8,0" />
                             <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ScoreThreshold, FallbackValue=0.85, StringFormat={}{0:0.##}}" />
@@ -830,13 +814,13 @@
                                         <Run Text="{Binding SelectedStep.MeasureUnit, FallbackValue='像素'}"/>
                                     </TextBlock>
                                     <TextBlock FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0">
-                                        <Run Text="输出变量："/>
+                                        <Run Text="输出变量：" />
                                         <Run Text="{Binding SelectedStep.OutputVar, FallbackValue='dMeasure'}"/>
                                         <Run Text="  ·  判定逻辑：|实测值 − 标称值| ≤ 公差"/>
                                     </TextBlock>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="12,0,0,0">
-                                    <TextBlock FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Text="实测值 / 判定" HorizontalAlignment="Right"/>
+                                    <TextBlock FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Text="实测值 / 判定" HorizontalAlignment="Right" ToolTip="这一次量出来的数字，以及它算不算合格" />
                                     <TextBlock FontSize="20" FontWeight="Bold" HorizontalAlignment="Right"
                                                Text="--"
                                                Foreground="{StaticResource TextMutedBrush}" ToolTip="运行流程后在此显示实际测量值"/>
@@ -986,7 +970,7 @@
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="比较变量" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="比较变量" ToolTip="拿这一步的结果和哪个变量做比较" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.CompareVar, FallbackValue='score'}" Width="120" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
@@ -1093,7 +1077,7 @@
                         <!-- 缺陷检测预览图见右侧列 -->
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="缺陷参数" />
                         <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="差异阈值" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="差异阈值" ToolTip="和标准图比，差多少算异常。数值越小越敏感，也越容易误报" />
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
                                 <Slider Minimum="1" Maximum="254" Value="{Binding SelectedStep.DiffThreshold, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
                                 <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding SelectedStep.DiffThreshold, StringFormat={}{0:F0}}" Width="50" />
@@ -1109,7 +1093,7 @@
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="全局亮度阈值" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="全局亮度阈值" ToolTip="整张图亮度超过这个值就报警，用来发现打光异常" />
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
                                 <Slider Minimum="1" Maximum="254" Value="{Binding SelectedStep.GlobalBrightnessThresh, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
                                 <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding SelectedStep.GlobalBrightnessThresh, StringFormat={}{0:F0}}" Width="50" />
@@ -1937,7 +1921,7 @@
                                 <TextBox Style="{StaticResource AppleTextField}" Text="{Binding BusCycleMs, FallbackValue=1.0}" />
                             </StackPanel>
                             <StackPanel Grid.Row="1" Grid.Column="1" Margin="8,8,0,0">
-                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="偏差报警阈值(ms)" Margin="0,0,0,2" />
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="偏差报警阈值(ms)" Margin="0,0,0,2" ToolTip="实际节拍和计划节拍差多少毫秒就报警" />
                                 <TextBox Style="{StaticResource AppleTextField}" Text="{Binding TimingThresholdMs, FallbackValue=0.5}" />
                             </StackPanel>
                         </Grid>

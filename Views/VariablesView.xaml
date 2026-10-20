@@ -30,7 +30,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Style="{StaticResource iOSTitle}" Text="变量" Margin="0,0,0,12" />
+        <TextBlock Grid.Row="0" Style="{StaticResource iOSTitle}" Text="变量" Margin="0,0,0,12" ToolTip="给一个数起个名字，流程里各步骤都能读它、改它" />
 
         <!-- 操作卡片：添加/删除 + 搜索，统一在同一张 iOS 分组卡内 -->
         <Border Grid.Row="1" Style="{StaticResource AppleGroupCard}" Padding="14,12" Margin="0,0,0,12">

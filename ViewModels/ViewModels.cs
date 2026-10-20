@@ -404,7 +404,7 @@ public class VisionFlowStep : ViewModelBase
 
     public string LogicRelation { get => _logicRelation; set => SetField(ref _logicRelation, value); }
 
-    private string _logicRelation = "如果";
+    private string _logicRelation = "满足就做";
 
 
 
@@ -3190,7 +3190,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                Index = 1, Function = "拍张照片", Name = "采集图像", ParamSummary = "打开文件", Timeout = 5000, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始", LogicRelation = "如果"
+                Index = 1, Function = "拍张照片", Name = "采集图像", ParamSummary = "打开文件", Timeout = 5000, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始", LogicRelation = "满足就做"
 
             },
 
@@ -3198,7 +3198,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                Index = 2, Function = "图里找图案", Name = "模板匹配", ParamSummary = "tpl / score≥0.85", Timeout = 3000, ActualValue = "未匹配", Icon = "🎯", StepType = "TemplateMatch", MatchMode = "灰度匹配", ScoreThreshold = 0.85, RoiX = 80, RoiY = 60, RoiW = 160, RoiH = 120, StatusText = "未开始", LogicRelation = "如果"
+                Index = 2, Function = "图里找图案", Name = "模板匹配", ParamSummary = "tpl / score≥0.85", Timeout = 3000, ActualValue = "未匹配", Icon = "🎯", StepType = "TemplateMatch", MatchMode = "灰度匹配", ScoreThreshold = 0.85, RoiX = 80, RoiY = 60, RoiW = 160, RoiH = 120, StatusText = "未开始", LogicRelation = "满足就做"
 
             },
 
@@ -3206,7 +3206,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                Index = 3, Function = "量尺寸", Name = "几何测量", ParamSummary = "圆径 / 12.00±0.05", Timeout = 2000, ActualValue = "未测量", Icon = "📐", StepType = "Measure", MeasureType = "圆径", NominalValue = 12.0, Tolerance = 0.05, StatusText = "未开始", LogicRelation = "如果"
+                Index = 3, Function = "量尺寸", Name = "几何测量", ParamSummary = "圆径 / 12.00±0.05", Timeout = 2000, ActualValue = "未测量", Icon = "📐", StepType = "Measure", MeasureType = "圆径", NominalValue = 12.0, Tolerance = 0.05, StatusText = "未开始", LogicRelation = "满足就做"
 
             },
 
@@ -3214,7 +3214,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                Index = 4, Function = "通讯发送", Name = "通讯发送(合格)", ParamSummary = "PLC-串口 / M100=1", Timeout = 1000, ActualValue = "未发送", Icon = "📡", StepType = "Comm", CommChannel = "PLC-串口", CommCmd = "发送", CommContent = "M100=1", CommEncoding = "ASCII", StatusText = "未开始", LogicRelation = "否则"
+                Index = 4, Function = "通讯发送", Name = "通讯发送(合格)", ParamSummary = "PLC-串口 / M100=1", Timeout = 1000, ActualValue = "未发送", Icon = "📡", StepType = "Comm", CommChannel = "PLC-串口", CommCmd = "发送", CommContent = "M100=1", CommEncoding = "ASCII", StatusText = "未开始", LogicRelation = "不满足时"
 
             },
 
@@ -3224,7 +3224,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                Index = 5, Function = "挑瑕疵", Name = "缺陷检测", ParamSummary = "差异比对 / 阈值45", Timeout = 3000, ActualValue = "未检测", Icon = "🔍", StepType = "Defect", StatusText = "未开始", LogicRelation = "如果"
+                Index = 5, Function = "挑瑕疵", Name = "缺陷检测", ParamSummary = "差异比对 / 阈值45", Timeout = 3000, ActualValue = "未检测", Icon = "🔍", StepType = "Defect", StatusText = "未开始", LogicRelation = "满足就做"
 
             },
 
@@ -3232,7 +3232,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                Index = 6, Function = "判一下对不对", Name = "循环条件", ParamSummary = "算子:大于 / 输入值:0.85", Timeout = 1000, ActualValue = "0", Icon = "✅", StepType = "Logic", LogicRelation = "如果", Operator = "大于", InputValue = "0.85", StatusText = "未开始"
+                Index = 6, Function = "判一下对不对", Name = "循环条件", ParamSummary = "算子:大于 / 输入值:0.85", Timeout = 1000, ActualValue = "0", Icon = "✅", StepType = "Logic", LogicRelation = "满足就做", Operator = "大于", InputValue = "0.85", StatusText = "未开始"
 
             },
 
@@ -3240,7 +3240,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                Index = 7, Function = "等一会", Name = "循环体", ParamSummary = "200ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", LogicRelation = "循环", StatusText = "未开始"
+                Index = 7, Function = "等一会", Name = "循环体", ParamSummary = "200ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", LogicRelation = "一直重复", StatusText = "未开始"
 
             },
 
@@ -3248,7 +3248,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                Index = 8, Function = "通讯发送", Name = "退出循环", ParamSummary = "PLC-串口 / M200=0", Timeout = 1000, ActualValue = "未发送", Icon = "📡", StepType = "Comm", CommChannel = "PLC-串口", CommCmd = "发送", CommContent = "M200=0", CommEncoding = "ASCII", StatusText = "未开始", LogicRelation = "否则"
+                Index = 8, Function = "通讯发送", Name = "退出循环", ParamSummary = "PLC-串口 / M200=0", Timeout = 1000, ActualValue = "未发送", Icon = "📡", StepType = "Comm", CommChannel = "PLC-串口", CommCmd = "发送", CommContent = "M200=0", CommEncoding = "ASCII", StatusText = "未开始", LogicRelation = "不满足时"
 
             },
 
@@ -3256,7 +3256,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                Index = 9, Function = "报结果", Name = "结果输出", ParamSummary = "PLC / OK", Timeout = 1000, ActualValue = "-", Icon = "📤", StepType = "Output", OutputAddress = "PLC_D200", OutputValue = 1, StatusText = "未开始", LogicRelation = "跳出"
+                Index = 9, Function = "报结果", Name = "结果输出", ParamSummary = "PLC / OK", Timeout = 1000, ActualValue = "-", Icon = "📤", StepType = "Output", OutputAddress = "PLC_D200", OutputValue = 1, StatusText = "未开始", LogicRelation = "结束重复"
 
             },
 
@@ -3275,31 +3275,31 @@ public class FlowViewModel : ViewModelBase
         {
             new VisionFlowStep
             {
-                Index = 1, Function = "动轴", Name = "轴运动", ParamSummary = "X轴 回原 → 移动 100mm", Timeout = 10000, ActualValue = "未运动", Icon = "🦾", StepType = "AxisMove", StatusText = "未开始", LogicRelation = "如果"
+                Index = 1, Function = "动轴", Name = "轴运动", ParamSummary = "X轴 回原点 → 移动 100mm", Timeout = 10000, ActualValue = "未运动", Icon = "🦾", StepType = "AxisMove", StatusText = "未开始", LogicRelation = "满足就做"
             },
             new VisionFlowStep
             {
-                Index = 2, Function = "开关电", Name = "IO控制", ParamSummary = "OUT0 = ON", Timeout = 1000, ActualValue = "未执行", Icon = "🔌", StepType = "IoControl", StatusText = "未开始", LogicRelation = "如果"
+                Index = 2, Function = "开关电", Name = "IO控制", ParamSummary = "OUT0 = ON", Timeout = 1000, ActualValue = "未执行", Icon = "🔌", StepType = "IoControl", StatusText = "未开始", LogicRelation = "满足就做"
             },
             new VisionFlowStep
             {
-                Index = 3, Function = "伸缩气缸", Name = "气缸动作", ParamSummary = "夹爪 伸出", Timeout = 2000, ActualValue = "未动作", Icon = "🟢", StepType = "CylinderAction", StatusText = "未开始", LogicRelation = "如果"
+                Index = 3, Function = "伸缩气缸", Name = "气缸动作", ParamSummary = "夹爪 伸出", Timeout = 2000, ActualValue = "未动作", Icon = "🟢", StepType = "CylinderAction", StatusText = "未开始", LogicRelation = "满足就做"
             },
             new VisionFlowStep
             {
-                Index = 4, Function = "等一会", Name = "未到位处理", ParamSummary = "200ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", StatusText = "未开始", LogicRelation = "否则"
+                Index = 4, Function = "等一会", Name = "未到位处理", ParamSummary = "200ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", StatusText = "未开始", LogicRelation = "不满足时"
             },
             new VisionFlowStep
             {
-                Index = 5, Function = "判一下对不对", Name = "重试条件", ParamSummary = "算子:大于 / 输入值:0.85", Timeout = 1000, ActualValue = "0", Icon = "✅", StepType = "Logic", LogicRelation = "如果", Operator = "大于", InputValue = "0.85", StatusText = "未开始"
+                Index = 5, Function = "判一下对不对", Name = "重试条件", ParamSummary = "算子:大于 / 输入值:0.85", Timeout = 1000, ActualValue = "0", Icon = "✅", StepType = "Logic", LogicRelation = "满足就做", Operator = "大于", InputValue = "0.85", StatusText = "未开始"
             },
             new VisionFlowStep
             {
-                Index = 6, Function = "等一会", Name = "重试循环体", ParamSummary = "100ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", LogicRelation = "循环", StatusText = "未开始"
+                Index = 6, Function = "等一会", Name = "重试循环体", ParamSummary = "100ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", LogicRelation = "一直重复", StatusText = "未开始"
             },
             new VisionFlowStep
             {
-                Index = 7, Function = "通讯发送", Name = "退出重试", ParamSummary = "PLC-串口 / M200=0", Timeout = 1000, ActualValue = "未发送", Icon = "📡", StepType = "Comm", CommChannel = "PLC-串口", CommCmd = "发送", CommContent = "M200=0", CommEncoding = "ASCII", StatusText = "未开始", LogicRelation = "否则"
+                Index = 7, Function = "通讯发送", Name = "退出重试", ParamSummary = "PLC-串口 / M200=0", Timeout = 1000, ActualValue = "未发送", Icon = "📡", StepType = "Comm", CommChannel = "PLC-串口", CommCmd = "发送", CommContent = "M200=0", CommEncoding = "ASCII", StatusText = "未开始", LogicRelation = "不满足时"
             },
         };
     }
@@ -3311,23 +3311,23 @@ public class FlowViewModel : ViewModelBase
         {
             new VisionFlowStep
             {
-                Index = 1, Function = "拍张照片", Name = "采集图像", ParamSummary = "打开文件", Timeout = 5000, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始", LogicRelation = "如果"
+                Index = 1, Function = "拍张照片", Name = "采集图像", ParamSummary = "打开文件", Timeout = 5000, ActualValue = "未采集", Icon = "📷", StepType = "ImageCapture", CaptureMode = "打开文件", ImageSource = "", StatusText = "未开始", LogicRelation = "满足就做"
             },
             new VisionFlowStep
             {
-                Index = 2, Function = "图里找图案", Name = "模板匹配", ParamSummary = "tpl / score≥0.85", Timeout = 3000, ActualValue = "未匹配", Icon = "🎯", StepType = "TemplateMatch", MatchMode = "灰度匹配", ScoreThreshold = 0.85, RoiX = 80, RoiY = 60, RoiW = 160, RoiH = 120, StatusText = "未开始", LogicRelation = "如果"
+                Index = 2, Function = "图里找图案", Name = "模板匹配", ParamSummary = "tpl / score≥0.85", Timeout = 3000, ActualValue = "未匹配", Icon = "🎯", StepType = "TemplateMatch", MatchMode = "灰度匹配", ScoreThreshold = 0.85, RoiX = 80, RoiY = 60, RoiW = 160, RoiH = 120, StatusText = "未开始", LogicRelation = "满足就做"
             },
             new VisionFlowStep
             {
-                Index = 3, Function = "判一下对不对", Name = "循环条件", ParamSummary = "算子:大于 / 输入值:0.85", Timeout = 1000, ActualValue = "0", Icon = "✅", StepType = "Logic", LogicRelation = "如果", Operator = "大于", InputValue = "0.85", StatusText = "未开始"
+                Index = 3, Function = "判一下对不对", Name = "循环条件", ParamSummary = "算子:大于 / 输入值:0.85", Timeout = 1000, ActualValue = "0", Icon = "✅", StepType = "Logic", LogicRelation = "满足就做", Operator = "大于", InputValue = "0.85", StatusText = "未开始"
             },
             new VisionFlowStep
             {
-                Index = 4, Function = "等一会", Name = "循环体", ParamSummary = "200ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", LogicRelation = "循环", StatusText = "未开始"
+                Index = 4, Function = "等一会", Name = "循环体", ParamSummary = "200ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", LogicRelation = "一直重复", StatusText = "未开始"
             },
             new VisionFlowStep
             {
-                Index = 5, Function = "通讯发送", Name = "退出循环", ParamSummary = "PLC-串口 / M200=0", Timeout = 1000, ActualValue = "未发送", Icon = "📡", StepType = "Comm", CommChannel = "PLC-串口", CommCmd = "发送", CommContent = "M200=0", CommEncoding = "ASCII", StatusText = "未开始", LogicRelation = "否则"
+                Index = 5, Function = "通讯发送", Name = "退出循环", ParamSummary = "PLC-串口 / M200=0", Timeout = 1000, ActualValue = "未发送", Icon = "📡", StepType = "Comm", CommChannel = "PLC-串口", CommCmd = "发送", CommContent = "M200=0", CommEncoding = "ASCII", StatusText = "未开始", LogicRelation = "不满足时"
             },
         };
     }
@@ -3340,7 +3340,7 @@ public class FlowViewModel : ViewModelBase
 
     public string[] MeasureTypes { get; } = { "圆径", "边距", "角度", "面积", "中心距" };
 
-    public string[] LogicRelations { get; } = { "如果", "并且", "或者", "否则", "循环", "跳出", "并行", "等待" };
+    public string[] LogicRelations { get; } = { "满足就做", "而且要", "或者要", "不满足时", "一直重复", "结束重复", "一起做", "等它完成" };
 
     public string[] Operators { get; } = { "大于", "小于", "等于", "大于等于", "小于等于", "不等于", "包含", "不包含", "开头为", "结尾为" };
 
@@ -4311,11 +4311,21 @@ public class FlowViewModel : ViewModelBase
         ["消息提示"] = "弹提示", ["通讯指令"] = "发数据",
     };
 
+    /// <summary>「逻辑」列的旧编程词 → 大白话。执行器 switch 用的是新词，老工程载入时统一改写。</summary>
+    private static readonly Dictionary<string, string> LegacyLogicNames = new()
+    {
+        ["如果"] = "满足就做", ["并且"] = "而且要", ["或者"] = "或者要", ["否则"] = "不满足时",
+        ["循环"] = "一直重复", ["跳出"] = "结束重复", ["并行"] = "一起做", ["等待"] = "等它完成",
+    };
+
     internal static void NormalizeStepNames(IEnumerable<VisionFlow> flows)
     {
         foreach (var f in flows)
             foreach (var s in f.Steps)
+            {
                 if (LegacyToolNames.TryGetValue(s.Function ?? "", out var plain)) s.Function = plain;
+                if (LegacyLogicNames.TryGetValue(s.LogicRelation ?? "", out var logic)) s.LogicRelation = logic;
+            }
     }
 
     private void RebuildToolOptions()
@@ -7164,11 +7174,11 @@ public class FlowViewModel : ViewModelBase
 
         {
 
-            case "如果":
+            case "满足就做":
 
-            case "并且":
+            case "而且要":
 
-            case "或者":
+            case "或者要":
 
                 if (EvalLogic(step)) return i + 1;
 
@@ -7176,21 +7186,21 @@ public class FlowViewModel : ViewModelBase
 
                 for (int j = i + 1; j < steps.Count; j++)
 
-                    if (steps[j].LogicRelation == "否则") return j;
+                    if (steps[j].LogicRelation == "不满足时") return j;
 
                 // 没有「否则」：跳过整个条件块（后续连续的 并且/或者 行）
 
                 for (int j = i + 1; j < steps.Count; j++)
 
-                    if (steps[j].LogicRelation != "并且" && steps[j].LogicRelation != "或者") return j;
+                    if (steps[j].LogicRelation != "而且要" && steps[j].LogicRelation != "或者要") return j;
 
                 return steps.Count;
 
-            case "否则":
+            case "不满足时":
 
                 return i + 1;
 
-            case "循环":
+            case "一直重复":
 
             {
 
@@ -7198,13 +7208,13 @@ public class FlowViewModel : ViewModelBase
 
                 for (int k = i - 1; k >= 0; k--)
 
-                    if (steps[k].LogicRelation == "如果" || steps[k].LogicRelation == "循环") return k;
+                    if (steps[k].LogicRelation == "满足就做" || steps[k].LogicRelation == "一直重复") return k;
 
                 return 0;
 
             }
 
-            case "跳出":
+            case "结束重复":
 
             {
 
@@ -7212,13 +7222,13 @@ public class FlowViewModel : ViewModelBase
 
                 for (int j = i + 1; j < steps.Count; j++)
 
-                    if (steps[j].LogicRelation == "循环") return j + 1;
+                    if (steps[j].LogicRelation == "一直重复") return j + 1;
 
                 // 无循环则越过下一个块行
 
                 for (int j = i + 1; j < steps.Count; j++)
 
-                    if (steps[j].LogicRelation == "如果" || steps[j].LogicRelation == "否则") return j + 1;
+                    if (steps[j].LogicRelation == "满足就做" || steps[j].LogicRelation == "不满足时") return j + 1;
 
                 return steps.Count;
 

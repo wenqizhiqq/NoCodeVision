@@ -288,12 +288,12 @@
                             <Border Grid.Column="2" Background="{StaticResource HoverBrush}" CornerRadius="10" Padding="12,10" Margin="6,0,0,0">
                                 <StackPanel HorizontalAlignment="Center">
                                     <TextBlock Text="{Binding Ng}" FontSize="26" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}" HorizontalAlignment="Center" />
-                                    <TextBlock Text="不合格" FontSize="12" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,2,0,0" />
+                                    <TextBlock Text="不合格" FontSize="12" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,2,0,0" ToolTip="这次检测判定为 NG 的数量" />
                                 </StackPanel>
                             </Border>
                         </Grid>
                         <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="良率" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="良率" ToolTip="合格数量占总数量的百分比" />
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Right" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" Text="{Binding YieldText}" />
                         </DockPanel>
                     </StackPanel>

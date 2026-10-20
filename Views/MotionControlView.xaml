@@ -147,8 +147,8 @@
                                     <Button Style="{StaticResource AppleBtn}" Content="JOG +" Command="{Binding JogPlusCmd}" Padding="14,6" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,8">
-                                    <Button Style="{StaticResource AppleBtnSecondary}" Content="回零" Command="{Binding HomeAxisCmd}" Padding="12,6" Margin="0,0,8,0" />
-                                    <Button Style="{StaticResource AppleBtnSecondary}" Content="使能/禁能" Command="{Binding EnableAxisCmd}" Padding="12,6" Margin="0,0,8,0" />
+                                    <Button Style="{StaticResource AppleBtnSecondary}" Content="回原点" Command="{Binding HomeAxisCmd}" Padding="12,6" Margin="0,0,8,0" />
+                                    <Button Style="{StaticResource AppleBtnSecondary}" Content="使能/禁能" Command="{Binding EnableAxisCmd}" Padding="12,6" Margin="0,0,8,0" ToolTip="使能=给驱动器上电解锁，轴才听指令；禁能=脱扣，可以用手推动" />
                                     <Button Style="{StaticResource AppleBtnSecondary}" Content="停止" Command="{Binding StopAxisCmd}" Padding="12,6" />
                                 </StackPanel>
                                 <Grid Width="200" Margin="0,2">
@@ -183,17 +183,17 @@
                     </Grid>
                     <Grid Style="{StaticResource AxisField}">
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="回零偏移" />
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="回原点偏移" ToolTip="回到原点之后再多走这么远才停" />
                         <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.HomeOffset, StringFormat={}{0:F2}, FallbackValue=0}" />
                     </Grid>
                     <Grid Style="{StaticResource AxisField}">
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="正软限位" />
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="正软限位" ToolTip="软件允许走到的最远位置，防止撞到机械尽头" />
                         <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.SoftLimitPos, StringFormat={}{0:F2}, FallbackValue=0}" />
                     </Grid>
                     <Grid Style="{StaticResource AxisField}">
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="负软限位" />
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="负软限位" ToolTip="软件允许走到的另一端位置，防止撞到机械尽头" />
                         <TextBox Grid.Row="1" Style="{StaticResource AppleTextField}" Text="{Binding SelectedAxis.SoftLimitNeg, StringFormat={}{0:F2}, FallbackValue=0}" />
                     </Grid>
                     <Grid Style="{StaticResource AxisField}">
@@ -281,7 +281,7 @@
                     </Grid>
                     <Grid Style="{StaticResource AxisField}">
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="极性" />
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="极性" ToolTip="输出高电平算动作还是算不动作。接线反了在这里翻一下" />
                         <CheckBox Grid.Row="1" IsChecked="{Binding SelectedIo.Polarity}" Content="高电平有效" VerticalAlignment="Center" />
                     </Grid>
                 </WrapPanel>
@@ -496,9 +496,9 @@
                         <TextBlock Style="{StaticResource AppleLabel}" Margin="0,8,0,4" Text="{Binding SelectedPointTable.AxisNames[3], StringFormat='{}{0} 速度'}" />
                         <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Axes[3].Speed, StringFormat={}{0:F1}, FallbackValue=0}" />
 
-                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="时序标记" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="时序标记" ToolTip="标了 T+0ms / T+5ms 的步骤会在同一时刻或延后几毫秒发出" />
                         <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.TimingMark, FallbackValue=''}" />
-                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="同步组" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="同步组" ToolTip="同一组的动作会同时发出，用来做多个气缸/轴的配合" />
                         <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.SyncGroup, FallbackValue=''}" />
                         <TextBlock Style="{StaticResource AppleLabel}" Margin="0,12,0,4" Text="说明" />
                         <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedPoint.Desc, FallbackValue=''}" />

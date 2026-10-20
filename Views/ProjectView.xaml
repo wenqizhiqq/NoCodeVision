@@ -971,7 +971,7 @@
 
         <!-- 新建项目示例弹窗：全视图覆盖两列，居中显示 -->
 
-        <!-- 新建项目示例弹窗：全视图覆盖两列；输入工程名称 + 选择示例（含相机/通讯/流程配置） -->
+        <!-- 新建项目示例弹窗：全视图覆盖两列；输入项目名称 + 选择示例（含相机/通讯/流程配置） -->
 
         <Grid Grid.ColumnSpan="2" Panel.ZIndex="100" Background="#80000000" Visibility="{Binding IsExampleDialogOpen, Converter={StaticResource BoolToVisibility}}">
 
@@ -997,7 +997,7 @@
 
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="4,2,4,12">
 
-                        <TextBlock Style="{StaticResource AppleLabel}" Text="工程名称：" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBlock Style="{StaticResource AppleLabel}" Text="项目名称：" VerticalAlignment="Center" Margin="0,0,8,0" />
 
                         <TextBox Width="340" Height="34" Text="{Binding NewProjectName, UpdateSourceTrigger=PropertyChanged}" FontSize="13" VerticalContentAlignment="Center" />
 

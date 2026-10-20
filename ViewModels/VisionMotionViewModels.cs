@@ -619,7 +619,7 @@ namespace NoCodeVision.ViewModels
                         new() { Name = "放料点", Desc = "放入工位", Axes = { new AxisPos { Position = 120.0, Speed = 50 }, new AxisPos { Position = 80.0, Speed = 50 }, new AxisPos { Position = 0, Speed = 30 }, new AxisPos { Position = 0 } } },
                         new() { Name = "安全点", Desc = "抬高处过渡", Axes = { new AxisPos { Position = 0, Speed = 50 }, new AxisPos { Position = 0, Speed = 50 }, new AxisPos { Position = 50.0, Speed = 30 }, new AxisPos { Position = 0 } } },
                         new() { Name = "拍照点", Desc = "视觉定位", Axes = { new AxisPos { Position = 60.0, Speed = 40 }, new AxisPos { Position = 40.0, Speed = 40 }, new AxisPos { Position = 10.0, Speed = 20 }, new AxisPos { Position = 0 } } },
-                        new() { Name = "待机点", Desc = "回零上方", Axes = { new AxisPos { Position = 0, Speed = 50 }, new AxisPos { Position = 100.0, Speed = 50 }, new AxisPos { Position = 30.0, Speed = 30 }, new AxisPos { Position = 0 } } },
+                        new() { Name = "待机点", Desc = "回原点上方", Axes = { new AxisPos { Position = 0, Speed = 50 }, new AxisPos { Position = 100.0, Speed = 50 }, new AxisPos { Position = 30.0, Speed = 30 }, new AxisPos { Position = 0 } } },
                     }
                 }
             };
