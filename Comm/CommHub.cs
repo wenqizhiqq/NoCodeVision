@@ -17,6 +17,8 @@ public sealed class CommHub : IDisposable
     private static readonly CommHub _instance = new();
     public static CommHub Instance => _instance;
 
+    readonly System.Collections.Concurrent.BlockingCollection<string> _inbox = new(1000);
+
     public event Action<string>? Log;
     public event Action<string>? DataReceived;
     public event Action<bool>? StateChanged;
@@ -81,6 +83,13 @@ public sealed class CommHub : IDisposable
         StateChanged?.Invoke(false);
     }
 
+    /// <summary>等对方发来一条内容，超时返回 null。会先清掉之前攒的旧消息。</summary>
+    public string? WaitNextMessage(int ms)
+    {
+        while (_inbox.TryTake(out _)) { }
+        return _inbox.TryTake(out var m, Math.Max(50, ms)) ? m : null;
+    }
+
     public async Task SendAsync(string text)
     {
         if (_delegatingToSvc)
@@ -96,9 +105,9 @@ public sealed class CommHub : IDisposable
     }
 
     private void OnSvcLog(string m) => Log?.Invoke(m);
-    private void OnSvcData(string m) => DataReceived?.Invoke(m);
+    private void OnSvcData(string m) { _inbox.Add(m); DataReceived?.Invoke(m); }
     private void OnLinkLog(string m) => Log?.Invoke(m);
-    private void OnLinkData(string m) => DataReceived?.Invoke(m);
+    private void OnLinkData(string m) { _inbox.Add(m); DataReceived?.Invoke(m); }
 
     private static ICommLink CreateLink(string type) => type switch
     {

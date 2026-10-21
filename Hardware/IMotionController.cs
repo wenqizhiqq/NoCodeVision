@@ -21,6 +21,36 @@ public interface IMotionController : IDisposable
 
     /// <summary>设置 IO 输出点状态。</summary>
     void SetIo(string name, bool on);
+
+    /// <summary>读到输入点状态。</summary>
+    bool ReadIo(string name) => false;
+
+    /// <summary>绝对运动到某位置。</summary>
+    void MoveAbsolute(string name, double position, double speed) { }
+
+    /// <summary>相对运动一段距离。</summary>
+    void MoveRelative(string name, double delta, double speed) { }
+
+    /// <summary>回机械原点。</summary>
+    void Home(string name, double offset = 0) { }
+
+    /// <summary>减速停止。</summary>
+    void Stop(string name) { }
+
+    /// <summary>所有轴急停。</summary>
+    void EmergencyStopAll() { }
+
+    /// <summary>两轴直线联动。</summary>
+    void MoveLinear(string xAxis, string yAxis, double x, double y, double speed) { }
+
+    /// <summary>两轴圆弧联动。</summary>
+    void MoveArc(string xAxis, string yAxis, double cx, double cy, double radius, double spanDeg, double speed) { }
+
+    /// <summary>读外部编码器位置。</summary>
+    double GetEncoder(string name) => 0;
+
+    /// <summary>设防硬件高速比较器。</summary>
+    void ArmCompare(string name, double triggerAt, double spacing) { }
 }
 
 /// <summary>轴实时状态。</summary>

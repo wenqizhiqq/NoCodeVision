@@ -16,6 +16,7 @@
         <local:IntToBoolConverter x:Key="IntToBoolConverter" />
         <local:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
         <local:FlowEmptyToVisibilityConverter x:Key="FlowEmptyToVisibilityConverter" />
+        <ctrl:KindToVisibilityConverter x:Key="KindVis" />
 
         <!-- 引导卡样式（AppleGuideCard / AppleGuideTitle / AppleGuideText）已提到 Themes/AppleControls.xaml 全局复用 -->
 
@@ -329,6 +330,52 @@
                             <ComboBox Grid.Column="3" Style="{StaticResource AppleComboBox}" ItemsSource="{Binding ToolOptions}" SelectedItem="{Binding SelectedTool}" />
                         </Grid>
                         <TextBlock Style="{StaticResource AppleGuideText}" Text="选好工具后点中间工具栏「➕ 添加」加入流程；切换工具会立即改写当前选中步骤，右侧属性面板同步切换。" Margin="14,0,14,4" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <!-- 通用参数面板：算子在 Vision/OperatorCatalog.cs 里登记后自动出界面，不必再写 XAML -->
+                <Border Margin="0,0,0,12">
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasGenericPanel}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="{Binding SelectedOperatorName}" />
+                        <Border Style="{StaticResource AppleGuideCard}" Margin="12,4,12,10">
+                            <TextBlock Style="{StaticResource AppleGuideText}" Text="{Binding SelectedOperatorDesc}" />
+                        </Border>
+                        <ItemsControl ItemsSource="{Binding SelectedOperatorParams}" Margin="12,0,12,8">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,0,0,9">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="112" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding Label}" VerticalAlignment="Center" FontSize="12"
+                                                   TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" ToolTip="{Binding Help}" />
+                                        <TextBox Grid.Column="1" Style="{StaticResource AppleTextField}"
+                                                 Visibility="{Binding Kind, Converter={StaticResource KindVis}, ConverterParameter='Number,Text'}"
+                                                 ctrl:DynBind.Target="Text" ctrl:DynBind.Path="{Binding Path=Path}"
+                                                 ToolTip="{Binding Help}" />
+                                        <CheckBox Grid.Column="1" Content="要" VerticalAlignment="Center" FontSize="12"
+                                                  Visibility="{Binding Kind, Converter={StaticResource KindVis}, ConverterParameter=Bool}"
+                                                  ctrl:DynBind.Target="Checked" ctrl:DynBind.Path="{Binding Path=Path}"
+                                                  ToolTip="{Binding Help}" />
+                                        <ComboBox Grid.Column="1" Style="{StaticResource AppleComboBox}" ItemsSource="{Binding Options}"
+                                                  Visibility="{Binding Kind, Converter={StaticResource KindVis}, ConverterParameter=Choice}"
+                                                  ctrl:DynBind.Target="Selected" ctrl:DynBind.Path="{Binding Path=Path}"
+                                                  ToolTip="{Binding Help}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
                 </Border>
 

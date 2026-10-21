@@ -125,17 +125,111 @@ public class NodeGraphViewModel : ViewModelBase
 
 
 
+    static string GroupTitle(string g) => g switch
+
+    {
+
+        "Locate" => "找位置",
+
+        "Measure" => "数与量",
+
+        "Color" => "先修图",
+
+        "Calib" => "标定换算",
+
+        "Save" => "留证据",
+
+        "Calc" => "算几何",
+
+        "Code" => "读码识字",
+
+        "Logic" => "判断和重复",
+
+        "Motion" => "让设备动",
+
+        "Output" => "发出去",
+
+        "Comm" => "收发数据",
+
+        _ => "看图"
+
+    };
+
+
+
     private void BuildPalette()
 
     {
 
-        AddCategory("先看图", "Vision", "拍张照片", "图里找图案", "挑瑕疵", "量尺寸", "看颜色", "数有几个", "扫条码", "认文字");
+        var cats = new Dictionary<string, NodeGraphCategory>();
 
-        AddCategory("再判断", "Logic", "判一下对不对", "走哪一条", "重复做", "算个数", "等一会", "调子流程", "写段代码");
 
-        AddCategory("让设备动", "Motion", "动轴", "开关电", "伸缩气缸");
 
-        AddCategory("发出去", "Output", "报结果", "存文件", "弹提示", "发数据");
+        void Cat(string key, string title)
+
+        {
+
+            if (!cats.ContainsKey(key)) cats[key] = new NodeGraphCategory(title, key);
+
+        }
+
+
+
+        void Add(string key, string name)
+
+        {
+
+            var (icon, type) = FlowViewModel.ToolToIconType(name);
+
+            cats[key].Tools.Add(new NodeGraphTool(name, icon, type, key));
+
+        }
+
+
+
+        Cat("Vision", "先看图");
+
+        foreach (var n in new[] { "拍张照片", "图里找图案", "挑瑕疵", "量尺寸", "看颜色", "数有几个", "扫条码", "认文字" }) Add("Vision", n);
+
+
+
+        Cat("Logic", "再判断");
+
+        foreach (var n in new[] { "判一下对不对", "走哪一条", "重复做", "算个数", "等一会", "调子流程", "写段代码" }) Add("Logic", n);
+
+
+
+        Cat("Motion", "让设备动");
+
+        foreach (var n in new[] { "动轴", "开关电", "伸缩气缸" }) Add("Motion", n);
+
+
+
+        Cat("Output", "发出去");
+
+        foreach (var n in new[] { "报结果", "存文件", "弹提示", "发数据" }) Add("Output", n);
+
+
+
+        // 目录里的算子并进同名分组，不重复出现
+
+        foreach (var d in OperatorCatalog.All)
+
+        {
+
+            Cat(d.Group, GroupTitle(d.Group));
+
+            if (cats[d.Group].Tools.Any(x => x.Name == d.Name)) continue;
+
+            cats[d.Group].Tools.Add(new NodeGraphTool(d.Name, d.Icon, d.StepType, d.Group));
+
+        }
+
+
+
+        foreach (var key in new[] { "Vision", "Locate", "Measure", "Calc", "Calib", "Color", "Code", "Logic", "Motion", "Output", "Comm", "Save" })
+
+            if (cats.TryGetValue(key, out var c) && c.Tools.Count > 0) Palette.Add(c);
 
     }
 
@@ -484,7 +578,7 @@ public class NodeGraphNode : ViewModelBase
 
     /// <summary>分类配色键：视觉=蓝、逻辑=橙、运动=绿、输出=紫，画布上一眼能分辨节点种类。</summary>
 
-    public string GroupKey => Step.StepType switch
+    public string GroupKey => OperatorCatalog.Find(Step.StepType)?.Group ?? Step.StepType switch
 
     {
 

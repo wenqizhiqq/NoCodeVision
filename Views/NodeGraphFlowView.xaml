@@ -79,6 +79,22 @@
         <SolidColorBrush x:Key="NodeOutputLine" Color="#AF52DE" />
         <SolidColorBrush x:Key="NodeOtherBg" Color="#F2F2F7" />
         <SolidColorBrush x:Key="NodeOtherLine" Color="#8E8E93" />
+        <SolidColorBrush x:Key="NodeLocateBg" Color="#E6FBFF" />
+        <SolidColorBrush x:Key="NodeLocateLine" Color="#00A8C0" />
+        <SolidColorBrush x:Key="NodeMeasureBg" Color="#FFF9E0" />
+        <SolidColorBrush x:Key="NodeMeasureLine" Color="#B98900" />
+        <SolidColorBrush x:Key="NodeColorBg" Color="#FFEBF3" />
+        <SolidColorBrush x:Key="NodeColorLine" Color="#E0356B" />
+        <SolidColorBrush x:Key="NodeCalibBg" Color="#EEF2F7" />
+        <SolidColorBrush x:Key="NodeCalibLine" Color="#5B7C99" />
+        <SolidColorBrush x:Key="NodeSaveBg" Color="#F1F5F2" />
+        <SolidColorBrush x:Key="NodeSaveLine" Color="#5E8C6A" />
+        <SolidColorBrush x:Key="NodeCalcBg" Color="#F0F0FF" />
+        <SolidColorBrush x:Key="NodeCalcLine" Color="#5B5BD6" />
+        <SolidColorBrush x:Key="NodeCodeBg" Color="#E8FFF6" />
+        <SolidColorBrush x:Key="NodeCodeLine" Color="#00A870" />
+        <SolidColorBrush x:Key="NodeCommBg" Color="#FFF0F0" />
+        <SolidColorBrush x:Key="NodeCommLine" Color="#D64545" />
 
         <!-- 算子节点：图标 + 序号·功能，页脚=步骤名/运行状态；左入右出（判断类出「真/假」两个口） -->
         <DataTemplate x:Key="NodeItemTemplate">
@@ -110,6 +126,38 @@
                             <DataTrigger Binding="{Binding GroupKey}" Value="Output">
                                 <Setter Property="HeaderBrush" Value="{StaticResource NodeOutputBg}" />
                                 <Setter Property="BorderBrush" Value="{StaticResource NodeOutputLine}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding GroupKey}" Value="Locate">
+                                <Setter Property="HeaderBrush" Value="{StaticResource NodeLocateBg}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource NodeLocateLine}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding GroupKey}" Value="Measure">
+                                <Setter Property="HeaderBrush" Value="{StaticResource NodeMeasureBg}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource NodeMeasureLine}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding GroupKey}" Value="Color">
+                                <Setter Property="HeaderBrush" Value="{StaticResource NodeColorBg}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource NodeColorLine}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding GroupKey}" Value="Calib">
+                                <Setter Property="HeaderBrush" Value="{StaticResource NodeCalibBg}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource NodeCalibLine}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding GroupKey}" Value="Save">
+                                <Setter Property="HeaderBrush" Value="{StaticResource NodeSaveBg}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource NodeSaveLine}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding GroupKey}" Value="Calc">
+                                <Setter Property="HeaderBrush" Value="{StaticResource NodeCalcBg}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource NodeCalcLine}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding GroupKey}" Value="Code">
+                                <Setter Property="HeaderBrush" Value="{StaticResource NodeCodeBg}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource NodeCodeLine}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding GroupKey}" Value="Comm">
+                                <Setter Property="HeaderBrush" Value="{StaticResource NodeCommBg}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource NodeCommLine}" />
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
@@ -153,6 +201,30 @@
                 </DataTrigger>
                 <DataTrigger Binding="{Binding GroupKey}" Value="Output">
                     <Setter Property="BorderBrush" Value="{StaticResource NodeOutputLine}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding GroupKey}" Value="Locate">
+                    <Setter Property="BorderBrush" Value="{StaticResource NodeLocateLine}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding GroupKey}" Value="Measure">
+                    <Setter Property="BorderBrush" Value="{StaticResource NodeMeasureLine}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding GroupKey}" Value="Color">
+                    <Setter Property="BorderBrush" Value="{StaticResource NodeColorLine}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding GroupKey}" Value="Calib">
+                    <Setter Property="BorderBrush" Value="{StaticResource NodeCalibLine}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding GroupKey}" Value="Save">
+                    <Setter Property="BorderBrush" Value="{StaticResource NodeSaveLine}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding GroupKey}" Value="Calc">
+                    <Setter Property="BorderBrush" Value="{StaticResource NodeCalcLine}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding GroupKey}" Value="Code">
+                    <Setter Property="BorderBrush" Value="{StaticResource NodeCodeLine}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding GroupKey}" Value="Comm">
+                    <Setter Property="BorderBrush" Value="{StaticResource NodeCommLine}" />
                 </DataTrigger>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="{StaticResource HoverBrush}" />

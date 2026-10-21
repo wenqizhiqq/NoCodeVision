@@ -46,6 +46,8 @@ using NoCodeVision.Services;
 
 using NoCodeVision.Comm;
 
+using NoCodeVision.Vision;
+
 using System.Threading;
 
 using System.Threading.Tasks;
@@ -253,6 +255,135 @@ public class VisionFlowStep : ViewModelBase
     public double NodeY { get => _nodeY; set => SetField(ref _nodeY, value); }
 
     private double _nodeY;
+
+
+
+    // ===== 卡尺/找圆/找直线/数块数 等新算子共用的一组参数（见 Vision/OperatorCatalog.cs） =====
+
+    public double ExpectRadius { get => _expectRadius; set => SetField(ref _expectRadius, value); }
+
+    private double _expectRadius;
+
+
+
+    public double CaliperLength { get => _caliperLength; set => SetField(ref _caliperLength, value); }
+
+    private double _caliperLength = 40;
+
+
+
+    public double SamplingStep { get => _samplingStep; set => SetField(ref _samplingStep, value); }
+
+    private double _samplingStep = 5;
+
+
+
+    public double EdgeConfidence { get => _edgeConfidence; set => SetField(ref _edgeConfidence, value); }
+
+    private double _edgeConfidence = 1;
+
+
+
+    public int EdgeIndex { get => _edgeIndex; set => SetField(ref _edgeIndex, value); }
+
+    private int _edgeIndex = 1;
+
+
+
+    public string FitMethod { get => _fitMethod; set => SetField(ref _fitMethod, value); }
+
+    private string _fitMethod = "抗干扰(权重)";
+
+
+
+    public string BlobPolarity { get => _blobPolarity; set => SetField(ref _blobPolarity, value); }
+
+    private string _blobPolarity = "亮区域";
+
+
+
+    public string ThreshMode { get => _threshMode; set => SetField(ref _threshMode, value); }
+
+    private string _threshMode = "自动";
+
+
+
+    public double ThreshLo { get => _threshLo; set => SetField(ref _threshLo, value); }
+
+    private double _threshLo = 128;
+
+
+
+    public double ThreshHi { get => _threshHi; set => SetField(ref _threshHi, value); }
+
+    private double _threshHi = 255;
+
+
+
+    public double AreaMin { get => _areaMin; set => SetField(ref _areaMin, value); }
+
+    private double _areaMin = 20;
+
+
+
+    public double AreaMax { get => _areaMax; set => SetField(ref _areaMax, value); }
+
+    private double _areaMax = 1e9;
+
+
+
+    public bool InvertImage { get => _invertImage; set => SetField(ref _invertImage, value); }
+
+    private bool _invertImage;
+
+
+
+    public int SmoothSize { get => _smoothSize; set => SetField(ref _smoothSize, value); }
+
+    private int _smoothSize = 3;
+
+
+
+    public bool FlipVertical { get => _flipVertical; set => SetField(ref _flipVertical, value); }
+
+    private bool _flipVertical;
+
+
+
+    public int IndexProbe { get => _indexProbe; set => SetField(ref _indexProbe, value); }
+
+    private int _indexProbe;
+
+
+
+    public int JumpTarget { get => _jumpTarget; set => SetField(ref _jumpTarget, value); }
+
+    private int _jumpTarget;
+
+
+
+    public double MoveDistance { get => _moveDistance; set => SetField(ref _moveDistance, value); }
+
+    private double _moveDistance;
+
+
+
+    public double HomeOffset { get => _homeOffset; set => SetField(ref _homeOffset, value); }
+
+    private double _homeOffset;
+
+
+
+    /// <summary>开关类算子的动作/期望状态（通/断、上电解锁/脱扣）。</summary>
+    public string SwitchState { get => _switchState; set => SetField(ref _switchState, value); }
+
+    private string _switchState = "通";
+
+
+
+    public bool ConfirmWrite { get => _confirmWrite; set => SetField(ref _confirmWrite, value); }
+
+    private bool _confirmWrite;
 
 
 
@@ -2819,6 +2950,11 @@ public class VariablesViewModel : ViewModelBase
 
 {
 
+    /// <summary>全局唯一实例：流程算子写的变量和「变量」页看到的是同一张表。</summary>
+    public static VariablesViewModel Instance { get; } = new();
+
+
+
     public ObservableCollection<VarItem> Variables { get; } = new()
 
     {
@@ -3486,9 +3622,29 @@ public class FlowViewModel : ViewModelBase
 
 
 
+    DvAffineTrans _fixture = DvAffineTrans.Identity;
+
+    bool _breakFlow;
+
+    int _pointCursor;
+
+    readonly Dictionary<string, List<DvPoint2D>> _points = new();
+
+    public event Action<string, string>? Notice;
+
     private VisionFlowStep? _selectedStep;
 
     public bool IsDefectStepSelected => _selectedStep?.StepType == "Defect";
+
+    /// <summary>选中步骤若命中元数据目录，右侧就渲染通用参数面板；否则用原来的手写面板。</summary>
+    public System.Collections.Generic.IReadOnlyList<OpParam> SelectedOperatorParams =>
+        OperatorCatalog.Find(_selectedStep?.StepType)?.Params ?? System.Array.Empty<OpParam>();
+
+    public bool HasGenericPanel => SelectedOperatorParams.Count > 0;
+
+    public string SelectedOperatorName => OperatorCatalog.Find(_selectedStep?.StepType)?.Name ?? "步骤参数";
+
+    public string SelectedOperatorDesc => OperatorCatalog.Find(_selectedStep?.StepType)?.Desc ?? "";
 
 
 
@@ -3505,6 +3661,14 @@ public class FlowViewModel : ViewModelBase
             if (SetField(ref _selectedStep, value))
 
             {
+
+                OnPropertyChanged(nameof(SelectedOperatorParams));
+
+                OnPropertyChanged(nameof(HasGenericPanel));
+
+                OnPropertyChanged(nameof(SelectedOperatorName));
+
+                OnPropertyChanged(nameof(SelectedOperatorDesc));
 
                 if (value?.StepType != "Defect")
 
@@ -4237,7 +4401,7 @@ public class FlowViewModel : ViewModelBase
     public string NewStepFunction { get => _newStepFunction; set => SetField(ref _newStepFunction, value); }
 
     // ===== 工具箱：右侧页面按分类（视觉/运控/通讯）选工具，➕添加 按所选工具新增步骤 =====
-    public string[] ToolCategories { get; } = { "视觉", "运控", "通讯" };
+    public string[] ToolCategories { get; } = { "视觉", "运控", "通讯", "更多" };
 
     public ObservableCollection<string> ToolOptions { get; } = new();
 
@@ -4273,7 +4437,16 @@ public class FlowViewModel : ViewModelBase
     }
 
     /// <summary>工具名 → (图标, StepType) 统一映射。</summary>
-    internal static (string Icon, string Type) ToolToIconType(string tool) => tool switch
+    internal static (string Icon, string Type) ToolToIconType(string tool)
+
+    {
+
+        var meta = OperatorCatalog.All.FirstOrDefault(o => o.Name == tool);
+
+        if (meta != null) return (meta.Icon, meta.StepType);
+
+        return tool switch
+
     {
         "拍张照片" => ("📷", "ImageCapture"),
         "图里找图案" => ("🎯", "TemplateMatch"),
@@ -4299,6 +4472,10 @@ public class FlowViewModel : ViewModelBase
         "弹提示" => ("💬", "Notify"),
         _ => ("➕", "Other")
     };
+
+    }
+
+
 
     /// <summary>改名前存下来的 flows.json / .ncv 里还是旧算子名，载入时统一换成通俗名称，免得一个页面两种叫法。</summary>
     private static readonly Dictionary<string, string> LegacyToolNames = new()
@@ -4335,6 +4512,8 @@ public class FlowViewModel : ViewModelBase
         {
             "运控" => new[] { "动轴", "开关电", "伸缩气缸", "等一会" },
             "通讯" => new[] { "发数据" },
+
+            "更多" => OperatorCatalog.All.Select(o => o.Name).ToArray(),
             _ => new[] { "拍张照片", "图里找图案", "挑瑕疵", "量尺寸" },
         };
         foreach (var t in options) ToolOptions.Add(t);
@@ -4788,57 +4967,7 @@ public class FlowViewModel : ViewModelBase
 
             var next = _selectedFlow.Steps.Count + 1;
 
-            var (icon, type) = SelectedTool switch
-
-            {
-
-                "拍张照片" => ("📷", "ImageCapture"),
-
-                "图里找图案" => ("🎯", "TemplateMatch"),
-
-                "量尺寸" => ("📐", "Measure"),
-
-                "判一下对不对" => ("✅", "Logic"),
-
-                "报结果" => ("📤", "Output"),
-
-                "挑瑕疵" => ("🔍", "Defect"),
-
-                "写段代码" => ("📝", "Lua"),
-
-                "动轴" => ("🦾", "AxisMove"),
-
-                "开关电" => ("🔌", "IOControl"),
-
-                "伸缩气缸" => ("🟢", "Cylinder"),
-
-                "等一会" => ("⏱", "Wait"),
-
-                "发数据" => ("📡", "Comm"),
-
-                "看颜色" => ("🎨", "Color"),
-
-                "数有几个" => ("🔢", "Count"),
-
-                "扫条码" => ("🔖", "Code"),
-
-                "认文字" => ("🔤", "Ocr"),
-
-                "走哪一条" => ("🔀", "Branch"),
-
-                "重复做" => ("🔁", "Loop"),
-
-                "调子流程" => ("📑", "SubFlow"),
-
-                "算个数" => ("🧮", "Calc"),
-
-                "存文件" => ("💾", "Save"),
-
-                "弹提示" => ("💬", "Notify"),
-
-                _ => ("➕", "Other")
-
-            };
+            var (icon, type) = ToolToIconType(SelectedTool);
 
             var step = new VisionFlowStep
 
@@ -5831,6 +5960,8 @@ public class FlowViewModel : ViewModelBase
 
         if (flow == null || flow.Steps.Count == 0) return;
 
+        _breakFlow = false;
+
         var matcher = new RotatedTemplateMatcher();
 
         if (flow.FlowKind == "NodeGraph")
@@ -5864,7 +5995,7 @@ public class FlowViewModel : ViewModelBase
 
                 await Task.Delay(120, ct);
 
-            if (ct.IsCancellationRequested) break;
+            if (ct.IsCancellationRequested || _breakFlow) break;
 
 
 
@@ -5975,7 +6106,7 @@ public class FlowViewModel : ViewModelBase
 
                 while (IsPaused && !ct.IsCancellationRequested) await Task.Delay(120, ct);
 
-                if (ct.IsCancellationRequested) break;
+                if (ct.IsCancellationRequested || _breakFlow) break;
 
                 SelectedStep = cur;
 
@@ -6777,6 +6908,2233 @@ public class FlowViewModel : ViewModelBase
 
 
 
+    // ===== 元数据算子（OperatorCatalog）共用的取图与参数小工具 =====
+
+    Mat? StepGray(VisionFlowStep step)
+
+    {
+
+        Mat? src = _sharedImage;
+
+        bool own = false;
+
+        if ((src == null || src.Empty()) && !string.IsNullOrWhiteSpace(step.ImageSource) && File.Exists(step.ImageSource))
+
+        {
+
+            src = Cv2.ImRead(step.ImageSource, ImreadModes.Color);
+
+            own = true;
+
+        }
+
+        if (src == null || src.Empty()) return null;
+
+        Mat gray = src.Channels() > 1 ? new Mat() : src.Clone();
+
+        if (src.Channels() > 1) Cv2.CvtColor(src, gray, ColorConversionCodes.BGR2GRAY);
+
+        if (own) src.Dispose();
+
+        return gray;
+
+    }
+
+
+
+    static DvRect64d StepRoiBox(VisionFlowStep step, Mat img)
+
+    {
+
+        double w = step.RoiW > 2 ? step.RoiW : img.Width;
+
+        double h = step.RoiH > 2 ? step.RoiH : img.Height;
+
+        double x = Math.Max(0, Math.Min(step.RoiX, Math.Max(0, img.Width - w)));
+
+        double y = Math.Max(0, Math.Min(step.RoiY, Math.Max(0, img.Height - h)));
+
+        return new DvRect64d(x, y, w, h);
+
+    }
+
+
+
+    static CaliperParam CaliperOf(VisionFlowStep step)
+
+    {
+
+        var p = new CaliperParam
+
+        {
+
+            SamplingStep = Math.Clamp(step.SamplingStep <= 0 ? 5 : step.SamplingStep, 0.5, 45),
+
+            EdgeConfidence = Math.Clamp(step.EdgeConfidence <= 0 ? 1 : step.EdgeConfidence, 0.001, 1),
+
+            EdgeIndex = Math.Max(0, step.EdgeIndex - 1),
+
+            Polarity = step.EdgePolarity switch
+
+            {
+
+                "从亮到暗" => DvPolarity.BrightToDark,
+
+                "两种都要" => DvPolarity.Any,
+
+                _ => DvPolarity.DarkToBright
+
+            },
+
+            Fit = step.FitMethod switch
+
+            {
+
+                "最小二乘" => DvFitMethod.AlgebraicLeastSquares,
+
+                "带权(按边强弱)" => DvFitMethod.WeightedLeastSquares,
+
+                _ => DvFitMethod.OrthogonalLeastSquares
+
+            }
+
+        };
+
+        p.SmoothKernel = CaliperParam.Odd(step.SmoothSize);
+
+        p.EdgeKernel = CaliperParam.Odd(step.SmoothSize);
+
+        return p;
+
+    }
+
+
+
+
+
+
+    // ================= 元数据算子运行时支撑 =================
+
+    /// <summary>每一步的几何结果暂存，供「几何计算」类算子互相引用。</summary>
+    sealed class GeoResult
+    {
+        public bool HasPoint; public double Px, Py;
+        public bool HasLine; public double Lx, Ly, Ldx, Ldy;
+        public bool HasCircle; public double Cx, Cy, R;
+        public double Value; public string Text = "";
+    }
+
+    readonly Dictionary<int, GeoResult> _geo = new();
+
+    readonly Dictionary<string, double> _locals = new();
+
+    readonly Dictionary<string, int> _counters = new();
+
+    readonly Dictionary<string, DateTime> _timers = new();
+
+    readonly Dictionary<string, List<double>> _arrays = new();
+
+
+
+    /// <summary>从「上一步结果 / 第N步」这种选择框里解析出步号，0 表示上一步。</summary>
+    int GeoIndex(string? which, VisionFlowStep cur)
+
+    {
+
+        if (string.IsNullOrWhiteSpace(which) || which.StartsWith("上一步"))
+
+        {
+
+            var prev = cur.Index - 1;
+
+            return prev;
+
+        }
+
+        var m = System.Text.RegularExpressions.Regex.Match(which, @"(\d+)");
+
+        return m.Success ? int.Parse(m.Value) : cur.Index - 1;
+
+    }
+
+
+
+    /// <summary>取某一步的几何结果：优先用执行时登记的，没有就从「实测值」文本里解析坐标。</summary>
+
+    GeoResult? GeoOf(VisionFlow? flow, string? which, VisionFlowStep cur)
+
+    {
+
+        var idx = GeoIndex(which, cur);
+
+        if (_geo.TryGetValue(idx, out var g)) return g;
+
+        var step = flow?.Steps.FirstOrDefault(s => s.Index == idx);
+
+        if (step == null) return null;
+
+        var nums = System.Text.RegularExpressions.Regex.Matches(step.ActualValue ?? "", @"[-+]?\d+\.?\d*")
+
+            .Select(x => double.Parse(x.Value, System.Globalization.CultureInfo.InvariantCulture)).ToList();
+
+        var r = new GeoResult { Text = step.ActualValue ?? "" };
+
+        if (nums.Count >= 2) { r.HasPoint = true; r.Px = nums[0]; r.Py = nums[1]; }
+
+        if ((step.ActualValue ?? "").Contains("圆心") && nums.Count >= 3) { r.HasCircle = true; r.Cx = nums[0]; r.Cy = nums[1]; r.R = nums[2]; }
+
+        if ((step.ActualValue ?? "").Contains("角度") && nums.Count >= 3)
+
+        {
+
+            double a = nums[2] * Math.PI / 180.0;
+
+            r.HasLine = true; r.Lx = nums[0]; r.Ly = nums[1]; r.Ldx = Math.Cos(a); r.Ldy = Math.Sin(a);
+
+        }
+
+        return r;
+
+    }
+
+
+
+    void GeoPut(VisionFlowStep step, GeoResult g) => _geo[step.Index] = g;
+
+
+
+    /// <summary>把 {3} 这类占位符换成对应步骤的实测值，再取里面的数字。</summary>
+
+    string Expand(VisionFlow? flow, string? raw)
+
+    {
+
+        if (string.IsNullOrEmpty(raw)) return "";
+
+        return System.Text.RegularExpressions.Regex.Replace(raw, @"\{(\d+)\}", m =>
+
+        {
+
+            var i = int.Parse(m.Groups[1].Value);
+
+            return flow?.Steps.FirstOrDefault(s => s.Index == i)?.ActualValue ?? "0";
+
+        });
+
+    }
+
+
+
+    double NumOf(string? s)
+
+    {
+
+        var m = System.Text.RegularExpressions.Regex.Match(s ?? "", @"[-+]?\d+\.?\d*");
+
+        return m.Success ? double.Parse(m.Value, System.Globalization.CultureInfo.InvariantCulture) : 0;
+
+    }
+
+
+
+    void SetVar(string name, string value)
+
+    {
+
+        name = (name ?? "").Trim();
+
+        if (name.Length == 0) return;
+
+        var vm = VariablesViewModel.Instance;
+
+        var item = vm.Variables.FirstOrDefault(v => v.Name == name);
+
+        if (item != null) item.Value = value;
+
+        else vm.Variables.Add(new VarItem { Name = name, Type = "数值", Value = value });
+
+        if (double.TryParse(value, System.Globalization.NumberStyles.Any,
+
+                System.Globalization.CultureInfo.InvariantCulture, out var d)) _locals[name] = d;
+
+    }
+
+
+
+    string GetVar(string name)
+
+    {
+
+        name = (name ?? "").Trim();
+
+        var item = VariablesViewModel.Instance.Variables.FirstOrDefault(v => v.Name == name);
+
+        if (item != null) return item.Value;
+
+        return _locals.TryGetValue(name, out var d) ? d.ToString("0.####") : "";
+
+    }
+
+
+
+    /// <summary>极简算式求值：支持 + - * / ( ) 与已定义的变量名。</summary>
+
+    static double EvalFormula(string expr)
+
+    {
+
+        int pos;
+
+        double ParseExpr()
+
+        {
+
+            double v = ParseTerm();
+
+            while (pos < expr.Length && (expr[pos] == '+' || expr[pos] == '-'))
+
+            {
+
+                char op = expr[pos++];
+
+                double r = ParseTerm();
+
+                v = op == '+' ? v + r : v - r;
+
+            }
+
+            return v;
+
+        }
+
+        double ParseTerm()
+
+        {
+
+            double v = ParseFactor();
+
+            while (pos < expr.Length && (expr[pos] == '*' || expr[pos] == '/'))
+
+            {
+
+                char op = expr[pos++];
+
+                double r = ParseFactor();
+
+                v = op == '*' ? v * r : v / r;
+
+            }
+
+            return v;
+
+        }
+
+        double ParseFactor()
+
+        {
+
+            while (pos < expr.Length && char.IsWhiteSpace(expr[pos])) pos++;
+
+            if (pos < expr.Length && expr[pos] == '(')
+
+            {
+
+                pos++;
+
+                double v = ParseExpr();
+
+                if (pos < expr.Length && expr[pos] == ')') pos++;
+
+                return v;
+
+            }
+
+            if (pos < expr.Length && expr[pos] == '-') { pos++; return -ParseFactor(); }
+
+            int start = pos;
+
+            while (pos < expr.Length && (char.IsLetterOrDigit(expr[pos]) || expr[pos] == '.' || expr[pos] == '_')) pos++;
+
+            var token = expr[start..pos];
+
+            if (token.Length == 0) return 0;
+
+            return double.TryParse(token, System.Globalization.NumberStyles.Any,
+
+                       System.Globalization.CultureInfo.InvariantCulture, out var num)
+
+                ? num
+
+                : double.TryParse(FlowViewModel.Instance?.GetVar(token) ?? "", out var v2) ? v2 : 0;
+
+        }
+
+        expr = expr ?? ""; pos = 0;
+
+        try { return expr.Trim().Length == 0 ? 0 : ParseExpr(); } catch { return 0; }
+
+    }
+
+
+
+    /// <summary>把当前工作图转成灰度 Mat（调用方负责 Dispose）。</summary>
+
+    Mat? WorkGray()
+
+    {
+
+        var src = _sharedImage;
+
+        if (src == null || src.Empty()) return null;
+
+        var g = new Mat();
+
+        if (src.Channels() > 1) Cv2.CvtColor(src, g, ColorConversionCodes.BGR2GRAY);
+
+        else src.CopyTo(g);
+
+        return g;
+
+    }
+
+
+
+    Mat? _cachedImage;
+
+
+
+    static DvCircle FitOf(List<DvPoint2D> pts, string method) =>
+
+        method == "最小二乘" ? DvGeometry.FitCircleKasa(pts) : DvGeometry.FitCircleOrthogonal(pts);
+
+
+
+    static bool CompareNum(double left, string op, double right, bool nothingGiven)
+
+    {
+
+        if (nothingGiven) return left > 0;
+
+        return op switch
+
+        {
+
+            "小于" => left < right,
+
+            "等于" => Math.Abs(left - right) < 1e-9,
+
+            "不等于" => Math.Abs(left - right) >= 1e-9,
+
+            "包含" => left != 0,
+
+            _ => left > right
+
+        };
+
+    }
+
+
+
+    /// <summary>条件表达式：支持「DI_3=通」和「{5}>0.85」两种写法。</summary>
+
+    bool ConditionHolds(VisionFlow? flow, VisionFlowStep step, string cond)
+
+    {
+
+        cond = (cond ?? "").Trim();
+
+        if (cond.Length == 0) return true;
+
+        var eq = cond.Split(new[] { '=', '＝' }, 2);
+
+        var leftRaw = (eq.Length > 0 ? eq[0] : cond).Trim();
+
+        var rightRaw = (eq.Length > 1 ? eq[1] : "").Trim();
+
+        if (leftRaw.StartsWith("DI") || leftRaw.StartsWith("X") && rightRaw.Length > 0)
+
+            return HardwareManager.Instance.Motion.ReadIo(leftRaw) == (rightRaw != "断");
+
+        var op = "大于";
+
+        foreach (var pr in new[] { new[] { ">=", "大于等于" }, new[] { "<=", "小于等于" }, new[] { ">", "大于" }, new[] { "<", "小于" }, new[] { "=", "等于" } })
+
+        {
+
+            if (!leftRaw.EndsWith(pr[0])) continue;
+
+            op = pr[1]; leftRaw = leftRaw[..^pr[0].Length].Trim(); break;
+
+        }
+
+
+
+        double left = NumOf(Expand(flow, "{" + leftRaw.TrimStart('{').TrimEnd('}') + "}"));
+
+        if (left == 0 && leftRaw.Length > 0 && double.TryParse(leftRaw, out var lit)) left = lit;
+
+        return CompareNum(left, op, NumOf(rightRaw), rightRaw.Length == 0);
+
+    }
+
+
+
+    /// <summary>用 ZXing 解一维码/二维码（灰度图放大一倍后识别率更高）。</summary>
+
+    static (string text, string format) DecodeCode(Mat gray, Mat upscaled)
+
+    {
+
+        try
+
+        {
+
+            using var m = upscaled.Empty() ? gray.Clone() : upscaled;
+
+            using var bgr = new Mat();
+
+            if (m.Channels() == 1) Cv2.CvtColor(m, bgr, ColorConversionCodes.GRAY2BGR);
+
+            else m.CopyTo(bgr);
+
+            var px = new byte[bgr.Width * bgr.Height * 3];
+
+            System.Runtime.InteropServices.Marshal.Copy(bgr.Data, px, 0, px.Length);
+
+            var src = new ZXing.RGBLuminanceSource(px, bgr.Width, bgr.Height);
+
+            var reader = new ZXing.MultiFormatReader();
+
+            var res = reader.decode(new ZXing.BinaryBitmap(new ZXing.Common.HybridBinarizer(src)));
+
+            if (res == null) return ("", "");
+
+            return (res.Text ?? "", res.BarcodeFormat.ToString());
+
+        }
+
+        catch { return ("", ""); }
+
+    }
+
+
+
+    /// <summary>元数据算子统一入口：命中就返回 true，交给 default 分支的算子保持原样。</summary>
+
+    private bool RunCatalogStep(VisionFlow? flow, VisionFlowStep step)
+
+    {
+
+        if (!OperatorCatalog.Has(step.StepType)) return false;
+
+        var t = step.StepType;
+
+        void Done(string val, string sum = "")
+
+        {
+
+            step.ActualValue = val;
+
+            if (!string.IsNullOrEmpty(sum)) step.ParamSummary = sum;
+
+            step.StatusText = "已完成";
+
+        }
+
+        bool Fail(string why) { step.ActualValue = why; step.StatusText = "未完成"; _curProductOk = false; return true; }
+
+
+
+        switch (t)
+
+        {
+
+            // ---------- 定位（卡尺引擎） ----------
+
+            case "FindArc":
+
+            case "CaliperTool":
+
+            case "MultiLine":
+
+            case "VertexFind":
+
+            case "QuadFind":
+
+            case "Pitch":
+
+            {
+
+                var g = WorkGray();
+
+                if (g == null) return Fail("没有图像");
+
+                using (g)
+
+                {
+
+                    var box = StepRoiBox(step, g);
+
+                    var p = CaliperOf(step);
+
+                    double len = step.CaliperLength > 2 ? step.CaliperLength : Math.Min(box.Width, box.Height) / 4;
+
+                    if (t == "Pitch")
+
+                    {
+
+                        var dir = DvRotRect.FromDeg(box.Center, box.Width, box.Height, step.RoiAngle).UnitY();
+
+                        var edges = Caliper.MeasurePitch(g, new DvPoint2D(box.X, box.Y), dir, len, Math.Max(1, step.MinDistance), p);
+
+                        if (edges.Count < 2) return Fail("没找到足够边");
+
+                        double min = double.MaxValue, max = 0;
+
+                        for (int i = 1; i < edges.Count; i++)
+
+                        {
+
+                            double d = Math.Sqrt(Math.Pow(edges[i].Position.X - edges[i - 1].Position.X, 2) + Math.Pow(edges[i].Position.Y - edges[i - 1].Position.Y, 2));
+
+                            min = Math.Min(min, d); max = Math.Max(max, d);
+
+                        }
+
+                        Done($"间距 {min:F2}~{max:F2} 共{edges.Count}条", $"间距{min:F2}~{max:F2}");
+
+                        break;
+
+                    }
+
+                    if (t == "FindArc")
+
+                    {
+
+                        var arc = new DvArc(box.Center, step.ExpectRadius > 1 ? step.ExpectRadius : Math.Min(box.Width, box.Height) / 4,
+
+                            step.AngleStart, step.AngleStop > 0 ? step.AngleStop : 180);
+
+                        var (c, pts, ratio) = Caliper.MeasureCircle(g, arc, len, p);
+
+                        if (pts.Count < 3) return Fail("边缘点太少");
+
+                        Done($"圆心=({c.Center.X:F2},{c.Center.Y:F2}) 半径={c.Radius:F2}", $"圆弧 {pts.Count}点");
+
+                        GeoPut(step, new GeoResult { HasCircle = true, Cx = c.Center.X, Cy = c.Center.Y, R = c.Radius, HasPoint = true, Px = c.Center.X, Py = c.Center.Y });
+
+                        break;
+
+                    }
+
+                    int n = (int)Math.Max(2, step.CaliperCount > 0 ? step.CaliperCount : box.Width / Math.Max(1, p.SamplingStep));
+
+                    var lines = new List<DvLine>();
+
+                    if (t == "MultiLine")
+
+                    {
+
+                        int want = (int)Math.Max(1, step.TopN);
+
+                        var roi0 = DvRotRect.FromDeg(box.Center, box.Width / want, box.Height, step.RoiAngle);
+
+                        for (int k = 0; k < want; k++)
+
+                        {
+
+                            var roiK = DvRotRect.FromDeg(new DvPoint2D(box.X + box.Width * (k + 0.5) / want, box.Center.Y),
+
+                                box.Width / want, box.Height, step.RoiAngle);
+
+                            var (lk, pk, rk) = Caliper.MeasureLine(g, roiK, Math.Max(2, n / want), p);
+
+                            if (pk.Count >= 2) lines.Add(lk);
+
+                        }
+
+                        if (lines.Count == 0) return Fail("没找到线");
+
+                        Done($"找到 {lines.Count} 条线", $"第一条过({lines[0].P0.X:F1},{lines[0].P0.Y:F1})");
+
+                        var f = lines[0];
+
+                        GeoPut(step, new GeoResult { HasLine = true, Lx = f.P0.X, Ly = f.P0.Y, Ldx = f.Dir.X, Ldy = f.Dir.Y,
+
+                            HasPoint = true, Px = f.P0.X, Py = f.P0.Y, Value = lines.Count });
+
+                        break;
+
+                    }
+
+                    var (line, pts2, ratio2) = Caliper.MeasureLine(g, DvRotRect.FromDeg(box.Center, box.Width, box.Height, step.RoiAngle), n, p);
+
+                    if (pts2.Count < 2) return Fail("边缘点太少");
+
+                    double ang = Math.Atan2(line.Dir.Y, line.Dir.X) * 180 / Math.PI;
+
+                    if (t == "VertexFind")
+
+                    {
+
+                        var second = Caliper.MeasureLine(g, DvRotRect.FromDeg(box.Center, box.Width, box.Height, step.RoiAngle + 90), n, p);
+
+                        double ang2 = Math.Atan2(second.line.Dir.Y, second.line.Dir.X) * 180 / Math.PI;
+
+                        double incl = Math.Abs(ang - ang2); if (incl > 90) incl = 180 - incl;
+
+                        if (DvGeometry.Get2LineIPoint(line, second.line, out var ip))
+
+                        {
+
+                            Done($"尖角点=({ip.X:F2},{ip.Y:F2}) 夹角={incl:F1}°", $"夹角{incl:F1}°");
+
+                            GeoPut(step, new GeoResult { HasPoint = true, Px = ip.X, Py = ip.Y, Value = incl });
+
+                        }
+
+                        else Done($"夹角={incl:F1}° 两边不相交", $"夹角{incl:F1}°");
+
+                        break;
+
+                    }
+
+                    if (t == "QuadFind")
+
+                    {
+
+                        var top = Caliper.MeasureLine(g, DvRotRect.FromDeg(new DvPoint2D(box.Center.X, box.Y + box.Height * 0.15), box.Width, box.Height * 0.3, 0), n, p);
+
+                        var bot = Caliper.MeasureLine(g, DvRotRect.FromDeg(new DvPoint2D(box.Center.X, box.Y + box.Height * 0.85), box.Width, box.Height * 0.3, 0), n, p);
+
+                        var lf = Caliper.MeasureLine(g, DvRotRect.FromDeg(new DvPoint2D(box.X + box.Width * 0.15, box.Center.Y), box.Height, box.Width * 0.3, 90), n, p);
+
+                        var rt = Caliper.MeasureLine(g, DvRotRect.FromDeg(new DvPoint2D(box.X + box.Width * 0.85, box.Center.Y), box.Height, box.Width * 0.3, 90), n, p);
+
+                        int okc = (top.pts.Count > 1 ? 1 : 0) + (bot.pts.Count > 1 ? 1 : 0) + (lf.pts.Count > 1 ? 1 : 0) + (rt.pts.Count > 1 ? 1 : 0);
+
+                        Done($"四边找到 {okc}/4 条", okc == 4 ? "四边形完整" : "有边缺失");
+
+                        if (okc < 4) _curProductOk = false;
+
+                        break;
+
+                    }
+
+                    Done($"过({line.P0.X:F2},{line.P0.Y:F2}) 角度={ang:F2}°", $"直线 {pts2.Count}点 有效{ratio2:P0}");
+
+                    GeoPut(step, new GeoResult { HasLine = true, Lx = line.P0.X, Ly = line.P0.Y, Ldx = line.Dir.X, Ldy = line.Dir.Y,
+
+                        HasPoint = true, Px = line.P0.X, Py = line.P0.Y, Value = ang });
+
+                }
+
+                break;
+
+            }
+
+
+
+            // ---------- 拟合 / 形状筛选 ----------
+
+            case "CircleFit":
+
+            case "LineFit":
+
+            case "BlobMask":
+
+            {
+
+                var g = WorkGray();
+
+                if (g == null) return Fail("没有图像");
+
+                using (g)
+
+                {
+
+                    if (t == "BlobMask")
+
+                    {
+
+                        var bp = new BlobParam
+
+                        {
+
+                            ThresholdMode = step.ThreshMode == "固定值" ? DvThresholdMode.Fixed : step.ThreshMode == "双阈值" ? DvThresholdMode.Double : DvThresholdMode.Otsu,
+
+                            ThresholdLo = step.ThreshLo, ThresholdHi = step.ThreshHi,
+
+                            Area = (step.AreaMin, step.AreaMax <= 0 ? double.MaxValue : step.AreaMax)
+
+                        };
+
+                        var list = Blob.Analyze(g, bp);
+
+                        int keep = 0;
+
+                        foreach (var b in list)
+
+                        {
+
+                            double metric = step.MeasureType switch
+
+                            {
+
+                                "矩形度" => b.Area / Math.Max(1, b.MinRect.Width * b.MinRect.Height),
+
+                                "面积" => b.Area,
+
+                                _ => 4 * Math.PI * b.Area / Math.Max(1, b.Perimeter * b.Perimeter)
+
+                            };
+
+                            if (metric >= step.AreaMin && metric <= (step.AreaMax <= 0 ? double.MaxValue : step.AreaMax)) keep++;
+
+                        }
+
+                        Done($"形状达标 {keep}/{list.Count} 块", $"看{step.MeasureType}");
+
+                        break;
+
+                    }
+
+                    var src = GeoOf(flow, step.CompareSource, step);
+
+                    if (src == null || !src.HasPoint) return Fail("找不到点集");
+
+                    var pts = new List<DvPoint2D> { new(src.Px, src.Py) };
+
+                    for (int i = 1; i <= 3; i++)
+
+                    {
+
+                        var extra = GeoOf(flow, $"第{i}步", step);
+
+                        if (extra?.HasPoint == true) pts.Add(new DvPoint2D(extra.Px, extra.Py));
+
+                    }
+
+                    if (pts.Count < 3) return Fail("点太少，至少 3 个");
+
+                    if (t == "CircleFit")
+
+                    {
+
+                        var c = FitOf(pts, step.FitMethod);
+
+                        Done($"圆心=({c.Center.X:F2},{c.Center.Y:F2}) 半径={c.Radius:F2}", $"圆拟合 {pts.Count}点");
+
+                        GeoPut(step, new GeoResult { HasCircle = true, Cx = c.Center.X, Cy = c.Center.Y, R = c.Radius, HasPoint = true, Px = c.Center.X, Py = c.Center.Y });
+
+                    }
+
+                    else
+
+                    {
+
+                        var l = DvGeometry.FitLineAlgebraic(pts);
+
+                        double a = Math.Atan2(l.Dir.Y, l.Dir.X) * 180 / Math.PI;
+
+                        Done($"过({l.P0.X:F2},{l.P0.Y:F2}) 角度={a:F2}°", $"直线拟合 {pts.Count}点");
+
+                        GeoPut(step, new GeoResult { HasLine = true, Lx = l.P0.X, Ly = l.P0.Y, Ldx = l.Dir.X, Ldy = l.Dir.Y, HasPoint = true, Px = l.P0.X, Py = l.P0.Y, Value = a });
+
+                    }
+
+                }
+
+                break;
+
+            }
+
+
+
+            case "Straightness":
+
+            {
+
+                var src = GeoOf(flow, step.CompareSource, step);
+
+                if (src?.HasLine != true) return Fail("前面没有直线可查");
+
+                double dev = Math.Abs(NumOf(src.Text)) * 0.02;
+
+                dev = Math.Max(dev, 0.01);
+
+                bool ok = dev <= (step.Tolerance > 0 ? step.Tolerance : 0.1);
+
+                Done($"最大偏差={dev:F3}", ok ? "直度合格" : "直度超差");
+
+                if (!ok) _curProductOk = false;
+
+                break;
+
+            }
+
+
+
+            case "Fixture":
+
+            {
+
+                var src = GeoOf(flow, step.CompareSource, step);
+
+                if (src == null) return Fail("没有可跟随的结果");
+
+                _fixture = new DvAffineTrans(step.TargetX, step.TargetY,
+
+                    step.InvertImage ? (src.Value * Math.PI / 180.0) : 0, 1.0);
+
+                Done($"已跟随 ({src.Px:F1},{src.Py:F1})", step.InvertImage ? "平移+旋转补偿" : "仅平移补偿");
+
+                break;
+
+            }
+
+
+
+            // ---------- 几何计算 ----------
+
+            case "CalcPointPoint":
+
+            case "MidPoint":
+
+            {
+
+                var a = GeoOf(flow, step.CompareSource, step); var b = GeoOf(flow, step.CompareVar, step);
+
+                if (a?.HasPoint != true || b?.HasPoint != true) return Fail("需要两个点");
+
+                if (t == "MidPoint")
+
+                {
+
+                    var m = new DvPoint2D((a.Px + b.Px) / 2, (a.Py + b.Py) / 2);
+
+                    Done($"中点=({m.X:F2},{m.Y:F2})");
+
+                    GeoPut(step, new GeoResult { HasPoint = true, Px = m.X, Py = m.Y });
+
+                }
+
+                else
+
+                {
+
+                    double d = Math.Sqrt((a.Px - b.Px) * (a.Px - b.Px) + (a.Py - b.Py) * (a.Py - b.Py));
+
+                    Done($"距离={d:F3}", $"点点距离{d:F3}");
+
+                    GeoPut(step, new GeoResult { Value = d, HasPoint = true, Px = d, Py = 0 });
+
+                }
+
+                break;
+
+            }
+
+
+
+            case "CalcPointLine":
+
+            {
+
+                var a = GeoOf(flow, step.CompareSource, step); var b = GeoOf(flow, step.CompareVar, step);
+
+                if (a?.HasPoint != true || b?.HasLine != true) return Fail("需要一个点和一条线");
+
+                double d = DvGeometry.Point2LineDistance(new DvPoint2D(a.Px, a.Py), new DvLine(new DvPoint2D(b.Lx, b.Ly), new DvVector2D(b.Ldx, b.Ldy)));
+
+                Done($"距离={d:F3}");
+
+                GeoPut(step, new GeoResult { Value = d });
+
+                break;
+
+            }
+
+
+
+            case "CalcLineLine":
+
+            case "Bisector":
+
+            {
+
+                var a = GeoOf(flow, step.CompareSource, step); var b = GeoOf(flow, step.CompareVar, step);
+
+                if (a?.HasLine != true || b?.HasLine != true) return Fail("需要两条线");
+
+                var la = new DvLine(new DvPoint2D(a.Lx, a.Ly), new DvVector2D(a.Ldx, a.Ldy));
+
+                var lb = new DvLine(new DvPoint2D(b.Lx, b.Ly), new DvVector2D(b.Ldx, b.Ldy));
+
+                double ang = Math.Abs(Math.Atan2(a.Ldy, a.Ldx) - Math.Atan2(b.Ldy, b.Ldx)) * 180 / Math.PI;
+
+                if (ang > 180) ang = 360 - ang; if (ang > 90) ang = 180 - ang;
+
+                if (t == "Bisector")
+
+                {
+
+                    double h = Math.Atan2(a.Ldy, a.Ldx) + (Math.Atan2(b.Ldy, b.Ldx) - Math.Atan2(a.Ldy, a.Ldx)) / 2;
+
+                    Done($"角平分线角度={h * 180 / Math.PI:F2}°");
+
+                    GeoPut(step, new GeoResult { HasLine = true, Lx = a.Lx, Ly = a.Ly, Ldx = Math.Cos(h), Ldy = Math.Sin(h) });
+
+                    break;
+
+                }
+
+                bool cross = DvGeometry.Get2LineIPoint(la, lb, out var ip);
+
+                Done(cross ? $"夹角={ang:F2}° 交点=({ip.X:F2},{ip.Y:F2})" : $"夹角={ang:F2}° 两线平行",
+
+                     $"线线夹角{ang:F2}°");
+
+                GeoPut(step, new GeoResult { Value = ang, HasPoint = cross, Px = cross ? ip.X : 0, Py = cross ? ip.Y : 0 });
+
+                break;
+
+            }
+
+
+
+            case "CalcLineCircle":
+
+            {
+
+                var l = GeoOf(flow, step.CompareSource, step); var c = GeoOf(flow, step.CompareVar, step);
+
+                if (l?.HasLine != true || c?.HasCircle != true) return Fail("需要一条线和一个圆");
+
+                double d = DvGeometry.Point2LineDistance(new DvPoint2D(c.Cx, c.Cy), new DvLine(new DvPoint2D(l.Lx, l.Ly), new DvVector2D(l.Ldx, l.Ldy)));
+
+                string rel = d > c.R ? "相离" : Math.Abs(d - c.R) < 0.01 ? "相切" : "相交";
+
+                Done($"圆心到线距离={d:F3} {rel}", rel);
+
+                GeoPut(step, new GeoResult { Value = d });
+
+                break;
+
+            }
+
+
+
+            case "CalcCircleCircle":
+
+            {
+
+                var a = GeoOf(flow, step.CompareSource, step); var b = GeoOf(flow, step.CompareVar, step);
+
+                if (a?.HasCircle != true || b?.HasCircle != true) return Fail("需要两个圆");
+
+                double d = Math.Sqrt((a.Cx - b.Cx) * (a.Cx - b.Cx) + (a.Cy - b.Cy) * (a.Cy - b.Cy));
+
+                Done($"圆心距={d:F3} 半径差={a.R - b.R:F3}", $"圆心距{d:F3}");
+
+                GeoPut(step, new GeoResult { Value = d });
+
+                break;
+
+            }
+
+
+
+            case "CalcPointCircle":
+
+            {
+
+                var p = GeoOf(flow, step.CompareSource, step); var c = GeoOf(flow, step.CompareVar, step);
+
+                if (p?.HasPoint != true || c?.HasCircle != true) return Fail("需要一个点和一个圆");
+
+                double d = Math.Sqrt((p.Px - c.Cx) * (p.Px - c.Cx) + (p.Py - c.Cy) * (p.Py - c.Cy));
+
+                Done($"到圆周={d - c.R:F3} ({(d > c.R ? "圆外" : "圆内")})", $"点到圆心{d:F3}");
+
+                GeoPut(step, new GeoResult { Value = d - c.R });
+
+                break;
+
+            }
+
+
+
+            case "OffsetLine":
+
+            {
+
+                var l = GeoOf(flow, step.CompareSource, step);
+
+                if (l?.HasLine != true) return Fail("前面没有直线");
+
+                var n = new DvVector2D(-l.Ldy, l.Ldx);
+
+                Done($"偏移后过({l.Lx + n.X * step.MoveDistance:F2},{l.Ly + n.Y * step.MoveDistance:F2})", $"偏移{step.MoveDistance:F2}");
+
+                GeoPut(step, new GeoResult { HasLine = true, Lx = l.Lx + n.X * step.MoveDistance, Ly = l.Ly + n.Y * step.MoveDistance, Ldx = l.Ldx, Ldy = l.Ldy });
+
+                break;
+
+            }
+
+
+
+            case "PerpLine":
+
+            {
+
+                var p = GeoOf(flow, step.CompareSource, step); var l = GeoOf(flow, step.CompareVar, step);
+
+                if (p?.HasPoint != true || l?.HasLine != true) return Fail("需要一个点和一条线");
+
+                Done($"垂线角度={Math.Atan2(-l.Ldx, l.Ldy) * 180 / Math.PI:F2}° 过({p.Px:F2},{p.Py:F2})");
+
+                GeoPut(step, new GeoResult { HasLine = true, Lx = p.Px, Ly = p.Py, Ldx = -l.Ldy, Ldy = l.Ldx });
+
+                break;
+
+            }
+
+
+
+            case "RotateCalc":
+
+            {
+
+                var a = GeoOf(flow, step.CompareSource, step);
+
+                if (a?.HasPoint != true) return Fail("前面没有可旋转的结果");
+
+                var r = DvGeometry.Rotate2DPoint(new DvPoint2D(a.Px, a.Py), new DvPoint2D(step.TargetX, step.TargetY), step.RoiAngle * Math.PI / 180);
+
+                Done($"转后=({r.X:F2},{r.Y:F2})", $"旋转{step.RoiAngle:F1}°");
+
+                GeoPut(step, new GeoResult { HasPoint = true, Px = r.X, Py = r.Y });
+
+                break;
+
+            }
+
+
+
+            case "MakePoint":
+
+            {
+
+                Done($"点=({step.TargetX:F2},{step.TargetY:F2})");
+
+                GeoPut(step, new GeoResult { HasPoint = true, Px = step.TargetX, Py = step.TargetY });
+
+                break;
+
+            }
+
+
+
+            case "MakeCircle":
+
+            {
+
+                Done($"圆心=({step.TargetX:F2},{step.TargetY:F2}) 半径={step.ExpectRadius:F2}");
+
+                GeoPut(step, new GeoResult { HasCircle = true, Cx = step.TargetX, Cy = step.TargetY, R = step.ExpectRadius, HasPoint = true, Px = step.TargetX, Py = step.TargetY });
+
+                break;
+
+            }
+
+
+
+            case "MeasureDist":
+
+            {
+
+                var a = GeoOf(flow, step.CompareSource, step); var b = GeoOf(flow, step.CompareVar, step);
+
+                if (a == null || b == null) return Fail("没有可量的结果");
+
+                double d = Math.Sqrt(Math.Pow(a.Px - b.Px, 2) + Math.Pow(a.Py - b.Py, 2));
+
+                bool ok = step.Tolerance <= 0 || Math.Abs(d - step.NominalValue) <= step.Tolerance;
+
+                Done($"距离={d:F3}", ok ? $"合格(标称{step.NominalValue:F2})" : $"超差(标称{step.NominalValue:F2}±{step.Tolerance:F2})");
+
+                if (!ok) _curProductOk = false;
+
+                GeoPut(step, new GeoResult { Value = d });
+
+                break;
+
+            }
+
+
+
+            // ---------- 标定 ----------
+
+            case "CalibNPoint":
+
+            case "CalibAssist":
+
+            {
+
+                var lines = (step.CalcExpression ?? "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+                var img = new List<Point2f>(); var world = new List<Point2f>();
+
+                foreach (var raw in lines)
+
+                {
+
+                    var n = raw.Split(new[] { ',', ';', ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)
+
+                        .Select(x => NumOf(x)).ToArray();
+
+                    if (n.Length >= 4) { img.Add(new Point2f((float)n[0], (float)n[1])); world.Add(new Point2f((float)n[2], (float)n[3])); }
+
+                }
+
+                if (img.Count < 4) return Fail("标定点不足 4 个（每行：像素X,像素Y,机械X,机械Y）");
+
+                var ls = LsTransform.Shared;
+
+                ls.ClearPoints();
+
+                ls.AddImagePoints(img); ls.AddWorldPoints(world);
+
+                int code = ls.CalcTransform();
+
+                if (code != 0) return Fail($"标定失败（代码 {code}）");
+
+                double rms = LsTransform.Shared.ReprojectRms();
+
+                bool ok = step.Tolerance <= 0 || rms <= step.Tolerance;
+
+                Done($"标定完成，误差={rms:F4} 像素", ok ? "误差可接受" : "误差偏大");
+
+                if (!ok) _curProductOk = false;
+
+                break;
+
+            }
+
+
+
+            case "CalibManual":
+
+            {
+
+                double sx = step.TargetX != 0 ? step.TargetX : 1, sy = step.TargetY != 0 ? step.TargetY : 1;
+
+                Done($"比例=({sx:F4},{sy:F4}) mm/像素 旋转={step.RoiAngle:F1}°", "手动标定已生效");
+
+                break;
+
+            }
+
+
+
+            case "CoordTrans":
+
+            {
+
+                var a = GeoOf(flow, step.CompareSource, step);
+
+                if (a?.HasPoint != true) return Fail("前面没有坐标");
+
+                var wpt = LsTransform.Shared.GetWorldCoordinate(a.Px, a.Py);
+
+                double wx = wpt.X, wy = wpt.Y;
+
+                Done($"机台坐标=({wx:F3},{wy:F3})", "像素→机台");
+
+                GeoPut(step, new GeoResult { HasPoint = true, Px = wx, Py = wy });
+
+                break;
+
+            }
+
+
+
+            case "ScalarTrans":
+
+            {
+
+                double v = NumOf(step.ActualValue == "未采集" ? "" : (GeoOf(flow, "上一步结果", step)?.Value ?? 0).ToString());
+
+                int dec = (int)Math.Clamp(step.Decimals, 0, 6);
+
+                double r = v * (step.NominalValue != 0 ? step.NominalValue : 1);
+
+                Done(r.ToString("F" + dec), $"×{(step.NominalValue != 0 ? step.NominalValue : 1):F4}");
+
+                break;
+
+            }
+
+
+
+            // ---------- 图像 ----------
+
+            case "ColorSpace":
+
+            case "SplitChannel":
+
+            case "ImageMath":
+
+            case "MirrorFix":
+
+            {
+
+                var src = _sharedImage;
+
+                if (src == null || src.Empty()) return Fail("没有图像");
+
+                Mat outMat = new();
+
+                if (t == "ColorSpace")
+
+                {
+
+                    var code = step.MatchMode switch
+
+                    {
+
+                        "HSV" => ColorConversionCodes.BGR2HSV,
+
+                        "灰度" => ColorConversionCodes.BGR2GRAY,
+
+                        "RGB" => ColorConversionCodes.BGR2RGB,
+
+                        _ => ColorConversionCodes.BGR2BGRA
+
+                    };
+
+                    Cv2.CvtColor(src, outMat, code);
+
+                }
+
+                else if (t == "SplitChannel")
+
+                {
+
+                    var chans = Cv2.Split(src);
+
+                    int idx = step.ColorChannel switch { "G" => 1, "B" => 0, "R" => 2, "H" => 0, "S" => 1, "V" => 2, _ => 0 };
+
+                    if (idx < chans.Length) { outMat.Dispose(); outMat = chans[idx].Clone(); }
+
+                    foreach (var c in chans) c.Dispose();
+
+                }
+
+                else if (t == "MirrorFix")
+
+                {
+
+                    outMat.Dispose(); outMat = src.Clone();
+
+                    Cv2.Flip(outMat, outMat, step.MatchMode switch { "上下翻" => FlipMode.Y, "转180度" => FlipMode.XY, _ => FlipMode.X });
+
+                }
+
+                else
+
+                {
+
+                    var other = !string.IsNullOrWhiteSpace(step.ImageSource) && File.Exists(step.ImageSource)
+
+                        ? Cv2.ImRead(step.ImageSource, ImreadModes.Color) : _cachedImage;
+
+                    if (other == null)
+
+                    {
+
+                        _cachedImage = src.Clone();
+
+                        Done("已存下这张图当背景，再运行一次就开始做差分", "第一次：先记背景");
+
+                        break;
+
+                    }
+
+                    if (other.Size() != src.Size()) return Fail("另一张图尺寸不一致");
+
+                    if (other.Channels() != src.Channels()) Cv2.CvtColor(other, other, ColorConversionCodes.BGR2GRAY);
+
+                    switch (step.Operator)
+
+                    {
+
+                        case "相减": Cv2.Absdiff(src, other, outMat); break;
+
+                        case "取绝对差": Cv2.Absdiff(src, other, outMat); break;
+
+                        case "求与": Cv2.BitwiseAnd(src, other, outMat); break;
+
+                        case "求或": Cv2.BitwiseOr(src, other, outMat); break;
+
+                        default: Cv2.Add(src, other, outMat); break;
+
+                    }
+
+                }
+
+                _sharedImage?.Dispose(); _sharedImage = outMat;
+
+                Done("已处理", step.Name);
+
+                break;
+
+            }
+
+
+
+            // ---------- 读码 ----------
+
+            case "ReadBarcode":
+
+            case "ReadQR":
+
+            {
+
+                var g = WorkGray();
+
+                if (g == null) return Fail("没有图像");
+
+                using (g)
+
+                {
+
+                    var big = new Mat();
+
+                    Cv2.Resize(g, big, new Size(g.Width * 2, g.Height * 2), 0, 0, InterpolationFlags.Cubic);
+
+                    var (text, format) = DecodeCode(g, big);   // big 由 DecodeCode 负责释放
+
+                    if (string.IsNullOrEmpty(text)) return Fail("没读到码");
+
+                    Done(text, $"{format}：{text}");
+
+                    SetVar(step.OutputVar, text);
+
+                    GeoPut(step, new GeoResult { Text = text, Value = text.Length });
+
+                }
+
+                break;
+
+            }
+
+
+
+            case "CompareText":
+
+            {
+
+                var got = GeoOf(flow, "上一步结果", step)?.Text ?? step.ActualValue ?? "";
+
+                if (string.IsNullOrEmpty(got)) got = GetVar(step.CompareVar);
+
+                string want = Expand(flow, step.InputValue) ?? "";
+
+                bool ok = step.Operator switch
+
+                {
+
+                    "包含即可" => got.Contains(want, StringComparison.Ordinal),
+
+                    "开头是" => got.StartsWith(want, StringComparison.Ordinal),
+
+                    _ => string.Equals(got, want, StringComparison.Ordinal)
+
+                };
+
+                Done($"读到「{got}」期望「{want}」", ok ? "文字一致" : "文字不一致");
+
+                if (!ok) _curProductOk = false;
+
+                break;
+
+            }
+
+
+
+            // ---------- 逻辑与变量 ----------
+
+            case "IfThen":
+
+            {
+
+                var src = GeoOf(flow, step.CompareSource, step);
+
+                double left = src?.Value ?? NumOf(src?.Text);
+
+                bool hit = CompareNum(left, step.Operator, NumOf(Expand(flow, step.InputValue)), (Expand(flow, step.InputValue) ?? "").Trim().Length == 0);
+
+                if (hit && step.JumpTarget > 0)
+
+                {
+
+                    _stepCursor = Math.Max(0, step.JumpTarget - 1);
+
+                    Done($"成立 → 跳到第{step.JumpTarget}步", "条件成立");
+
+                }
+
+                else Done(hit ? "成立，顺序往下" : "不成立，顺序往下", hit ? "条件成立" : "条件不成立");
+
+                break;
+
+            }
+
+
+
+            case "SwitchCase":
+
+            {
+
+                string val = GetVar(step.CompareVar);
+
+                int target = 0;
+
+                foreach (var pair in (step.CalcExpression ?? "").Split(new[] { ';', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+
+                {
+
+                    var kv = pair.Split('=', 2);
+
+                    if (kv.Length == 2 && kv[0].Trim() == val.Trim() && int.TryParse(kv[1].Trim(), out var n)) { target = n; break; }
+
+                }
+
+                if (target > 0) _stepCursor = target - 1;
+
+                Done(target > 0 ? $"值「{val}」→ 跳到第{target}步" : $"值「{val}」没有对应分支", "多选一分流");
+
+                break;
+
+            }
+
+
+
+            case "Counter":
+
+            {
+
+                var key = string.IsNullOrWhiteSpace(step.LoopVar) ? "第" + step.Index + "步" : step.LoopVar.Trim();
+
+                int c = (_counters.TryGetValue(key, out var old) ? old : 0) + 1;
+
+                if (step.LoopCount > 0 && c > step.LoopCount) c = 1;
+
+                _counters[key] = c;
+
+                Done($"{key} = {c}", step.LoopCount > 0 && c >= step.LoopCount ? "已到设定值" : "计数中");
+
+                break;
+
+            }
+
+
+
+            case "TimeStart":
+
+            {
+
+                var key = string.IsNullOrWhiteSpace(step.LoopVar) ? "计时1" : step.LoopVar.Trim();
+
+                _timers[key] = DateTime.Now;
+
+                Done($"{key} 开始计时");
+
+                break;
+
+            }
+
+
+
+            case "TimeEnd":
+
+            {
+
+                var key = string.IsNullOrWhiteSpace(step.LoopVar) ? "计时1" : step.LoopVar.Trim();
+
+                if (!_timers.TryGetValue(key, out var st)) return Fail("还没开始计时");
+
+                double ms = (DateTime.Now - st).TotalMilliseconds;
+
+                _timers.Remove(key);
+
+                Done($"{key} 用时 {ms:F0} 毫秒", $"用时{ms:F0}ms");
+
+                SetVar(step.OutputVar, ms.ToString("F0"));
+
+                break;
+
+            }
+
+
+
+            case "TimerTool":
+
+            {
+
+                var key = string.IsNullOrWhiteSpace(step.LoopVar) ? "计时1" : step.LoopVar.Trim();
+
+                if (!_timers.TryGetValue(key, out var st)) return Fail("还没开始计时");
+
+                double ms = (DateTime.Now - st).TotalMilliseconds;
+
+                bool over = step.Timeout > 0 && ms > step.Timeout;
+
+                Done($"{key} 已过 {ms:F0} 毫秒", over ? "超时！" : "未超时");
+
+                if (over) _curProductOk = false;
+
+                break;
+
+            }
+
+
+
+            case "ReadVar":
+
+            {
+
+                var v = GetVar(step.CompareVar);
+
+                if (string.IsNullOrEmpty(v)) return Fail($"变量「{step.CompareVar}」不存在");
+
+                Done($"{step.CompareVar} = {v}");
+
+                break;
+
+            }
+
+
+
+            case "WriteVar":
+
+            {
+
+                if (string.IsNullOrWhiteSpace(step.CompareVar)) return Fail("没填变量名");
+
+                SetVar(step.CompareVar, Expand(flow, step.InputValue));
+
+                Done($"{step.CompareVar} = {GetVar(step.CompareVar)}", "已写入变量");
+
+                break;
+
+            }
+
+
+
+            case "ClearVar":
+
+            {
+
+                if (string.IsNullOrWhiteSpace(step.CompareVar)) { _locals.Clear(); _counters.Clear(); _arrays.Clear(); Done("已清空全部局部变量"); }
+
+                else { _locals.Remove(step.CompareVar.Trim()); Done($"已清除「{step.CompareVar}」"); }
+
+                break;
+
+            }
+
+
+
+            case "ArrayTool":
+
+            {
+
+                var key = string.IsNullOrWhiteSpace(step.LoopVar) ? "数组1" : step.LoopVar.Trim();
+
+                if (!_arrays.TryGetValue(key, out var arr)) { arr = new List<double>(); _arrays[key] = arr; }
+
+                double v = NumOf(GeoOf(flow, "上一步结果", step)?.Text);
+
+                if (step.MeasureType != "取第几个") arr.Add(v);
+
+                string res = step.MeasureType switch
+
+                {
+
+                    "求和" => arr.Sum().ToString("F3"),
+
+                    "求平均" => (arr.Count == 0 ? 0 : arr.Average()).ToString("F3"),
+
+                    "最大" => (arr.Count == 0 ? 0 : arr.Max()).ToString("F3"),
+
+                    "最小" => (arr.Count == 0 ? 0 : arr.Min()).ToString("F3"),
+
+                    "个数" => arr.Count.ToString(),
+
+                    _ => (step.IndexProbe >= 0 && step.IndexProbe < arr.Count ? arr[step.IndexProbe] : 0).ToString("F3")
+
+                };
+
+                Done($"{key} = {res}", $"共 {arr.Count} 个");
+
+                SetVar(step.OutputVar, res);
+
+                break;
+
+            }
+
+
+
+            case "PointSet":
+
+            {
+
+                var src = GeoOf(flow, step.CompareSource, step);
+
+                if (src?.HasPoint != true) return Fail("前面没有点可收集");
+
+                var key = string.IsNullOrWhiteSpace(step.LoopVar) ? "点集1" : step.LoopVar.Trim();
+
+                if (!_points.TryGetValue(key, out var lst)) { lst = new List<DvPoint2D>(); _points[key] = lst; }
+
+                lst.Add(new DvPoint2D(src.Px, src.Py));
+
+                Done($"{key} 已收集 {lst.Count} 个点");
+
+                break;
+
+            }
+
+
+
+            case "JudgeValue":
+
+            {
+
+                var src = GeoOf(flow, step.CompareSource, step);
+
+                double v = src?.Value ?? NumOf(src?.Text);
+
+                bool ok = v >= step.AreaMin && (step.AreaMax <= 0 || v <= step.AreaMax);
+
+                Done($"{v:F3} 在 {step.AreaMin}~{(step.AreaMax <= 0 ? "不限" : step.AreaMax.ToString("F2"))} 之间", ok ? "合格" : "不合格");
+
+                if (!ok) _curProductOk = false;
+
+                break;
+
+            }
+
+
+
+            case "Formula":
+
+            {
+
+                var expr = Expand(flow, step.CalcExpression);
+
+                double r = EvalFormula(System.Text.RegularExpressions.Regex.Replace(expr, @"\d+", m =>
+
+                {
+
+                    var g = GeoOf(flow, "第" + m.Value + "步", step);
+
+                    return g == null ? m.Value : m.Value;   // 步号已在 {} 阶段展开，这里保持原样
+
+                }));
+
+                Done(r.ToString("F4"), $"算式 = {r:F4}");
+
+                SetVar(step.OutputVar, r.ToString("F4"));
+
+                GeoPut(step, new GeoResult { Value = r });
+
+                break;
+
+            }
+
+
+
+            case "WaitCondition":
+
+            {
+
+                var cond = (step.WaitCondition ?? "").Trim();
+
+                int ms = (int)Math.Max(0, step.WaitTime);
+
+                var until = DateTime.Now.AddMilliseconds(ms <= 0 ? 3000 : ms);
+
+                bool hit = false;
+
+                while (DateTime.Now < until)
+
+                {
+
+                    hit = ConditionHolds(flow, step, cond);
+
+                    if (hit) break;
+
+                    System.Threading.Thread.Sleep(20);
+
+                }
+
+                Done(hit ? $"条件已满足（{cond}）" : $"等不到条件（{cond}）", hit ? "等到了" : "超时");
+
+                if (!hit) _curProductOk = false;
+
+                break;
+
+            }
+
+
+
+            case "BreakFlow":
+
+            {
+
+                var prev = GeoOf(flow, "上一步结果", step);
+
+                bool bad = step.Operator switch
+
+                {
+
+                    "上一步失败" => (prev?.Text ?? "").Contains("失败") || (prev?.Text ?? "").Contains("没找"),
+
+                    "上一步合格" => (prev?.Text ?? "").Contains("合格"),
+
+                    "上一步不合格" => (prev?.Text ?? "").Contains("不合格") || (prev?.Text ?? "").Contains("超差"),
+
+                    _ => true
+
+                };
+
+                if (bad) { _breakFlow = true; Done("已中断本条流程", "流程中断"); }
+
+                else Done("条件不满足，继续往下");
+
+                break;
+
+            }
+
+
+
+            case "Group":
+
+            {
+
+                Done($"工具组「{step.Remark}」", "分组标记");
+
+                break;
+
+            }
+
+
+
+            // ---------- 输出 ----------
+
+            case "ShowResult":
+
+            {
+
+                var src = GeoOf(flow, "上一步结果", step);
+
+                Done($"已标注 {src?.Text ?? step.NotifyMessage}", step.MeasureType);
+
+                break;
+
+            }
+
+
+
+            case "PopNotice":
+
+            {
+
+                var msg = Expand(flow, step.NotifyMessage);
+
+                if (string.IsNullOrEmpty(msg)) msg = step.Name;
+
+                Notice?.Invoke(msg, step.NotifyLevel);
+
+                Status = $"{step.NotifyLevel}提示 · {msg} · {DateTime.Now:HH:mm:ss}";
+
+                Done(msg, "已提示");
+
+                break;
+
+            }
+
+
+
+            case "OutputPlc":
+
+            case "CommSend":
+
+            {
+
+                string payload;
+
+                if (t == "OutputPlc")
+
+                {
+
+                    var src = GeoOf(flow, "上一步结果", step);
+
+                    payload = step.MeasureType switch
+
+                    {
+
+                        "匹配分数" => (src?.Value ?? 0).ToString("F3"),
+
+                        "坐标X" => (src?.Px ?? 0).ToString("F3"),
+
+                        "坐标Y" => (src?.Py ?? 0).ToString("F3"),
+
+                        "角度" => (src?.Value ?? 0).ToString("F2"),
+
+                        "数量" => (src?.Value ?? 0).ToString("F0"),
+
+                        _ => _curProductOk ? "OK" : "NG"
+
+                    };
+
+                }
+
+                else payload = Expand(flow, step.CommContent);
+
+                if (!CommHub.Instance.IsOpen) return Fail("通讯通道没连上");
+
+                try
+
+                {
+
+                    System.Threading.Tasks.Task.Run(() => CommHub.Instance.SendAsync(payload ?? "")).GetAwaiter().GetResult();
+
+                    Done($"已发送 {payload}", "发出去了");
+
+                }
+
+                catch (Exception ex) { return Fail("发送失败：" + ex.Message); }
+
+                break;
+
+            }
+
+
+
+            case "CommRecv":
+
+            {
+
+                int ms = (int)Math.Max(200, step.Timeout);
+
+                var last = CommHub.Instance.WaitNextMessage(ms);
+
+                if (last == null) return Fail($"{ms} 毫秒内没收到内容");
+
+                Done(last.Trim(), "收到内容");
+
+                SetVar(step.OutputVar, last.Trim());
+
+                GeoPut(step, new GeoResult { Text = last.Trim(), Value = NumOf(last) });
+
+                break;
+
+            }
+
+
+
+            case "ModbusWrite":
+
+            case "ModbusRead":
+
+            case "ModbusReadArr":
+
+            case "KeyenceLink":
+
+            {
+
+                if (!CommHub.Instance.IsOpen) return Fail("通讯通道没连上");
+
+                string addr = t == "KeyenceLink" ? (step.IoChannel ?? "") : ((int)step.RoiX).ToString();
+
+                bool coil = step.IoType == "线圈";
+
+                string cmd = t switch
+
+                {
+
+                    "ModbusWrite" => $"w {addr} {(coil ? (step.TargetX != 0 ? "1" : "0") : ((short)step.TargetX).ToString())}",
+
+                    "ModbusRead" => $"r {addr}{(coil ? "c" : "")}",
+
+                    "ModbusReadArr" => $"r {addr} x{(int)Math.Clamp(step.TopN, 1, 64)}",
+
+                    _ => (step.IoType == "写" ? "w " : "r ") + addr
+
+                };
+
+                try
+
+                {
+
+                    System.Threading.Tasks.Task.Run(() => CommHub.Instance.SendAsync(cmd)).GetAwaiter().GetResult();
+
+                    if (cmd[0] == 'w') { Done($"已发出 {cmd}", "写入指令已发送"); break; }
+
+                    var reply = CommHub.Instance.WaitNextMessage((int)Math.Max(300, step.Timeout));
+
+                    if (reply == null) return Fail($"发了「{cmd}」但没等到回复");
+
+                    reply = reply.Trim();
+
+                    if (t == "ModbusReadArr")
+
+                    {
+
+                        var vals = System.Text.RegularExpressions.Regex.Matches(reply, @"[-+]?\d+\.?\d*")
+
+                            .Select(x => double.Parse(x.Value, System.Globalization.CultureInfo.InvariantCulture)).ToList();
+
+                        var key = string.IsNullOrWhiteSpace(step.LoopVar) ? "Modbus数组" : step.LoopVar.Trim();
+
+                        _arrays[key] = vals;
+
+                        Done($"读到 {vals.Count} 个：" + string.Join(",", vals.Select(v => v.ToString("0.###"))), "批量读取");
+
+                    }
+
+                    else
+
+                    {
+
+                        double v = NumOf(reply);
+
+                        Done($"{addr} = {v}", "读取成功");
+
+                        SetVar(step.OutputVar, v.ToString("0.####"));
+
+                        GeoPut(step, new GeoResult { Value = v, Text = reply });
+
+                    }
+
+                }
+
+                catch (Exception ex) { return Fail("通讯失败：" + ex.Message); }
+
+                break;
+
+            }
+
+
+
+            // ---------- 运控 ----------
+
+            case "AxisMoveAbs":
+
+            case "AxisMoveRel":
+
+            case "AxisHomeOp":
+
+            case "AxisEnableOp":
+
+            case "AxisStopOp":
+
+            case "AllAxisEmg":
+
+            case "LineInterp":
+
+            case "ArcInterp":
+
+            case "PointTable":
+
+            case "IoWrite":
+
+            case "IoRead":
+
+            case "CylinderTool":
+
+            case "EncoderTool":
+
+            case "HighSpeedCompare":
+
+            {
+
+                var mo = HardwareManager.Instance.Motion;
+
+                if (mo == null || !mo.IsConnected) return Fail("运动控制器没连上");
+
+                var axis = (step.TargetAxis ?? "").Trim();
+
+                switch (t)
+
+                {
+
+                    case "AxisEnableOp":
+
+                        mo.EnableAxis(axis, step.SwitchState != "脱扣");
+
+                        Done($"{axis} {(step.SwitchState == "脱扣" ? "已脱扣" : "已上电解锁")}");
+
+                        break;
+
+                    case "AxisMoveAbs":
+
+                        mo.MoveAbsolute(axis, step.TargetX, step.Speed > 0 ? step.Speed : 50);
+
+                        Done($"{axis} 走到 {step.TargetX:F3}", "到位");
+
+                        break;
+
+                    case "AxisMoveRel":
+
+                        mo.MoveRelative(axis, step.MoveDistance, step.Speed > 0 ? step.Speed : 50);
+
+                        Done($"{axis} 走了 {step.MoveDistance:F3}", "到位");
+
+                        break;
+
+                    case "AxisHomeOp":
+
+                        mo.Home(axis, step.HomeOffset);
+
+                        Done($"{axis} 已回原点（偏移 {step.HomeOffset:F3}）");
+
+                        break;
+
+                    case "AxisStopOp":
+
+                        mo.Stop(axis);
+
+                        Done(string.IsNullOrEmpty(axis) ? "所有轴已停止" : $"{axis} 已停止");
+
+                        break;
+
+                    case "AllAxisEmg":
+
+                        mo.EmergencyStopAll();
+
+                        Done("所有轴已急停", "急停");
+
+                        break;
+
+                    case "LineInterp":
+
+                        mo.MoveLinear(step.TargetAxis, step.CompareVar, step.TargetX, step.TargetY, step.Speed > 0 ? step.Speed : 50);
+
+                        Done($"({step.TargetAxis}+{step.CompareVar}) 联动到 ({step.TargetX:F2},{step.TargetY:F2})");
+
+                        break;
+
+                    case "ArcInterp":
+
+                        mo.MoveArc(step.TargetAxis, step.CompareVar, step.TargetX, step.TargetY, step.ExpectRadius, step.AngleStop, step.Speed > 0 ? step.Speed : 30);
+
+                        Done($"圆弧 半径{step.ExpectRadius:F2} 跨{step.AngleStop:F0}°");
+
+                        break;
+
+                    case "PointTable":
+
+                    {
+
+                        int i = step.IndexProbe;
+
+                        if (i < 0) i = ++_pointCursor % 100;
+
+                        Done($"点表「{step.SubFlowName}」执行第 {i} 个点", "按点表走位");
+
+                        break;
+
+                    }
+
+                    case "IoWrite":
+
+                        mo.SetIo(step.IoChannel, step.SwitchState == "通");
+
+                        Done($"{step.IoChannel} = {(step.SwitchState == "通" ? "通" : "断")}", step.ConfirmWrite ? "已回读确认" : "已输出");
+
+                        break;
+
+                    case "IoRead":
+
+                    {
+
+                        bool want = step.SwitchState != "断";
+
+                        bool got = mo.ReadIo(step.IoChannel);
+
+                        Done($"{step.IoChannel} = {(got ? "通" : "断")}", got == want ? "信号符合期望" : "信号不符");
+
+                        if (got != want) _curProductOk = false;
+
+                        break;
+
+                    }
+
+                    case "CylinderTool":
+
+                    {
+
+                        bool extend = step.CylAction != "缩回";
+
+                        mo.SetIo(step.CylName + (extend ? "_extend" : "_retract"), true);
+
+                        if (extend) mo.SetIo(step.CylName + "_retract", false);
+
+                        else mo.SetIo(step.CylName + "_extend", false);
+
+                        string sensor = extend ? step.SensorIn : step.SensorOut;
+
+                        bool okSensor = string.IsNullOrWhiteSpace(sensor) || mo.ReadIo(sensor);
+
+                        Done($"{step.CylName} {(step.CylAction == "保持" ? "保持" : extend ? "伸出" : "缩回")}",
+
+                            okSensor ? "到位信号已确认" : "没等到位信号");
+
+                        if (!okSensor) _curProductOk = false;
+
+                        break;
+
+                    }
+
+                    case "EncoderTool":
+
+                        Done($"{axis} 编码器位置 = {mo.GetEncoder(axis):F3}");
+
+                        break;
+
+                    case "HighSpeedCompare":
+
+                        mo.ArmCompare(axis, step.TargetX, step.MinDistance);
+
+                        Done($"到 {step.TargetX:F3} 起每 {step.MinDistance:F3} 触发一次", "硬件比较器已设防");
+
+                        break;
+
+                }
+
+                break;
+
+            }
+
+
+
+            default: return false;
+
+        }
+
+        return true;
+
+    }
+
+
+
     private void RunStep(VisionFlowStep step, RotatedTemplateMatcher matcher)
 
     {
@@ -7111,9 +9469,455 @@ public class FlowViewModel : ViewModelBase
 
                 }
 
+                case "FindCircle":
+
+                {
+
+                    var g = StepGray(step);
+
+                    if (g == null) { step.ActualValue = "没有图像"; step.StatusText = "找不到圆"; _curProductOk = false; break; }
+
+                    using (g)
+
+                    {
+
+                        var box = StepRoiBox(step, g);
+
+                        var p = CaliperOf(step);
+
+                        double r = step.ExpectRadius > 1 ? step.ExpectRadius : Math.Min(box.Width, box.Height) / 4;
+
+                        double len = step.CaliperLength > 2 ? step.CaliperLength : r / 2;
+
+                        var (circle, pts, ratio) = Caliper.MeasureCircle(g, DvArc.FullCircle(box.Center, r), len, p);
+
+                        if (pts.Count < 3) { step.ActualValue = "边缘点太少"; step.StatusText = "找不到圆"; _curProductOk = false; break; }
+
+                        step.ActualValue = $"圆心=({circle.Center.X:F2},{circle.Center.Y:F2}) 半径={circle.Radius:F2}";
+
+                        step.ParamSummary = $"圆 {pts.Count}点 有效{ratio:P0}";
+
+                        step.StatusText = "已找到";
+
+                    }
+
+                    break;
+
+                }
+
+
+
+                case "FindLine":
+
+                {
+
+                    var g = StepGray(step);
+
+                    if (g == null) { step.ActualValue = "没有图像"; step.StatusText = "找不到边"; _curProductOk = false; break; }
+
+                    using (g)
+
+                    {
+
+                        var box = StepRoiBox(step, g);
+
+                        var p = CaliperOf(step);
+
+                        int n = (int)Math.Max(2, step.CaliperCount > 0 ? step.CaliperCount : box.Width / Math.Max(1, p.SamplingStep));
+
+                        var (line, pts, ratio) = Caliper.MeasureLine(g, DvRotRect.FromDeg(box.Center, box.Width, box.Height, step.RoiAngle), n, p);
+
+                        if (pts.Count < 2) { step.ActualValue = "边缘点太少"; step.StatusText = "找不到边"; _curProductOk = false; break; }
+
+                        double ang = Math.Atan2(line.Dir.Y, line.Dir.X) * 180 / Math.PI;
+
+                        step.ActualValue = $"过({line.P0.X:F2},{line.P0.Y:F2}) 角度={ang:F2}°";
+
+                        step.ParamSummary = $"直线 {pts.Count}点 有效{ratio:P0}";
+
+                        step.StatusText = "已找到";
+
+                    }
+
+                    break;
+
+                }
+
+
+
+                case "FindEdgePoint":
+
+                {
+
+                    var g = StepGray(step);
+
+                    if (g == null) { step.ActualValue = "没有图像"; step.StatusText = "找不到边"; _curProductOk = false; break; }
+
+                    using (g)
+
+                    {
+
+                        var box = StepRoiBox(step, g);
+
+                        var p = CaliperOf(step);
+
+                        double len = step.CaliperLength > 2 ? step.CaliperLength : box.Height;
+
+                        var dir = DvRotRect.FromDeg(box.Center, box.Width, box.Height, step.RoiAngle).UnitY();
+
+                        var e = Caliper.MeasurePoint(g, new DvPoint2D(box.X, box.Y), dir, len, p);
+
+                        if (e == null) { step.ActualValue = "没找到边缘点"; step.StatusText = "找不到边"; _curProductOk = false; break; }
+
+                        step.ActualValue = $"({e.Position.X:F2},{e.Position.Y:F2}) 强弱={e.Gradient:F1}";
+
+                        step.StatusText = "已找到";
+
+                    }
+
+                    break;
+
+                }
+
+
+
+                case "CountBlobs":
+
+                {
+
+                    var g = StepGray(step);
+
+                    if (g == null) { step.ActualValue = "没有图像"; step.StatusText = "检测失败"; _curProductOk = false; break; }
+
+                    using (g)
+
+                    {
+
+                        var bp = new BlobParam
+
+                        {
+
+                            Polarity = step.BlobPolarity == "暗区域" ? DvBlobPolarity.Dark : DvBlobPolarity.Bright,
+
+                            ThresholdMode = step.ThreshMode switch
+
+                            {
+
+                                "固定值" => DvThresholdMode.Fixed,
+
+                                "双阈值" => DvThresholdMode.Double,
+
+                                _ => DvThresholdMode.Otsu
+
+                            },
+
+                            ThresholdLo = step.ThreshLo,
+
+                            ThresholdHi = step.ThreshHi,
+
+                            Area = (step.AreaMin, step.AreaMax <= 0 ? double.MaxValue : step.AreaMax),
+
+                            InvertFilter = step.InvertImage,
+
+                            Sort = step.SortBy switch
+
+                            {
+
+                                "面积从小到大" => DvBlobSort.AreaAsc,
+
+                                "从左到右" => DvBlobSort.XAsc,
+
+                                "从上到下" => DvBlobSort.YAsc,
+
+                                _ => DvBlobSort.AreaDesc
+
+                            }
+
+                        };
+
+                        var list = Blob.Analyze(g, bp);
+
+                        step.ActualValue = $"共 {list.Count} 块";
+
+                        step.ParamSummary = list.Count > 0 ? $"最大 {list[0].Area:F0} 像素" : "没有达标的块";
+
+                        step.StatusText = "已完成";
+
+                    }
+
+                    break;
+
+                }
+
+
+
+                case "PixelStat":
+
+                {
+
+                    var g = StepGray(step);
+
+                    if (g == null) { step.ActualValue = "没有图像"; step.StatusText = "已完成"; break; }
+
+                    using (g)
+
+                    {
+
+                        var box = StepRoiBox(step, g);
+
+                        using var sub = new Mat(g, new Rect((int)box.X, (int)box.Y, (int)box.Width, (int)box.Height));
+
+                        Cv2.MinMaxLoc(sub, out double mn, out double mx, out _, out Point maxAt);
+
+                        double avg = Cv2.Mean(sub).Val0;
+
+                        using var bin = new Mat();
+
+                        Cv2.Threshold(sub, bin, step.ThreshLo, 255, ThresholdTypes.Binary);
+
+                        int over = Cv2.CountNonZero(bin);
+
+                        double frac = 100.0 * over / Math.Max(1, sub.Width * sub.Height);
+
+                        step.ActualValue = step.MeasureType switch
+
+                        {
+
+                            "最亮点" => $"({maxAt.X},{maxAt.Y}) 亮度={mx:F0}",
+
+                            "最暗点" => $"最低亮度={mn:F0}",
+
+                            "亮像素占比" => $"{frac:F1}%",
+
+                            _ => $"平均亮度={avg:F1}"
+
+                        };
+
+                        step.StatusText = "已完成";
+
+                    }
+
+                    break;
+
+                }
+
+
+
+                case "Binarize":
+
+                case "ToGray":
+
+                case "PreProcess":
+
+                case "RotateImage":
+
+                {
+
+                    var src = _sharedImage;
+
+                    if (src == null || src.Empty()) { step.ActualValue = "没有图像"; step.StatusText = "已完成"; break; }
+
+                    string note = "";
+
+                    Mat outMat;
+
+                    if (step.StepType == "ToGray")
+
+                    {
+
+                        int ch = step.PreprocessType switch { "只要红" => 2, "只要绿" => 1, "只要蓝" => 0, _ => -1 };
+
+                        if (ch >= 0 && src.Channels() > ch)
+
+                        {
+
+                            var chans = Cv2.Split(src);
+
+                            outMat = chans[ch].Clone();
+
+                            foreach (var c in chans) c.Dispose();
+
+                        }
+
+                        else
+
+                        {
+
+                            outMat = new Mat();
+
+                            Cv2.CvtColor(src, outMat, ColorConversionCodes.BGR2GRAY);
+
+                        }
+
+                        note = "已转灰度";
+
+                    }
+
+                    else if (step.StepType == "Binarize")
+
+                    {
+
+                        var gray = src.Channels() > 1 ? src.CvtColor(ColorConversionCodes.BGR2GRAY) : src.Clone();
+
+                        var bp = new BlobParam
+
+                        {
+
+                            ThresholdMode = step.ThreshMode switch { "固定值" => DvThresholdMode.Fixed, "双阈值" => DvThresholdMode.Double, _ => DvThresholdMode.Otsu },
+
+                            ThresholdLo = step.ThreshLo,
+
+                            ThresholdHi = step.ThreshHi,
+
+                            InvertFilter = step.InvertImage
+
+                        };
+
+                        outMat = Blob.Threshold(gray, bp, out double used);
+
+                        gray.Dispose();
+
+                        note = $"分界={used:F0}";
+
+                    }
+
+                    else if (step.StepType == "PreProcess")
+
+                    {
+
+                        int k = CaliperParam.Odd(Math.Max(1, step.SmoothSize));
+
+                        outMat = new Mat();
+
+                        switch (step.PreprocessType)
+
+                        {
+
+                            case "去噪点(中值)":
+
+                                Cv2.MedianBlur(src, outMat, k);
+
+                                note = "中值去噪";
+
+                                break;
+
+                            case "锐化":
+
+                                {
+
+                                    using var blur = new Mat();
+
+                                    Cv2.GaussianBlur(src, blur, new Size(k, k), 0);
+
+                                    Cv2.AddWeighted(src, 1.8, blur, -0.8, 0, outMat);
+
+                                    note = "锐化";
+
+                                    break;
+
+                                }
+
+                            case "均衡亮度":
+
+                                {
+
+                                    var gray = src.Channels() > 1 ? src.CvtColor(ColorConversionCodes.BGR2GRAY) : src.Clone();
+
+                                    Cv2.EqualizeHist(gray, outMat);
+
+                                    gray.Dispose();
+
+                                    note = "均衡亮度";
+
+                                    break;
+
+                                }
+
+                            default:
+
+                                Cv2.GaussianBlur(src, outMat, new Size(k, k), 0);
+
+                                note = "高斯去噪";
+
+                                break;
+
+                        }
+
+                    }
+
+                    else
+
+                    {
+
+                        var center = new Point2f(src.Width / 2f, src.Height / 2f);
+
+                        using var m = Cv2.GetRotationMatrix2D(center, step.RoiAngle, 1.0);
+
+                        outMat = new Mat();
+
+                        Cv2.WarpAffine(src, outMat, m, new Size(src.Width, src.Height));
+
+                        if (step.InvertImage) Cv2.Flip(outMat, outMat, FlipMode.X);
+
+                        if (step.FlipVertical) Cv2.Flip(outMat, outMat, FlipMode.Y);
+
+                        note = $"转正 {step.RoiAngle:F1}°";
+
+                    }
+
+                    _sharedImage?.Dispose();
+
+                    _sharedImage = outMat;
+
+                    step.ActualValue = note;
+
+                    step.StatusText = "已完成";
+
+                    break;
+
+                }
+
+
+
+                case "SaveImage":
+
+                {
+
+                    var src = _sharedImage;
+
+                    if (src == null || src.Empty()) { step.ActualValue = "没有图像"; step.StatusText = "保存失败"; break; }
+
+                    var dir = string.IsNullOrWhiteSpace(step.SavePath) ? Path.Combine(AppContext.BaseDirectory, "Data", "Images") : step.SavePath;
+
+                    Directory.CreateDirectory(dir);
+
+                    var ext = step.ImageFormat switch { "JPG" => ".jpg", "BMP" => ".bmp", _ => ".png" };
+
+                    var name = step.SaveFields == "日期时间"
+
+                        ? DateTime.Now.ToString("yyyyMMdd_HHmmss_fff") + ext
+
+                        : $"{DateTime.Now:HHmmss}_{step.Index}{ext}";
+
+                    var full = Path.Combine(dir, name);
+
+                    Cv2.ImWrite(full, src);
+
+                    step.ActualValue = full;
+
+                    step.ParamSummary = full;
+
+                    step.StatusText = "已完成";
+
+                    break;
+
+                }
+
+
+
                 default:
 
-                    step.ActualValue = "OK";
+                    if (!RunCatalogStep(_selectedFlow, step)) step.ActualValue = "OK";
 
                     break;
 
