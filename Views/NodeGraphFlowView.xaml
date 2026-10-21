@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:nodify="clr-namespace:Nodify;assembly=Nodify"
+             xmlns:ctrl="clr-namespace:NoCodeVision.Views.Controls"
              mc:Ignorable="d" d:DesignWidth="980" d:DesignHeight="620"
              Loaded="OnViewLoaded">
 <!-- 温启志：18719361399  节点图流程编辑器：左侧算子拖拽 → 中间连线成图 → 右侧改参数 -->
@@ -23,6 +24,14 @@
             <Setter Property="Header" Value="{Binding Title}" />
             <Setter Property="IsConnected" Value="{Binding IsConnected}" />
             <Setter Property="Background" Value="Transparent" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Name}" Value="真">
+                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Name}" Value="假">
+                    <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
         <!-- 正在拉出的临时连线 -->
@@ -59,18 +68,62 @@
             </nodify:Connection>
         </DataTemplate>
 
-        <!-- 算子节点：标题=序号+功能，页脚=步骤名/运行状态，左入右出（条件节点出「真/假」两个口） -->
+        <!-- 节点分类配色：看图=蓝 / 判断=橙 / 运动=绿 / 输出=紫 / 其它=灰 -->
+        <SolidColorBrush x:Key="NodeVisionBg" Color="#EAF3FF" />
+        <SolidColorBrush x:Key="NodeVisionLine" Color="#0A84FF" />
+        <SolidColorBrush x:Key="NodeLogicBg" Color="#FFF4E5" />
+        <SolidColorBrush x:Key="NodeLogicLine" Color="#FF9F0A" />
+        <SolidColorBrush x:Key="NodeMotionBg" Color="#E9F9EF" />
+        <SolidColorBrush x:Key="NodeMotionLine" Color="#34C759" />
+        <SolidColorBrush x:Key="NodeOutputBg" Color="#F3ECFF" />
+        <SolidColorBrush x:Key="NodeOutputLine" Color="#AF52DE" />
+        <SolidColorBrush x:Key="NodeOtherBg" Color="#F2F2F7" />
+        <SolidColorBrush x:Key="NodeOtherLine" Color="#8E8E93" />
+
+        <!-- 算子节点：图标 + 序号·功能，页脚=步骤名/运行状态；左入右出（判断类出「真/假」两个口） -->
         <DataTemplate x:Key="NodeItemTemplate">
-            <nodify:Node Width="186"
-                         Header="{Binding Title}"
+            <nodify:Node Width="196"
+                         Header="{Binding}"
                          Footer="{Binding Subtitle}"
                          Input="{Binding Input}"
                          Output="{Binding Outputs}"
                          Background="{StaticResource SurfaceBrush}"
-                         BorderBrush="{StaticResource LineBrush}"
                          Foreground="{StaticResource TextPrimaryBrush}"
-                         HeaderBrush="{StaticResource AccentSoftBrush}"
                          FooterBrush="{StaticResource CanvasBrush}">
+                <nodify:Node.Style>
+                    <Style TargetType="{x:Type nodify:Node}" BasedOn="{StaticResource {x:Type nodify:Node}}">
+                        <Setter Property="HeaderBrush" Value="{StaticResource NodeOtherBg}" />
+                        <Setter Property="BorderBrush" Value="{StaticResource NodeOtherLine}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding GroupKey}" Value="Vision">
+                                <Setter Property="HeaderBrush" Value="{StaticResource NodeVisionBg}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource NodeVisionLine}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding GroupKey}" Value="Logic">
+                                <Setter Property="HeaderBrush" Value="{StaticResource NodeLogicBg}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource NodeLogicLine}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding GroupKey}" Value="Motion">
+                                <Setter Property="HeaderBrush" Value="{StaticResource NodeMotionBg}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource NodeMotionLine}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding GroupKey}" Value="Output">
+                                <Setter Property="HeaderBrush" Value="{StaticResource NodeOutputBg}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource NodeOutputLine}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </nodify:Node.Style>
+                <nodify:Node.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Margin="2,0">
+                            <ctrl:AppleIconTile Glyph="{Binding Glyph}" TileSize="20" />
+                            <TextBlock Text="{Binding Title}" Margin="7,0,0,0" VerticalAlignment="Center"
+                                       FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type nodify:Node}}, Path=BorderBrush}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </nodify:Node.HeaderTemplate>
                 <nodify:Node.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="删除该节点" Command="{Binding DeleteCommand}" />
@@ -79,19 +132,30 @@
             </nodify:Node>
         </DataTemplate>
 
-        <!-- 左侧算子库条目 -->
+        <!-- 左侧算子库条目：左边一条色带和画布上同类节点同色 -->
         <Style x:Key="ToolChip" TargetType="Border">
             <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{StaticResource NodeOtherLine}" />
+            <Setter Property="BorderThickness" Value="4,1,1,1" />
             <Setter Property="CornerRadius" Value="7" />
             <Setter Property="Padding" Value="8,5" />
             <Setter Property="Margin" Value="0,0,0,6" />
             <Setter Property="Cursor" Value="SizeAll" />
             <Style.Triggers>
+                <DataTrigger Binding="{Binding GroupKey}" Value="Vision">
+                    <Setter Property="BorderBrush" Value="{StaticResource NodeVisionLine}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding GroupKey}" Value="Logic">
+                    <Setter Property="BorderBrush" Value="{StaticResource NodeLogicLine}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding GroupKey}" Value="Motion">
+                    <Setter Property="BorderBrush" Value="{StaticResource NodeMotionLine}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding GroupKey}" Value="Output">
+                    <Setter Property="BorderBrush" Value="{StaticResource NodeOutputLine}" />
+                </DataTrigger>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="{StaticResource HoverBrush}" />
-                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -165,7 +229,7 @@
                              Drop="OnCanvasDrop"
                              DragOver="OnCanvasDragOver"
                              Background="{StaticResource CanvasBrush}"
-                             GridCellSize="24"
+                             GridCellSize="1"
                              MinViewportZoom="0.4"
                              MaxViewportZoom="2"
                              ItemsSource="{Binding NodeGraph.Nodes}"

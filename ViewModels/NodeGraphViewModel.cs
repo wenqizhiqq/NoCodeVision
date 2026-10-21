@@ -129,23 +129,23 @@ public class NodeGraphViewModel : ViewModelBase
 
     {
 
-        AddCategory("先看图", "拍张照片", "图里找图案", "挑瑕疵", "量尺寸", "看颜色", "数有几个", "扫条码", "认文字");
+        AddCategory("先看图", "Vision", "拍张照片", "图里找图案", "挑瑕疵", "量尺寸", "看颜色", "数有几个", "扫条码", "认文字");
 
-        AddCategory("再判断", "判一下对不对", "走哪一条", "重复做", "算个数", "等一会", "调子流程", "写段代码");
+        AddCategory("再判断", "Logic", "判一下对不对", "走哪一条", "重复做", "算个数", "等一会", "调子流程", "写段代码");
 
-        AddCategory("让设备动", "动轴", "开关电", "伸缩气缸");
+        AddCategory("让设备动", "Motion", "动轴", "开关电", "伸缩气缸");
 
-        AddCategory("发出去", "报结果", "存文件", "弹提示", "发数据");
+        AddCategory("发出去", "Output", "报结果", "存文件", "弹提示", "发数据");
 
     }
 
 
 
-    private void AddCategory(string name, params string[] tools)
+    private void AddCategory(string name, string groupKey, params string[] tools)
 
     {
 
-        var cat = new NodeGraphCategory(name);
+        var cat = new NodeGraphCategory(name, groupKey);
 
         foreach (var t in tools)
 
@@ -153,7 +153,7 @@ public class NodeGraphViewModel : ViewModelBase
 
             var (icon, type) = FlowViewModel.ToolToIconType(t);
 
-            cat.Tools.Add(new NodeGraphTool(t, icon, type));
+            cat.Tools.Add(new NodeGraphTool(t, icon, type, groupKey));
 
         }
 
@@ -367,9 +367,17 @@ public class NodeGraphCategory
 
     public string Name { get; }
 
+    public string GroupKey { get; }
+
     public List<NodeGraphTool> Tools { get; } = new();
 
-    public NodeGraphCategory(string name) => Name = name;
+    public NodeGraphCategory(string name, string groupKey)
+
+    {
+
+        Name = name; GroupKey = groupKey;
+
+    }
 
 }
 
@@ -385,11 +393,13 @@ public class NodeGraphTool
 
     public string StepType { get; }
 
-    public NodeGraphTool(string name, string icon, string stepType)
+    public string GroupKey { get; }
+
+    public NodeGraphTool(string name, string icon, string stepType, string groupKey)
 
     {
 
-        Name = name; Icon = icon; StepType = stepType;
+        Name = name; Icon = icon; StepType = stepType; GroupKey = groupKey;
 
     }
 
@@ -440,6 +450,8 @@ public class NodeGraphNode : ViewModelBase
 
             if (e.PropertyName is nameof(VisionFlowStep.Function) or nameof(VisionFlowStep.Name) or nameof(VisionFlowStep.Icon)
 
+                or nameof(VisionFlowStep.StepType)
+
                 or nameof(VisionFlowStep.StatusText) or nameof(VisionFlowStep.ActualValue) or nameof(VisionFlowStep.Index))
 
             {
@@ -447,6 +459,10 @@ public class NodeGraphNode : ViewModelBase
                 OnPropertyChanged(nameof(Title));
 
                 OnPropertyChanged(nameof(Subtitle));
+
+                OnPropertyChanged(nameof(Glyph));
+
+                OnPropertyChanged(nameof(GroupKey));
 
             }
 
@@ -463,6 +479,30 @@ public class NodeGraphNode : ViewModelBase
 
 
     public string Title => $"{Step.Index}．{Step.Function}";
+
+
+
+    /// <summary>分类配色键：视觉=蓝、逻辑=橙、运动=绿、输出=紫，画布上一眼能分辨节点种类。</summary>
+
+    public string GroupKey => Step.StepType switch
+
+    {
+
+        "ImageCapture" or "TemplateMatch" or "Defect" or "Measure" or "Color" or "Count" or "Code" or "Ocr" => "Vision",
+
+        "Branch" or "Logic" or "Loop" or "Calc" or "Wait" or "SubFlow" or "Lua" => "Logic",
+
+        "AxisMove" or "IOControl" or "Cylinder" => "Motion",
+
+        "Output" or "Save" or "Notify" or "Comm" => "Output",
+
+        _ => "Other"
+
+    };
+
+
+
+    public string Glyph => Step.Icon;
 
 
 
