@@ -8419,6 +8419,92 @@ public class FlowViewModel : ViewModelBase
 
             // ---------- 图像 ----------
 
+            case "RemoveColorMark":
+
+            {
+
+                var src = _sharedImage;
+
+                if (src == null || src.Empty()) return Fail("没有图像");
+
+                if (src.Channels() < 3) { Done("这张图没有彩色标记"); break; }
+
+                int satMin = (int)Math.Clamp(step.Number1 <= 0 ? 70 : step.Number1, 10, 255);
+
+                int valMin = 50;
+
+                using var hsv = new Mat();
+
+                Cv2.CvtColor(src, hsv, ColorConversionCodes.BGR2HSV);
+
+                using var mask = new Mat();
+
+                switch (step.MatchMode)
+
+                {
+
+                    case "绿":
+
+                        Cv2.InRange(hsv, new Scalar(35, satMin, valMin), new Scalar(90, 255, 255), mask);
+
+                        break;
+
+                    case "蓝":
+
+                        Cv2.InRange(hsv, new Scalar(90, satMin, valMin), new Scalar(135, 255, 255), mask);
+
+                        break;
+
+                    case "任意彩色":
+
+                        Cv2.InRange(hsv, new Scalar(0, satMin, valMin), new Scalar(180, 255, 255), mask);
+
+                        break;
+
+                    default:
+
+                    {
+
+                        using var m2 = new Mat();
+
+                        Cv2.InRange(hsv, new Scalar(0, satMin, valMin), new Scalar(15, 255, 255), mask);
+
+                        Cv2.InRange(hsv, new Scalar(165, satMin, valMin), new Scalar(180, 255, 255), m2);
+
+                        Cv2.BitwiseOr(mask, m2, mask);
+
+                        break;
+
+                    }
+
+                }
+
+                using (var k = Cv2.GetStructuringElement(MorphShapes.Rect, new Size(3, 3)))
+
+                    Cv2.Dilate(mask, mask, k);   // 把抗锯齿的边一起抹掉
+
+                int marked = Cv2.CountNonZero(mask);
+
+                if (marked == 0) { Done("没有找到要抹的颜色"); break; }
+
+                int radius = (int)Math.Clamp(step.Number2 <= 0 ? 4 : step.Number2, 1, 20);
+
+                var clean = new Mat();
+
+                Cv2.Inpaint(src, mask, clean, radius, InpaintMethod.Telea);
+
+                _sharedImage?.Dispose();
+
+                _sharedImage = clean;
+
+                Done($"已抹掉 {marked} 个彩色像素", $"{step.MatchMode}色笔迹");
+
+                break;
+
+            }
+
+
+
             case "ColorSpace":
 
             case "SplitChannel":

@@ -23,6 +23,24 @@ public sealed class WidthToHeightConverter : IValueConverter
         => throw new NotImplementedException();
 }
 
+/// <summary>按图片自身宽高比算显示高度：图片宽度占满，高度跟着图片比例走。
+/// 比例带上下限（0.45~1.45），免得线扫那种超长图把页面撑爆。</summary>
+public sealed class AspectHeightConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object? parameter, CultureInfo culture)
+    {
+        double w = values.Length > 0 && values[0] is double d0 ? d0 : 0;
+        double iw = values.Length > 1 && values[1] is double d1 ? d1 : 0;
+        double ih = values.Length > 2 && values[2] is double d2 ? d2 : 0;
+        if (w <= 0) return 0d;
+        if (iw <= 0 || ih <= 0) return w * 0.7;
+        return w * Math.Clamp(ih / iw, 0.45, 1.45);
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 /// <summary>对象为 null → Visible；否则 Collapsed。用于「未选中流程」提示。</summary>
 public sealed class NullToVisibilityConverter : IValueConverter
 {
