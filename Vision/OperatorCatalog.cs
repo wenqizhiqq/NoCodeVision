@@ -180,6 +180,7 @@ public static class OperatorCatalog
             C("点从哪来", "CompareVar", "选前面「数块数」那一步，最大那块的中心就是线圈", SRC),
             C("0度朝哪边", "AngleZero", "选「向上」就是时钟12点算0度，现场最好读", ZERO),
             B("顺时针算正数", "InvertImage", "打开=顺时针为正（像钟表）；关掉=逆时针为正"),
+            N("基准偏移(度)", "HomeOffset", "读数 = 算出来的角度 + 这个值，用来对齐现场认定的零点"),
             T("结果写入", "OutputVar", "存进变量，后面判定、发PLC都取这个值")),
         O("MidPoint", "求中点", "◽", "Calc", "两个点的中点。",
             C("第一个点", "CompareSource", ByStep(""), SRC),
@@ -309,9 +310,11 @@ public static class OperatorCatalog
             C("什么时候中断", "Operator", "", new[] { "无条件", "上一步失败", "上一步合格", "上一步不合格" })),
 
         // ================= 输出与界面 =================
-        O("ShowResult", "显示结果", "🖥", "Output", "把结果画到图上（十字、框、文字），现场一眼看到。",
-            C("画什么", "MeasureType", "", new[] { "中心十字", "外框", "圆", "文字标注" }),
-            T("文字内容", "NotifyMessage", "支持 {3} 这种写法")),
+        O("ShowResult", "显示结果", "🖥", "Output", "把结果画到图上（圆、十字、连线、大字），现场一眼看到。",
+            C("画哪一步结果", "CompareSource", ByStep(""), SRC),
+            C("再叠哪一步", "CompareVar", "想把基准圆也画上，就选「找圆」那一步", SRC),
+            C("画什么", "MeasureType", "", new[] { "圆和点", "只要十字", "只要文字" }),
+            T("标签文字", "NotifyMessage", "只支持英文数字，例如 OK0；留空写 OK，后面自动跟(读数)")),
         O("PopNotice", "说句话", "💬", "Output", "在软件右下角提示一条消息，不打断操作。",
             T("提示内容", "NotifyMessage", ""),
             C("级别", "NotifyLevel", "", new[] { "普通", "成功", "警告", "错误" })),

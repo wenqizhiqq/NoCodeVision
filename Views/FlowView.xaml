@@ -424,6 +424,26 @@
                     </StackPanel>
                 </Border>
 
+                <!-- 结果画面：运行后把圆、点、连线和大字结论画在图上 -->
+                <Border Margin="0,0,0,12">
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ResultImage}" Value="{x:Null}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="🖥 结果画面" />
+                        <Border Margin="12,4,12,10" CornerRadius="8" ClipToBounds="True" Background="{StaticResource CanvasBrush}">
+                            <Image Source="{Binding ResultImage}" Stretch="Uniform" MaxHeight="360" />
+                        </Border>
+                    </StackPanel>
+                </Border>
+
                 <TextBlock>
                     <TextBlock.Style>
                         <Style BasedOn="{StaticResource iOSTitle}" TargetType="TextBlock">

@@ -4729,6 +4729,11 @@ public class FlowViewModel : ViewModelBase
 
     public BitmapImage? CurrentImageSource { get => _currentImageSource; set => SetField(ref _currentImageSource, value); }
 
+    /// <summary>「显示结果」画出来的那张图：圆、点、连线、大字结论。</summary>
+    public ImageSource? ResultImage { get => _resultImage; set => SetField(ref _resultImage, value); }
+
+    private ImageSource? _resultImage;
+
 
 
     public ImageSource? DefectOverlayImage { get => _defectOverlayImage; set => SetField(ref _defectOverlayImage, value); }
@@ -8124,6 +8129,8 @@ public class FlowViewModel : ViewModelBase
 
                 double ang = step.InvertImage ? cw - zero : zero - cw;
 
+                ang += step.HomeOffset;
+
                 while (ang <= -180) ang += 360;
 
                 while (ang > 180) ang -= 360;
@@ -8880,9 +8887,61 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                var src = GeoOf(flow, "上一步结果", step);
+                var main = GeoOf(flow, step.CompareSource, step);
 
-                Done($"已标注 {src?.Text ?? step.NotifyMessage}", step.MeasureType);
+                var extra = GeoOf(flow, step.CompareVar, step);
+
+                var img = _sharedImage;
+
+                if (img == null || img.Empty()) return Fail("没有图像可画");
+
+                using (var canvas = img.Clone())
+
+                {
+
+                    var red = new Scalar(48, 59, 255);
+
+                    var green = new Scalar(60, 230, 60);
+
+                    bool shape = step.MeasureType != "只要文字";
+
+                    foreach (var gg in new[] { main, extra })
+
+                    {
+
+                        if (gg == null) continue;
+
+                        if (shape && gg.HasCircle)
+
+                            Cv2.Circle(canvas, new Point((int)Math.Round(gg.Cx), (int)Math.Round(gg.Cy)), Math.Max(2, (int)Math.Round(gg.R)), red, 2);
+
+                        if (shape && gg.HasPoint)
+
+                            Cv2.DrawMarker(canvas, new Point((int)Math.Round(gg.Px), (int)Math.Round(gg.Py)), red, MarkerTypes.Cross, 18, 2);
+
+                    }
+
+                    var cen = main?.HasCircle == true ? main : extra?.HasCircle == true ? extra : null;
+
+                    var dot = main?.HasPoint == true ? main : extra?.HasPoint == true ? extra : null;
+
+                    if (shape && cen != null && dot != null)
+
+                        Cv2.Line(canvas, new Point((int)cen.Cx, (int)cen.Cy), new Point((int)dot.Px, (int)dot.Py), red, 1, LineTypes.AntiAlias);
+
+                    double val = main?.Value ?? 0;
+
+                    string head = string.IsNullOrWhiteSpace(step.NotifyMessage) ? "OK" : step.NotifyMessage.Trim();
+
+                    string label = head + "(" + val.ToString("F2") + ")";
+
+                    Cv2.PutText(canvas, label, new Point(16, 56), HersheyFonts.HersheyDuplex, 1.4, green, 3, LineTypes.AntiAlias);
+
+                    ResultImage = MatToBitmapSource(canvas);
+
+                }
+
+                Done($"{main?.Value ?? 0:F2}", "已画到结果画面");
 
                 break;
 
