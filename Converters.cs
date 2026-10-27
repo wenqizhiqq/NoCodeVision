@@ -9,6 +9,20 @@ using NoCodeVision.ViewModels;
 
 namespace NoCodeVision;
 
+/// <summary>宽度 × 比例 → 高度：把图片区钉成固定显示比例（默认 0.7）。</summary>
+public sealed class WidthToHeightConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        double w = value is double d ? d : 0;
+        double ratio = double.TryParse(parameter as string, NumberStyles.Any, CultureInfo.InvariantCulture, out var r) ? r : 0.7;
+        return w <= 0 ? 0d : w * ratio;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotImplementedException();
+}
+
 /// <summary>对象为 null → Visible；否则 Collapsed。用于「未选中流程」提示。</summary>
 public sealed class NullToVisibilityConverter : IValueConverter
 {

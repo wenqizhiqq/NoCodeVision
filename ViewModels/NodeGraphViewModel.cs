@@ -298,7 +298,10 @@ public class NodeGraphViewModel : ViewModelBase
 
         if (from == null || to == null || ReferenceEquals(from, to)) return;
 
-        var port = from.Outputs.FirstOrDefault(o => o.Name == model.FromPort);
+        // 手写/旧配置里的出口名可能写成「出」，而默认出口的 Name 是空串，这里兜一层
+        var port = from.Outputs.FirstOrDefault(o => o.Name == model.FromPort)
+                   ?? from.Outputs.FirstOrDefault(o => string.IsNullOrEmpty(model.FromPort))
+                   ?? from.Outputs.FirstOrDefault();
 
         if (port == null) return;
 

@@ -15,6 +15,7 @@
     <UserControl.Resources>
         <local:IntToBoolConverter x:Key="IntToBoolConverter" />
         <local:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+        <local:WidthToHeightConverter x:Key="WidthToHeight" />
         <local:FlowEmptyToVisibilityConverter x:Key="FlowEmptyToVisibilityConverter" />
         <ctrl:KindToVisibilityConverter x:Key="KindVis" />
 
@@ -381,7 +382,8 @@
                             <Rectangle Style="{StaticResource AppleDivider}" />
                             <TextBlock Style="{StaticResource AppleSubLabel}" Text="要看哪一块（在图上按住鼠标拖一个框）" Margin="14,6,14,4"
                                        ToolTip="只有框里的内容参与计算；宽高填 0 表示整张图都算" />
-                            <ctrl:RoiImageView Height="240" Margin="12,0,12,8"
+                            <ctrl:RoiImageView Margin="12,0,12,8"
+                                               Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}, Converter={StaticResource WidthToHeight}, ConverterParameter=0.7}"
                                                SourceImage="{Binding CurrentImageSource}"
                                                RoiX="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=0}"
                                                RoiY="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=0}"
@@ -439,7 +441,8 @@
                     <StackPanel>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="🖥 结果画面" />
                         <Border Margin="12,4,12,10" CornerRadius="8" ClipToBounds="True" Background="{StaticResource CanvasBrush}">
-                            <Image Source="{Binding ResultImage}" Stretch="Uniform" MaxHeight="360" />
+                            <Image Source="{Binding ResultImage}" Stretch="Uniform"
+                                   Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}, Converter={StaticResource WidthToHeight}, ConverterParameter=0.7}" />
                         </Border>
                     </StackPanel>
                 </Border>
