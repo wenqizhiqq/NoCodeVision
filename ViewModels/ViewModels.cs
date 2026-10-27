@@ -6777,9 +6777,25 @@ public class FlowViewModel : ViewModelBase
 
                     var imgExt = new[] { ".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff" };
 
-                    var first = Directory.EnumerateFiles(step.FolderPath).FirstOrDefault(f => imgExt.Contains(Path.GetExtension(f).ToLowerInvariant()));
+                    var files = Directory.EnumerateFiles(step.FolderPath)
 
-                    return first == null ? null : Cv2.ImRead(first, ImreadModes.Color);
+                        .Where(f => imgExt.Contains(Path.GetExtension(f).ToLowerInvariant())).OrderBy(f => f).ToList();
+
+                    if (files.Count == 0) return null;
+
+                    // 每跑一次换下一张，跑完一轮从头开始（方便拿一组图连着测）
+
+                    int idx = _folderCursor.TryGetValue(step.FolderPath, out var c) ? c % files.Count : 0;
+
+                    _folderCursor[step.FolderPath] = idx + 1;
+
+                    var file = files[idx];
+
+                    step.ImageSource = file;
+
+                    step.ParamSummary = $"{idx + 1}/{files.Count} {Path.GetFileName(file)}";
+
+                    return Cv2.ImRead(file, ImreadModes.Color);
 
                 }
 
@@ -7517,6 +7533,10 @@ public class FlowViewModel : ViewModelBase
     }
 
 
+
+    /// <summary>「打开文件夹」取图游标：每个文件夹记住下一张是第几个。</summary>
+
+    readonly Dictionary<string, int> _folderCursor = new();
 
     Mat? _cachedImage;
 

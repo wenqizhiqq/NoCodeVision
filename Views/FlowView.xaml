@@ -42,7 +42,7 @@
             <Grid Height="40">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="150" SharedSizeGroup="StepColLogic" />
-                    <ColumnDefinition SharedSizeGroup="StepColFunc" />
+                    <ColumnDefinition Width="165" SharedSizeGroup="StepColFunc" />
                     <ColumnDefinition SharedSizeGroup="StepColStatus" />
                     <ColumnDefinition SharedSizeGroup="StepColOp" />
                     <ColumnDefinition Width="*" />
@@ -195,7 +195,7 @@
                     <Grid Grid.Row="0" Height="36" Background="{StaticResource HoverBrush}" Margin="0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="150" SharedSizeGroup="StepColLogic" />
-                            <ColumnDefinition Width="110" SharedSizeGroup="StepColFunc" />
+                            <ColumnDefinition Width="165" SharedSizeGroup="StepColFunc" />
                             <ColumnDefinition Width="95" SharedSizeGroup="StepColStatus" />
                             <ColumnDefinition Width="85" SharedSizeGroup="StepColOp" />
                             <ColumnDefinition Width="*" />
@@ -505,13 +505,13 @@
                             </Style.Triggers>
                         </Style>
                     </Border.Style>
-                    <!-- 参数列固定 250px 在左，图像列在右 -->
+                    <!-- 参数在上、图像在下：图占满整张卡片宽度 -->
                     <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="250" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0">
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="📷 拍张照片" /> — 给后续步骤提供一张图</TextBlock>
@@ -625,9 +625,9 @@
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding SelectedStep.ImageSource, FallbackValue='未选择图片'}" Margin="16,4,16,4" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
-                        <!-- 右：ROI 图像列 -->
-                        <StackPanel Grid.Column="1" Margin="14,0,14,0">
-                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI（在右侧图上拖拽绘制）" Margin="0,8,0,4" ToolTip="在右边的图上按住鼠标拖出一个框，软件只看框里的内容" />
+                        <!-- 下：ROI 图像（整卡宽度） -->
+                        <StackPanel Grid.Row="1" Margin="0,6,0,0">
+                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI（在下面的图上拖拽绘制）" Margin="0,8,0,4" ToolTip="在右边的图上按住鼠标拖出一个框，软件只看框里的内容" />
                         <ctrl:RoiImageView Margin="0,0,0,10"
                                            SourceImage="{Binding CurrentImageSource}"
                                            RoiX="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=10}"
