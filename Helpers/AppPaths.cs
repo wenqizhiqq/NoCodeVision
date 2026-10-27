@@ -30,6 +30,7 @@ public static class AppPaths
     public static string ToStoredPath(string? path)
     {
         if (string.IsNullOrWhiteSpace(path)) return path ?? "";
+        if (!Path.IsPathRooted(path)) return path;      // 已经是相对路径，原样返回
         try
         {
             var full = Path.GetFullPath(path);

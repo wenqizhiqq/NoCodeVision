@@ -16,6 +16,7 @@
         <local:IntToBoolConverter x:Key="IntToBoolConverter" />
         <local:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
         <local:WidthToHeightConverter x:Key="WidthToHeight" />
+        <local:BinPathConverter x:Key="BinPath" />
         <local:AspectHeightConverter x:Key="AspectHeight" />
         <local:FlowEmptyToVisibilityConverter x:Key="FlowEmptyToVisibilityConverter" />
         <ctrl:KindToVisibilityConverter x:Key="KindVis" />
@@ -406,9 +407,9 @@
                             <DockPanel Style="{StaticResource AppleRow}">
                                 <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="标准图" Width="70" />
                                 <Button Style="{StaticResource AppleBtn}" Content="📂 选标准图" Command="{Binding PickGoldenImageCmd}" DockPanel.Dock="Right" Margin="8,0,0,0" />
-                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding SelectedStep.TemplateFile, FallbackValue='还没有选'}"
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding SelectedStep.TemplateFile, Converter={StaticResource BinPath}, FallbackValue='还没有选'}"
                                            TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="8,0,8,0"
-                                           ToolTip="{Binding SelectedStep.TemplateFile}" />
+                                           ToolTip="{Binding SelectedStep.TemplateFile, Converter={StaticResource BinPath}}" />
                             </DockPanel>
                         </StackPanel>
                         <!-- 显示结果：先看当前图，跑一次后这里就是画好的结果图 -->
@@ -554,7 +555,7 @@
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="相机参数" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="图像源" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ImageSource, FallbackValue=''}" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ImageSource, Converter={StaticResource BinPath}, FallbackValue=''}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
@@ -656,7 +657,7 @@
                             </DockPanel>
                         </StackPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
-                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding SelectedStep.ImageSource, FallbackValue='未选择图片'}" Margin="16,4,16,4" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding SelectedStep.ImageSource, Converter={StaticResource BinPath}, FallbackValue='未选择图片'}" Margin="16,4,16,4" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
                         <!-- 下：ROI 图像（整卡宽度） -->
                         <StackPanel Grid.Row="1" Margin="0,6,0,0">

@@ -9,6 +9,16 @@ using NoCodeVision.ViewModels;
 
 namespace NoCodeVision;
 
+/// <summary>路径显示：bin 目录下的显示成相对路径；手填相对路径也能还原成绝对（两向都管）。</summary>
+public sealed class BinPathConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => Helpers.AppPaths.ToStoredPath(value as string ?? "");
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => Helpers.AppPaths.ResolvePath(value as string ?? "");
+}
+
 /// <summary>宽度 × 比例 → 高度：把图片区钉成固定显示比例（默认 0.7）。</summary>
 public sealed class WidthToHeightConverter : IValueConverter
 {

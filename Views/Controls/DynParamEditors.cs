@@ -59,12 +59,16 @@ public static class DynBind
 
         var root = GetRoot(fe);
 
-        fe.SetBinding(dp, new Binding("DataContext." + (string.IsNullOrEmpty(root) ? path : root + "." + path))
+        var bnd = new Binding("DataContext." + (string.IsNullOrEmpty(root) ? path : root + "." + path))
         {
             RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor, typeof(UserControl), 1),
             Mode = BindingMode.TwoWay,
             UpdateSourceTrigger = dp == TextBox.TextProperty ? UpdateSourceTrigger.PropertyChanged : UpdateSourceTrigger.Default
-        });
+        };
+        // 路径类参数：bin 里显示相对路径，手填相对路径也能还原
+        if (path is "ImageSource" or "FolderPath" or "TemplateFile")
+            bnd.Converter = new NoCodeVision.BinPathConverter();
+        fe.SetBinding(dp, bnd);
     }
 }
 
