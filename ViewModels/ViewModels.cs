@@ -9266,6 +9266,78 @@ public class FlowViewModel : ViewModelBase
 
             case "ModbusWrite":
 
+            {
+
+                if (!CommHub.Instance.IsOpen) return Fail("通讯通道没连上（去「通讯」页连上 Modbus-TCP 再跑）");
+
+                int wAddr = (int)Math.Round(step.RoiX);
+
+                bool wCoil = step.IoType == "线圈";
+
+                double rawVal = step.TargetX;
+
+                if (!string.IsNullOrWhiteSpace(step.CompareSource) && step.CompareSource != "固定值")
+
+                {
+
+                    var srcGeo = GeoOf(flow, step.CompareSource, step);
+
+                    if (srcGeo == null) return Fail($"「{step.CompareSource}」没有可写的结果");
+
+                    rawVal = srcGeo.Value;
+
+                    if (rawVal == 0 && srcGeo.Text.Length > 0) rawVal = NumOf(srcGeo.Text);
+
+                }
+
+                double scale = step.Number1 > 0 ? step.Number1 : 1;
+
+                string wCmd;
+
+                string shown;
+
+                if (wCoil)
+
+                {
+
+                    wCmd = $"c {wAddr} {(rawVal != 0 ? 1 : 0)}";
+
+                    shown = rawVal != 0 ? "1" : "0";
+
+                }
+
+                else
+
+                {
+
+                    long iv = (long)Math.Round(rawVal * scale);
+
+                    ushort u = unchecked((ushort)iv);
+
+                    wCmd = $"w {wAddr} {u}";
+
+                    shown = scale == 1 ? $"{rawVal:F2}" : $"{rawVal:F2}×{scale:0} = {u}";
+
+                }
+
+                try
+
+                {
+
+                    System.Threading.Tasks.Task.Run(() => CommHub.Instance.SendAsync(wCmd)).GetAwaiter().GetResult();
+
+                    Done($"已写 {wAddr} ← {shown}", "已发到 PLC");
+
+                }
+
+                catch (Exception ex) { return Fail("通讯失败：" + ex.Message); }
+
+                break;
+
+            }
+
+
+
             case "ModbusRead":
 
             case "ModbusReadArr":

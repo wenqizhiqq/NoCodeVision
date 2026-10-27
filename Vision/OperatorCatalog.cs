@@ -48,6 +48,7 @@ public static class OperatorCatalog
     static readonly string[] THMODE = { "自动", "固定值", "双阈值" };
     static readonly string[] ZERO = { "向上(12点)", "向右(3点)", "向下(6点)", "向左(9点)" };
     static readonly string[] SRC = { "上一步结果", "第1步", "第2步", "第3步", "第4步", "第5步", "第6步", "第7步", "第8步", "第9步", "第10步" };
+    static readonly string[] WSRC = { "固定值", "上一步结果", "第1步", "第2步", "第3步", "第4步", "第5步", "第6步", "第7步", "第8步", "第9步", "第10步" };
 
     static string ByStep(string h) => h + "：可以选上一步的结果，也可以直接选第几步的结果";
 
@@ -393,11 +394,13 @@ public static class OperatorCatalog
             T("通道", "CommChannel", ""),
             N("最多等多久(ms)", "Timeout", ""),
             T("存到变量", "OutputVar", "")),
-        O("ModbusWrite", "Modbus 写", "🟦", "Comm", "往 PLC 的寄存器或线圈写值。",
-            T("通道", "CommChannel", ""),
+        O("ModbusWrite", "Modbus 写", "🟦", "Comm", "把算出来的结果（比如角度）写到 PLC 的寄存器或线圈。",
+            T("通道", "CommChannel", "留空就用当前连上的那个通道"),
             C("写哪种", "IoType", "", new[] { "保持寄存器", "线圈" }),
-            N("地址", "RoiX", "例如 40001 或 0"),
-            N("写多少", "TargetX", "")),
+            N("地址", "RoiX", "PLC 寄存器偏移地址（从 0 算）；手册写 40001 的通常对应这里的 0"),
+            C("写哪个值", "CompareSource", "选前面算出来那一步；选「固定值」就写下面的固定数", WSRC),
+            N("放大倍数", "Number1", "角度一般放大 100 写成整数（171.52→17152）；填 1 就是原值"),
+            N("固定值", "TargetX", "上面选「固定值」时才用")),
         O("ModbusRead", "Modbus 读", "🟩", "Comm", "从 PLC 读一个寄存器或线圈。",
             T("通道", "CommChannel", ""),
             C("读哪种", "IoType", "", new[] { "保持寄存器", "线圈" }),
