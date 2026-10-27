@@ -3429,6 +3429,78 @@ public class FlowViewModel : ViewModelBase
 
     // 新建「流程 / 脚本流程」时预置的完整 5 步流水线：采集 → 模板匹配 → 缺陷检测 → 测量 → 通讯
 
+    /// <summary>弹「新建流程」对话框选模板；取消返回 null。</summary>
+    string? PromptFlowTemplate(string title)
+    {
+        try
+        {
+            var dlg = new NoCodeVision.Views.AddFlowDialog(title)
+            {
+                Owner = System.Windows.Application.Current?.MainWindow
+            };
+            return dlg.ShowDialog() == true ? dlg.SelectedKey : null;
+        }
+        catch { return "empty"; }
+    }
+
+    VisionFlowStep MkStep(int idx, string tool, string name, Action<VisionFlowStep>? cfg = null)
+    {
+        var (icon, type) = ToolToIconType(tool);
+        var s = new VisionFlowStep
+        {
+            Index = idx,
+            Function = tool,
+            Name = name,
+            Icon = icon,
+            StepType = type,
+            ParamSummary = "-",
+            StatusText = "未开始",
+        };
+        cfg?.Invoke(s);
+        return s;
+    }
+
+    /// <summary>按模板给流程填步骤；empty 就什么都不放（空白流程）。</summary>
+    void ApplyFlowTemplate(VisionFlow flow, string key)
+    {
+        if (key != "bottle" && key != "zeroshot") return;
+        var dir = Helpers.AppPaths.ResolvePath(@"Projects\瓶底线圈角度");
+        var zsDir = System.IO.Path.Combine(dir, "零样本测试");
+        var capDir = key == "zeroshot" ? zsDir : dir;
+        var cap = MkStep(1, "拍张照片", "读瓶底图", s => { s.CaptureMode = "打开文件夹"; s.FolderPath = capDir; });
+        if (key == "bottle")
+        {
+            flow.Steps = new ObservableCollection<VisionFlowStep>
+            {
+                cap,
+                MkStep(2, "找圆", "定瓶底中心", s => { s.RoiX = 0; s.RoiY = 0; s.RoiW = 0; s.RoiH = 0; s.ExpectRadius = 425; s.CaliperLength = 60; s.SamplingStep = 6; s.EdgePolarity = "从亮到暗"; s.FitMethod = "正交距离(更准)"; }),
+                MkStep(3, "去掉彩色笔迹", "抹掉红圈", s => { s.MatchMode = "红"; s.Number1 = 70; s.Number2 = 4; }),
+                MkStep(4, "数块数", "找黑线圈", s => { s.RoiX = 0; s.RoiY = 0; s.RoiW = 0; s.RoiH = 0; s.BlobPolarity = "暗区域"; s.ThreshMode = "固定值"; s.ThreshLo = 130; s.AreaMin = 300; s.AreaMax = 20000; s.SortBy = "面积从大到小"; }),
+                MkStep(5, "求角度", "线圈角度", s => { s.CompareSource = "第2步"; s.CompareVar = "第4步"; s.AngleZero = "向上(12点)"; s.InvertImage = true; s.OutputVar = "coilAngle"; }),
+                MkStep(6, "Modbus 写", "角度写PLC", s => { s.ModbusIp = "192.168.1.60"; s.ModbusPort = 502; s.ModbusUnit = 1; s.RoiX = 100; s.Number1 = 100; s.IoType = "保持寄存器"; s.CompareSource = "第5步"; }),
+                MkStep(7, "判个数对不对", "角度判定", s => { s.CompareSource = "第5步"; s.AreaMin = -20; s.AreaMax = 20; }),
+                MkStep(8, "显示结果", "画到图上", s => { s.CompareSource = "第5步"; s.CompareVar = "第2步"; s.MeasureType = "圆和点"; s.NotifyMessage = "OK0"; }),
+            };
+        }
+        else
+        {
+            flow.Steps = new ObservableCollection<VisionFlowStep>
+            {
+                cap,
+                MkStep(2, "零样本查瑕疵", "查瑕疵", s =>
+                {
+                    s.TemplateFile = Helpers.AppPaths.ToStoredPath(System.IO.Path.Combine(zsDir, "标准图.png"));
+                    s.MatchMode = "平移+旋转";
+                    s.Number1 = 60;
+                    s.AreaMin = 30;
+                    s.IndexProbe = 0;
+                }),
+                MkStep(3, "判个数对不对", "缺陷判定", s => { s.CompareSource = "第2步"; s.AreaMin = 0; s.AreaMax = 0; }),
+                MkStep(4, "显示结果", "画到图上", s => { s.CompareSource = "第2步"; s.MeasureType = "圆和点"; }),
+            };
+        }
+    }
+
     private static ObservableCollection<VisionFlowStep> CreateStandardPipeline()
 
     {
@@ -3522,41 +3594,6 @@ public class FlowViewModel : ViewModelBase
 
 
     /// <summary>运控流程预设：轴运动 → IO控制 → 气缸动作 → 等待延时，并带逻辑列示例(如果/否则/循环)。</summary>
-    private static ObservableCollection<VisionFlowStep> CreateMotionPipeline()
-    {
-        return new ObservableCollection<VisionFlowStep>
-        {
-            new VisionFlowStep
-            {
-                Index = 1, Function = "动轴", Name = "轴运动", ParamSummary = "X轴 回原点 → 移动 100mm", Timeout = 10000, ActualValue = "未运动", Icon = "🦾", StepType = "AxisMove", StatusText = "未开始", LogicRelation = "满足就做"
-            },
-            new VisionFlowStep
-            {
-                Index = 2, Function = "开关电", Name = "IO控制", ParamSummary = "OUT0 = ON", Timeout = 1000, ActualValue = "未执行", Icon = "🔌", StepType = "IoControl", StatusText = "未开始", LogicRelation = "满足就做"
-            },
-            new VisionFlowStep
-            {
-                Index = 3, Function = "伸缩气缸", Name = "气缸动作", ParamSummary = "夹爪 伸出", Timeout = 2000, ActualValue = "未动作", Icon = "🟢", StepType = "CylinderAction", StatusText = "未开始", LogicRelation = "满足就做"
-            },
-            new VisionFlowStep
-            {
-                Index = 4, Function = "等一会", Name = "未到位处理", ParamSummary = "200ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", StatusText = "未开始", LogicRelation = "不满足时"
-            },
-            new VisionFlowStep
-            {
-                Index = 5, Function = "判一下对不对", Name = "重试条件", ParamSummary = "算子:大于 / 输入值:0.85", Timeout = 1000, ActualValue = "0", Icon = "✅", StepType = "Logic", LogicRelation = "满足就做", Operator = "大于", InputValue = "0.85", StatusText = "未开始"
-            },
-            new VisionFlowStep
-            {
-                Index = 6, Function = "等一会", Name = "重试循环体", ParamSummary = "100ms", Timeout = 1000, ActualValue = "未等待", Icon = "⏱", StepType = "Delay", LogicRelation = "一直重复", StatusText = "未开始"
-            },
-            new VisionFlowStep
-            {
-                Index = 7, Function = "通讯发送", Name = "退出重试", ParamSummary = "PLC-串口 / M200=0", Timeout = 1000, ActualValue = "未发送", Icon = "📡", StepType = "Comm", CommChannel = "PLC-串口", CommCmd = "发送", CommContent = "M200=0", CommEncoding = "ASCII", StatusText = "未开始", LogicRelation = "不满足时"
-            },
-        };
-    }
-
     /// <summary>简单视觉流程预设：图像采集 → 模板匹配，并带逻辑列示例(如果/循环/否则)。</summary>
     private static ObservableCollection<VisionFlowStep> CreateSimpleVisionPipeline()
     {
@@ -5164,29 +5201,14 @@ public class FlowViewModel : ViewModelBase
 
 
         AddFlowCmd = new RelayCommand(_ =>
-
         {
-
-            var next = Flows.Count + 1;
-
-            var flow = new VisionFlow
-
-            {
-
-                Name = $"逻辑视觉流程-{next}",
-
-                Icon = "🔀",
-
-                Steps = CreateStandardPipeline()
-
-            };
-
+            var key = PromptFlowTemplate("添加逻辑视觉流程");
+            if (key == null) return;
+            var flow = new VisionFlow { Name = $"逻辑视觉流程-{Flows.Count + 1}", Icon = "🔀" };
+            ApplyFlowTemplate(flow, key);
             Flows.Add(flow);
-
             SelectedFlow = flow;
-
             SelectedStep = flow.Steps.FirstOrDefault();
-
         });
 
         DeleteFlowCmd = new RelayCommand(_ =>
@@ -5256,29 +5278,14 @@ public class FlowViewModel : ViewModelBase
 
 
         AddScriptFlowCmd = new RelayCommand(_ =>
-
         {
-
-            var next = Flows.Count + 1;
-
-            var flow = new VisionFlow
-
-            {
-
-                Name = $"脚本流程-{next}",
-
-                Icon = "📝",
-
-                FlowKind = "Script",
-
-                Steps = CreateStandardPipeline()
-
-            };
-
+            var key = PromptFlowTemplate("添加脚本流程");
+            if (key == null) return;
+            var flow = new VisionFlow { Name = $"脚本流程-{Flows.Count + 1}", Icon = "📝", FlowKind = "Script" };
+            ApplyFlowTemplate(flow, key);
             Flows.Add(flow);
-
             SelectedFlow = flow;
-
+            SelectedStep = flow.Steps.FirstOrDefault();
         }, _ => true);
 
 
@@ -5301,13 +5308,10 @@ public class FlowViewModel : ViewModelBase
 
         AddMotionFlowCmd = new RelayCommand(_ =>
         {
-            var next = Flows.Count + 1;
-            var flow = new VisionFlow
-            {
-                Name = $"运控流程-{next}",
-                Icon = "🕹",
-                Steps = CreateMotionPipeline()
-            };
+            var key = PromptFlowTemplate("添加运控流程");
+            if (key == null) return;
+            var flow = new VisionFlow { Name = $"运控流程-{Flows.Count + 1}", Icon = "🕹" };
+            ApplyFlowTemplate(flow, key);
             Flows.Add(flow);
             SelectedFlow = flow;
             SelectedStep = flow.Steps.FirstOrDefault();
@@ -8075,7 +8079,7 @@ public class FlowViewModel : ViewModelBase
 
                 {
 
-                    Register = step.MatchMode == "不配准" ? 0 : step.MatchMode == "平移+旋转" ? 2 : 1,
+                    Register = step.MatchMode == "不配准" ? 0 : step.MatchMode == "只补平移" ? 1 : 2,
 
                     Sensitivity = step.Number1 <= 0 ? 60 : step.Number1,
 
@@ -9419,7 +9423,8 @@ public class FlowViewModel : ViewModelBase
 
                     double val = main?.Value ?? 0;
 
-                    string head = string.IsNullOrWhiteSpace(step.NotifyMessage) ? "OK" : step.NotifyMessage.Trim();
+                    var ascii = new string((step.NotifyMessage ?? "").Where(ch => ch < 128).ToArray()).Trim();
+                    string head = ascii.Length == 0 ? "OK" : ascii;   // PutText 只认英数，中文会画成问号
 
                     string label = head + "(" + val.ToString("F2") + ")";
 

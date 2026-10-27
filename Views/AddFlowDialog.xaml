@@ -1,0 +1,46 @@
+<Window x:Class="NoCodeVision.Views.AddFlowDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="新建流程" Height="470" Width="560"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{StaticResource CanvasBrush}">
+    <Border Padding="20">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Margin="0,0,0,12">
+                <TextBlock x:Name="TitleText" Style="{StaticResource AppleLabel}" FontSize="17" FontWeight="SemiBold" Text="新建流程" />
+                <TextBlock Style="{StaticResource AppleGuideText}" Margin="0,6,0,0" TextWrapping="Wrap"
+                           Text="先选一个起点：空白流程自己一步步搭；也可以从示例改——示例里的步骤和参数都能再调。" />
+            </StackPanel>
+
+            <ListBox x:Name="TemplateList" Grid.Row="1" Style="{StaticResource AppleListBox}"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.Resources>
+                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource AppleListBoxItem}">
+                        <Setter Property="Padding" Value="4" />
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    </Style>
+                </ListBox.Resources>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="10,8">
+                            <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                            <TextBlock Text="{Binding Desc}" Style="{StaticResource AppleSubLabel}" TextWrapping="Wrap" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+                <Button Style="{StaticResource AppleBtnSecondary}" Content="取消" Click="Cancel_Click" />
+                <Button Style="{StaticResource AppleBtn}" Content="创建" Click="OK_Click" Margin="10,0,0,0" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>
