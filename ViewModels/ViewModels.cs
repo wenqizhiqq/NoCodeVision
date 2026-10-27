@@ -4480,7 +4480,7 @@ public class FlowViewModel : ViewModelBase
     public string NewStepFunction { get => _newStepFunction; set => SetField(ref _newStepFunction, value); }
 
     // ===== 工具箱：右侧页面按分类（视觉/运控/通讯）选工具，➕添加 按所选工具新增步骤 =====
-    public string[] ToolCategories { get; } = { "视觉", "运控", "通讯", "更多" };
+    public string[] ToolCategories { get; } = { "视觉", "OpenCVVision", "运控", "通讯", "更多" };
 
     public ObservableCollection<string> ToolOptions { get; } = new();
 
@@ -4592,8 +4592,9 @@ public class FlowViewModel : ViewModelBase
         {
             "运控" => new[] { "动轴", "开关电", "伸缩气缸", "等一会" },
             "通讯" => new[] { "发数据" },
+            "OpenCVVision" => OperatorCatalog.All.Where(o => o.Group == "OpenCVVision").Select(o => o.Name).ToArray(),
 
-            "更多" => OperatorCatalog.All.Select(o => o.Name).ToArray(),
+            "更多" => OperatorCatalog.All.Where(o => o.Group != "OpenCVVision").Select(o => o.Name).ToArray(),
             _ => new[] { "拍张照片", "图里找图案", "挑瑕疵", "量尺寸" },
         };
         foreach (var t in options) ToolOptions.Add(t);

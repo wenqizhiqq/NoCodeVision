@@ -85,6 +85,8 @@
         <SolidColorBrush x:Key="NodeMeasureLine" Color="#B98900" />
         <SolidColorBrush x:Key="NodeColorBg" Color="#FFEBF3" />
         <SolidColorBrush x:Key="NodeColorLine" Color="#E0356B" />
+        <SolidColorBrush x:Key="NodeOpenCvBg" Color="#E8F1FF" />
+        <SolidColorBrush x:Key="NodeOpenCvLine" Color="#2F6FED" />
         <SolidColorBrush x:Key="NodeCalibBg" Color="#EEF2F7" />
         <SolidColorBrush x:Key="NodeCalibLine" Color="#5B7C99" />
         <SolidColorBrush x:Key="NodeSaveBg" Color="#F1F5F2" />
@@ -138,6 +140,10 @@
                             <DataTrigger Binding="{Binding GroupKey}" Value="Color">
                                 <Setter Property="HeaderBrush" Value="{StaticResource NodeColorBg}" />
                                 <Setter Property="BorderBrush" Value="{StaticResource NodeColorLine}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding GroupKey}" Value="OpenCVVision">
+                                <Setter Property="HeaderBrush" Value="{StaticResource NodeOpenCvBg}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource NodeOpenCvLine}" />
                             </DataTrigger>
                             <DataTrigger Binding="{Binding GroupKey}" Value="Calib">
                                 <Setter Property="HeaderBrush" Value="{StaticResource NodeCalibBg}" />
@@ -210,6 +216,9 @@
                 </DataTrigger>
                 <DataTrigger Binding="{Binding GroupKey}" Value="Color">
                     <Setter Property="BorderBrush" Value="{StaticResource NodeColorLine}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding GroupKey}" Value="OpenCVVision">
+                    <Setter Property="BorderBrush" Value="{StaticResource NodeOpenCvLine}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding GroupKey}" Value="Calib">
                     <Setter Property="BorderBrush" Value="{StaticResource NodeCalibLine}" />

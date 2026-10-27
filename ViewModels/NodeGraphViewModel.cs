@@ -134,6 +134,7 @@ public class NodeGraphViewModel : ViewModelBase
         "Measure" => "数与量",
 
         "Color" => "先修图",
+        "OpenCVVision" => "OpenCVVision",
 
         "Calib" => "标定换算",
 
@@ -227,7 +228,7 @@ public class NodeGraphViewModel : ViewModelBase
 
 
 
-        foreach (var key in new[] { "Vision", "Locate", "Measure", "Calc", "Calib", "Color", "Code", "Logic", "Motion", "Output", "Comm", "Save" })
+        foreach (var key in new[] { "Vision", "Locate", "Measure", "Calc", "Calib", "Color", "OpenCVVision", "Code", "Logic", "Motion", "Output", "Comm", "Save" })
 
             if (cats.TryGetValue(key, out var c) && c.Tools.Count > 0) Palette.Add(c);
 

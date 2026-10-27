@@ -29,7 +29,8 @@ public sealed class OperatorDef
     public OpParam[] Params { get; set; } = System.Array.Empty<OpParam>();
 
     /// <summary>要不要在图上框一块区域：视觉类要，逻辑/运动/通讯类不要。</summary>
-    public bool UsesRoi => Group is "Locate" or "Measure" or "Calc" or "Calib" or "Code";
+    public bool UsesRoi => Group is "Locate" or "Measure" or "Calc" or "Calib" or "Code"
+        || StepType is "MaskRegionOp";
 }
 
 public static class OperatorCatalog
@@ -406,70 +407,70 @@ public static class OperatorCatalog
             T("软元件地址", "IoChannel", "例如 DM100"),
             N("值", "TargetX", "")),
         // ===== 以下来自开源项目 OpenCVVision（Apache-2.0）的工具移植 =====
-        O("MorphOp", "形态学处理", "⬛", "Color", "把黑白图上的块放大缩小、补洞、去毛刺（腐蚀/膨胀/开/闭/顶帽等）。",
+        O("MorphOp", "形态学处理", "⬛", "OpenCVVision", "把黑白图上的块放大缩小、补洞、去毛刺（腐蚀/膨胀/开/闭/顶帽等）。",
             C("做什么", "Mode", "", new[] { "腐蚀(缩小)", "膨胀(放大)", "开(去小毛刺)", "闭(补小洞)", "梯度(留边缘)", "顶帽(亮小点)", "黑帽(暗小点)", "击不中" }),
             C("核形状", "MatchMode", "", new[] { "矩形", "十字", "椭圆" }),
             N("核宽", "SizeX", ""), N("核高", "SizeY", "")),
 
-        O("BilateralOp", "保边去噪", "🌫", "Color", "只抹平小噪点、不糊掉边缘，金属和塑料件特别好用。",
+        O("BilateralOp", "保边去噪", "🌫", "OpenCVVision", "只抹平小噪点、不糊掉边缘，金属和塑料件特别好用。",
             N("邻域大小", "SizeX", ""), N("颜色差阈值", "Number1", "差值小于这个才互相平均"),
             N("距离差阈值", "Number2", "")),
 
-        O("EmphasizeOp", "加强边缘", "✨", "Color", "把和周围平均亮度差别大的地方拉得更明显，让浅淡的边看得清。",
+        O("EmphasizeOp", "加强边缘", "✨", "OpenCVVision", "把和周围平均亮度差别大的地方拉得更明显，让浅淡的边看得清。",
             N("核宽", "SizeX", ""), N("核高", "SizeY", ""),
             N("加强倍数", "Factor", "1=轻微，3=很强也容易放大噪点")),
 
-        O("LightDarkOp", "明暗筛选", "", "Color", "按局部背景只留明显更亮或更暗的部分，专门对付光照不均、反光。",
+        O("LightDarkOp", "明暗筛选", "", "OpenCVVision", "按局部背景只留明显更亮或更暗的部分，专门对付光照不均、反光。",
             N("核大小", "Number1", "局部背景取样范围，默认 9"),
             N("块宽", "Number2", "核必须能被它整除，默认 3"),
             C("留哪边", "Mode", "", new[] { "只留暗的", "只留亮的", "明暗都留" }),
             N("亮保留比例(%)", "Number3", "越大留得越多"), N("暗保留比例(%)", "Number4", "")),
 
-        O("MaskRegionOp", "只看这块", "🔲", "Color", "把不关心的区域涂黑，只留框内（或反过来只留框外），后面的处理就不会被干扰。",
+        O("MaskRegionOp", "只看这块", "🔲", "OpenCVVision", "把不关心的区域涂黑，只留框内（或反过来只留框外），后面的处理就不会被干扰。",
             C("怎么留", "Mode", "", new[] { "只留框内", "挖掉框内" })),
 
-        O("PyramidOp", "金字塔缩放", "🔻", "Color", "整张图缩小或放大几档，或取出明暗漂移层。",
+        O("PyramidOp", "金字塔缩放", "🔻", "OpenCVVision", "整张图缩小或放大几档，或取出明暗漂移层。",
             C("做什么", "Mode", "", new[] { "缩小", "放大", "取明暗层" }),
             N("做几层", "Number1", "1~6")),
 
-        O("HoughCirclesOp", "找一堆圆", "⭕", "Locate", "一次找出画面里所有大小相近的圆（孔、珠子、瓶盖）。",
+        O("HoughCirclesOp", "找一堆圆", "⭕", "OpenCVVision", "一次找出画面里所有大小相近的圆（孔、珠子、瓶盖）。",
             N("最小半径", "Number1", ""), N("最大半径", "Number2", ""),
             N("圆心最小间隔", "Number3", "防止同一个圆重复报"),
             N("灵敏度", "Number4", "累加阈值，越小找到的圆越多也越容易误报")),
 
-        O("ContourShapeOp", "配外形框", "🔷", "Measure", "给找到的轮廓套一个外接框/最小矩形/凸包/最小圆/椭圆，输出尺寸角度。",
+        O("ContourShapeOp", "配外形框", "🔷", "OpenCVVision", "给找到的轮廓套一个外接框/最小矩形/凸包/最小圆/椭圆，输出尺寸角度。",
             C("找轮廓方式", "MatchMode", "", new[] { "只找最外圈", "找全部", "找内孔", "同层平铺" }),
             C("套什么外形", "Mode", "", new[] { "外接矩形", "最小矩形", "凸包", "最小圆", "最小三角", "椭圆" }),
             N("最小面积", "AreaMin", "")),
 
-        O("BlobDetectorOp", "斑点检测", "🫧", "Measure", "按颜色、大小、圆度、凸性挑出斑点（黑点、气泡、脏点）。",
+        O("BlobDetectorOp", "斑点检测", "🫧", "OpenCVVision", "按颜色、大小、圆度、凸性挑出斑点（黑点、气泡、脏点）。",
             C("找哪种斑", "Mode", "", new[] { "暗斑", "亮斑" }),
             N("最小面积", "AreaMin", ""), N("最大面积", "AreaMax", ""),
             N("最圆程度", "Number1", "0~1，越接近 1 越圆"), N("最多几个", "TopN", "")),
 
-        O("ConnectedCompOp", "连通域染色", "🎨", "Measure", "把每一块独立区域染成不同颜色，可按面积/宽/高/位置筛掉不要的。",
+        O("ConnectedCompOp", "连通域染色", "🎨", "OpenCVVision", "把每一块独立区域染成不同颜色，可按面积/宽/高/位置筛掉不要的。",
             N("最小面积", "AreaMin", ""), N("最大面积", "AreaMax", ""),
             N("最小宽度", "Number1", ""), N("最小高度", "Number2", ""),
             B("输出染色图", "InvertImage", "生成一张每块一色的图")),
 
-        O("FeatureDetectOp", "找特征点", "✳", "Locate", "自动找出图上有辨识度的角点/斑点，用来配准或比对。",
+        O("FeatureDetectOp", "找特征点", "✳", "OpenCVVision", "自动找出图上有辨识度的角点/斑点，用来配准或比对。",
             C("用哪种方法", "Mode", "", new[] { "ORB", "SIFT", "AKAZE", "BRISK", "FAST", "角点(GFTT)" }),
             N("最多几个点", "Number1", "")),
 
-        O("FeatureRegisterOp", "特征配准", "🧷", "Locate", "把第二张图按特征点对齐到第一张（位置角度都自动纠正）。",
+        O("FeatureRegisterOp", "特征配准", "🧷", "OpenCVVision", "把第二张图按特征点对齐到第一张（位置角度都自动纠正）。",
             C("用哪种方法", "Mode", "", new[] { "ORB", "SIFT", "AKAZE", "BRISK", "FAST", "角点(GFTT)" }),
             C("匹配器", "MatchMode", "", new[] { "暴力匹配", "FLANN(大数据快)" }),
             T("参考图", "ImageSource", "对齐的目标图，留空用当前缓存图")),
 
-        O("LensCalibOp", "镜头标定", "🎥", "Calib", "拍一批棋盘格照片，算出镜头畸变并修正——尺寸测量精度靠它。",
+        O("LensCalibOp", "镜头标定", "🎥", "OpenCVVision", "拍一批棋盘格照片，算出镜头畸变并修正——尺寸测量精度靠它。",
             N("横向内角点数", "SizeX", "11 格板填 10"),
             N("纵向内角点数", "SizeY", ""),
             N("每格多少毫米", "NominalValue", ""),
             T("照片文件夹", "FolderPath", "放 10~20 张不同角度拍的棋盘格")),
 
-        O("LensUndistortOp", "去掉镜头畸变", "🫳", "Calib", "用上次标定的结果把当前图拉直，边缘不再拉伸变形。"),
+        O("LensUndistortOp", "去掉镜头畸变", "🫳", "OpenCVVision", "用上次标定的结果把当前图拉直，边缘不再拉伸变形。"),
 
-        O("DnnDetectOp", "AI 找目标", "🧠", "Code", "用训练好的模型找出目标位置（缺什么、装没装、有没有划伤）。",
+        O("DnnDetectOp", "AI 找目标", "🧠", "OpenCVVision", "用训练好的模型找出目标位置（缺什么、装没装、有没有划伤）。",
             T("模型文件", "ModelFile", ".onnx，或 .weights（要配 cfg）；放进步骤同目录 Data\\Models 可自动找"),
             T("cfg 文件", "CalcExpression", "只有 Darknet 权重需要"),
             T("类别名单", "LabelsFile", "一行一个类别名的 txt"),
