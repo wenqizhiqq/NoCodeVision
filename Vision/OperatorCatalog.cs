@@ -308,7 +308,7 @@ public static class OperatorCatalog
         O("JudgeValue", "判个数对不对", "⚖", "Logic", "拿一个数值和上下限比，判合格不合格。",
             C("判哪一步结果", "CompareSource", ByStep(""), SRC),
             N("下限", "AreaMin", ""),
-            N("上限", "AreaMax", "")),
+            N("上限", "AreaMax", "填 0 表示和下限相同：0~0 就是必须一个都没有")),
         O("Formula", "公式计算", "🧮", "Logic", "写一条算式，用前面步骤的结果当输入。",
             T("算式", "CalcExpression", "例如 {3} * 2 + {5}，花括号里是步号"),
             T("结果写入", "OutputVar", "")),

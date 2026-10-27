@@ -7439,6 +7439,7 @@ public class FlowViewModel : ViewModelBase
         public bool HasPoint; public double Px, Py;
         public bool HasLine; public double Lx, Ly, Ldx, Ldy;
         public bool HasCircle; public double Cx, Cy, R;
+        public bool HasBox; public double Bx, By, Bw, Bh;
         public double Value; public string Text = "";
     }
 
@@ -8103,7 +8104,8 @@ public class FlowViewModel : ViewModelBase
 
                     Done($"缺陷 {zsDefects.Count} 个，最大 {d0.Area:F0} 像素 @({d0.X + d0.W / 2:F0},{d0.Y + d0.H / 2:F0})", zsNote);
 
-                    GeoPut(step, new GeoResult { Value = zsDefects.Count, HasPoint = true, Px = d0.X + d0.W / 2, Py = d0.Y + d0.H / 2 });
+                    GeoPut(step, new GeoResult { Value = zsDefects.Count, HasPoint = true, Px = d0.X + d0.W / 2, Py = d0.Y + d0.H / 2,
+                        HasBox = true, Bx = d0.X, By = d0.Y, Bw = d0.W, Bh = d0.H });
 
                 }
 
@@ -9257,9 +9259,12 @@ public class FlowViewModel : ViewModelBase
 
                 double v = src?.Value ?? NumOf(src?.Text);
 
-                bool ok = v >= step.AreaMin && (step.AreaMax <= 0 || v <= step.AreaMax);
+                // 上限填 0 视为“与下限相同”：0~0 就是必须一个都没有，不再是“不限”
+                double hi = step.AreaMax <= 0 ? step.AreaMin : step.AreaMax;
 
-                Done($"{v:F3} 在 {step.AreaMin}~{(step.AreaMax <= 0 ? "不限" : step.AreaMax.ToString("F2"))} 之间", ok ? "合格" : "不合格");
+                bool ok = v >= step.AreaMin && v <= hi;
+
+                Done($"{v:F3} {(ok ? "在" : "不在")} {step.AreaMin}~{hi:F0} 之间", ok ? "合格" : "不合格");
 
                 if (!ok) _curProductOk = false;
 
@@ -9407,6 +9412,11 @@ public class FlowViewModel : ViewModelBase
 
                             Cv2.Circle(canvas, new Point((int)Math.Round(gg.Cx), (int)Math.Round(gg.Cy)), Math.Max(2, (int)Math.Round(gg.R)), red, 2);
 
+                        if (shape && gg.HasBox)
+
+                            Cv2.Rectangle(canvas, new Rect((int)Math.Round(gg.Bx), (int)Math.Round(gg.By),
+                                Math.Max(2, (int)Math.Round(gg.Bw)), Math.Max(2, (int)Math.Round(gg.Bh))), red, 2);
+
                         if (shape && gg.HasPoint)
 
                             Cv2.DrawMarker(canvas, new Point((int)Math.Round(gg.Px), (int)Math.Round(gg.Py)), red, MarkerTypes.Cross, 18, 2);
@@ -9424,11 +9434,13 @@ public class FlowViewModel : ViewModelBase
                     double val = main?.Value ?? 0;
 
                     var ascii = new string((step.NotifyMessage ?? "").Where(ch => ch < 128).ToArray()).Trim();
-                    string head = ascii.Length == 0 ? "OK" : ascii;   // PutText 只认英数，中文会画成问号
+                    bool good = _curProductOk;                                  // 整件产品的结论
+                    var textColor = good ? green : red;                          // 不合格画红字
+                    string head = ascii.Length == 0 ? (good ? "OK" : "NG") : ascii;   // PutText 只认英数
 
                     string label = head + "(" + val.ToString("F2") + ")";
 
-                    Cv2.PutText(canvas, label, new Point(16, 56), HersheyFonts.HersheyDuplex, 1.4, green, 3, LineTypes.AntiAlias);
+                    Cv2.PutText(canvas, label, new Point(16, 56), HersheyFonts.HersheyDuplex, 1.4, textColor, 3, LineTypes.AntiAlias);
 
                     ResultImage = MatToBitmapSource(canvas);
 
