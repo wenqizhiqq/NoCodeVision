@@ -149,6 +149,12 @@ public static class OperatorCatalog
             N("最小间距", "MinDistance", ""),
             C("明暗方向", "EdgePolarity", "", POL)),
 
+        O("ZeroShotAnomaly", "零样本查瑕疵", "🔎", "Measure", "给一张标准（OK）图，不用训练就能挑出这张图和标准不一样的地方（划伤、脏污、缺料）。",
+            T("标准图", "TemplateFile", "OK 图的路径，点下面「📂 选标准图」挑一张"),
+            C("配准方式", "MatchMode", "产品每次位置会飘就先配准", new[] { "不配准", "只补平移", "平移+旋转" }),
+            N("灵敏度", "Number1", "0~100，越大挑得越细，默认 60"),
+            N("最小缺陷面积", "AreaMin", "比这小的当噪点扔掉，默认 30"),
+            N("允许几个", "IndexProbe", "缺陷个数超过它就判不合格；填 0 就是零容忍")),
         O("CircleFit", "圆拟合", "⭕", "Measure", "把已有的若干个点拟成一个圆，看圆心和半径合不合格。",
             T("点从哪来", "CompareSource", "选前面哪一步给的点集"),
             C("拟合方式", "FitMethod", "", FIT)),

@@ -4975,6 +4975,8 @@ public class FlowViewModel : ViewModelBase
 
     public ICommand TestModbusCmd { get; }
 
+    public ICommand PickGoldenImageCmd { get; }
+
     public string ModbusStatus { get => _modbusStatus; set => SetField(ref _modbusStatus, value); }
 
     private string _modbusStatus = "点「🔌 测一下」看能不能连上 PLC";
@@ -5094,6 +5096,14 @@ public class FlowViewModel : ViewModelBase
             GrabCameraCmd = new RelayCommand(_ => GrabMindVisionFrame());
 
             TestModbusCmd = new RelayCommand(_ => TestModbusConnection());
+
+            PickGoldenImageCmd = new RelayCommand(_ =>
+            {
+                if (_selectedStep == null) return;
+                var dlg = new OpenFileDialog { Filter = "图片|*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.tiff" };
+                if (dlg.ShowDialog() != true) return;
+                _selectedStep.TemplateFile = Helpers.AppPaths.ToStoredPath(dlg.FileName);
+            });
 
             RebuildToolOptions(); // 初始化工具箱（视觉分类）
 
@@ -8044,6 +8054,78 @@ public class FlowViewModel : ViewModelBase
 
 
             // ---------- 拟合 / 形状筛选 ----------
+
+            case "ZeroShotAnomaly":
+
+            {
+
+                var zsCur = _sharedImage;
+
+                if (zsCur == null || zsCur.Empty()) return Fail("没有当前图");
+
+                var zsPath = Helpers.AppPaths.ResolvePath(step.TemplateFile);
+
+                if (string.IsNullOrWhiteSpace(zsPath) || !File.Exists(zsPath)) return Fail("没选标准图：点属性页里的「📂 选标准图」");
+
+                using var zsGold = Cv2.ImRead(zsPath, ImreadModes.Color);
+
+                if (zsGold.Empty()) return Fail("标准图读不出来：" + zsPath);
+
+                var zsParam = new ZeroShotParam
+
+                {
+
+                    Register = step.MatchMode == "不配准" ? 0 : step.MatchMode == "平移+旋转" ? 2 : 1,
+
+                    Sensitivity = step.Number1 <= 0 ? 60 : step.Number1,
+
+                    MinArea = step.AreaMin <= 0 ? 30 : step.AreaMin,
+
+                };
+
+                var (zsDefects, zsDiff, zsDx, zsDy, zsAng, zsNote) = ZeroShot.Run(zsCur, zsGold, zsParam);
+
+                zsDiff.Dispose();
+
+                int zsAllow = (int)Math.Max(0, step.IndexProbe);
+
+                bool zsOk = zsDefects.Count <= zsAllow;
+
+                if (zsDefects.Count > 0)
+
+                {
+
+                    var d0 = zsDefects[0];
+
+                    Done($"缺陷 {zsDefects.Count} 个，最大 {d0.Area:F0} 像素 @({d0.X + d0.W / 2:F0},{d0.Y + d0.H / 2:F0})", zsNote);
+
+                    GeoPut(step, new GeoResult { Value = zsDefects.Count, HasPoint = true, Px = d0.X + d0.W / 2, Py = d0.Y + d0.H / 2 });
+
+                }
+
+                else
+
+                {
+
+                    Done("没查出缺陷", zsNote);
+
+                    GeoPut(step, new GeoResult { Value = 0 });
+
+                }
+
+                if (!zsOk) _curProductOk = false;
+
+                step.StatusText = zsOk ? "合格" : $"不合格（{zsDefects.Count} 处）";
+
+                using (var zsDraw = ZeroShot.Draw(zsCur, zsDefects))
+
+                    ResultImage = MatToBitmapSource(zsDraw);
+
+                break;
+
+            }
+
+
 
             case "CircleFit":
 

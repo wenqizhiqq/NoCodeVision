@@ -400,8 +400,19 @@
                                            TextWrapping="Wrap" VerticalAlignment="Center" />
                             </DockPanel>
                         </StackPanel>
+                        <!-- 零样本查瑕疵：选一张标准（OK）图 -->
+                        <StackPanel Visibility="{Binding SelectedStep.StepType, Converter={StaticResource KindVis}, ConverterParameter=ZeroShotAnomaly}">
+                            <Rectangle Style="{StaticResource AppleDivider}" />
+                            <DockPanel Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="标准图" Width="70" />
+                                <Button Style="{StaticResource AppleBtn}" Content="📂 选标准图" Command="{Binding PickGoldenImageCmd}" DockPanel.Dock="Right" Margin="8,0,0,0" />
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding SelectedStep.TemplateFile, FallbackValue='还没有选'}"
+                                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="8,0,8,0"
+                                           ToolTip="{Binding SelectedStep.TemplateFile}" />
+                            </DockPanel>
+                        </StackPanel>
                         <!-- 显示结果：先看当前图，跑一次后这里就是画好的结果图 -->
-                        <StackPanel x:Name="ShowResultPreviewHost" Visibility="{Binding SelectedStep.StepType, Converter={StaticResource KindVis}, ConverterParameter=ShowResult}">
+                        <StackPanel x:Name="ShowResultPreviewHost" Visibility="{Binding SelectedStep.StepType, Converter={StaticResource KindVis}, ConverterParameter='ShowResult,ZeroShotAnomaly'}">
                             <Rectangle Style="{StaticResource AppleDivider}" />
                             <TextBlock Style="{StaticResource AppleSubLabel}" Text="预览（跑一次后这里就变成画好的结果图）" Margin="14,6,14,4" />
                             <Border Margin="12,0,12,10" CornerRadius="8" ClipToBounds="True" Background="{StaticResource CanvasBrush}">
