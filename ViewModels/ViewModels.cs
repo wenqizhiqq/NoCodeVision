@@ -3706,11 +3706,30 @@ public class FlowViewModel : ViewModelBase
     public System.Collections.Generic.IReadOnlyList<OpParam> SelectedOperatorParams =>
         OperatorCatalog.Find(_selectedStep?.StepType)?.Params ?? System.Array.Empty<OpParam>();
 
-    public bool HasGenericPanel => SelectedOperatorParams.Count > 0;
+    public bool HasGenericPanel => OperatorCatalog.Find(_selectedStep?.StepType) != null;
 
-    public string SelectedOperatorName => OperatorCatalog.Find(_selectedStep?.StepType)?.Name ?? "步骤参数";
+    public string SelectedOperatorName
+    {
+        get
+        {
+            var d = OperatorCatalog.Find(_selectedStep?.StepType);
+            return d == null ? "步骤参数" : d.Icon + " " + d.Name;
+        }
+    }
 
     public string SelectedOperatorDesc => OperatorCatalog.Find(_selectedStep?.StepType)?.Desc ?? "";
+
+    public bool SelectedOperatorUsesRoi => OperatorCatalog.Find(_selectedStep?.StepType)?.UsesRoi == true;
+
+    /// <summary>右侧通用参数面板的五个绑定都靠它重算，切换工具后必须调一次。</summary>
+    void RaiseOperatorPanel()
+    {
+        OnPropertyChanged(nameof(SelectedOperatorParams));
+        OnPropertyChanged(nameof(HasGenericPanel));
+        OnPropertyChanged(nameof(SelectedOperatorName));
+        OnPropertyChanged(nameof(SelectedOperatorDesc));
+        OnPropertyChanged(nameof(SelectedOperatorUsesRoi));
+    }
 
 
 
@@ -3728,13 +3747,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                OnPropertyChanged(nameof(SelectedOperatorParams));
-
-                OnPropertyChanged(nameof(HasGenericPanel));
-
-                OnPropertyChanged(nameof(SelectedOperatorName));
-
-                OnPropertyChanged(nameof(SelectedOperatorDesc));
+                RaiseOperatorPanel();
 
                 if (value?.StepType != "Defect")
 
@@ -4500,6 +4513,7 @@ public class FlowViewModel : ViewModelBase
         _selectedStep.Icon = icon;
         _selectedStep.StepType = type;
         _selectedStep.ParamSummary = "-";
+        RaiseOperatorPanel();
     }
 
     /// <summary>工具名 → (图标, StepType) 统一映射。</summary>

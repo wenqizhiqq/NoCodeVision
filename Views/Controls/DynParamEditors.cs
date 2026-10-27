@@ -22,11 +22,18 @@ public static class DynBind
     public static string GetPath(DependencyObject d) => (string)d.GetValue(PathProperty);
     public static void SetPath(DependencyObject d, string v) => d.SetValue(PathProperty, v);
 
+    /// <summary>参数名挂在哪个对象上（默认当前选中步骤），绑定路径 = Root + "." + Path。</summary>
+    public static string GetRoot(DependencyObject d) => (string)d.GetValue(RootProperty);
+    public static void SetRoot(DependencyObject d, string v) => d.SetValue(RootProperty, v);
+
     public static readonly DependencyProperty TargetProperty =
         DependencyProperty.RegisterAttached("Target", typeof(string), typeof(DynBind), new PropertyMetadata("", Apply));
 
     public static readonly DependencyProperty PathProperty =
         DependencyProperty.RegisterAttached("Path", typeof(string), typeof(DynBind), new PropertyMetadata("", Apply));
+
+    public static readonly DependencyProperty RootProperty =
+        DependencyProperty.RegisterAttached("Root", typeof(string), typeof(DynBind), new PropertyMetadata("SelectedStep", Apply));
 
     static DependencyProperty? Resolve(string target) => target switch
     {
@@ -50,7 +57,9 @@ public static class DynBind
         if (dp == null || string.IsNullOrEmpty(path)) return;
         if (BindingOperations.GetBinding(fe, dp) != null) return;   // 已经挂过，别重复
 
-        fe.SetBinding(dp, new Binding("DataContext." + path)
+        var root = GetRoot(fe);
+
+        fe.SetBinding(dp, new Binding("DataContext." + (string.IsNullOrEmpty(root) ? path : root + "." + path))
         {
             RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor, typeof(UserControl), 1),
             Mode = BindingMode.TwoWay,

@@ -27,6 +27,9 @@ public sealed class OperatorDef
     public string Group { get; set; } = "Vision";
     public string Desc { get; set; } = "";
     public OpParam[] Params { get; set; } = System.Array.Empty<OpParam>();
+
+    /// <summary>要不要在图上框一块区域：视觉类要，逻辑/运动/通讯类不要。</summary>
+    public bool UsesRoi => Group is "Locate" or "Measure" or "Calc" or "Calib" or "Code";
 }
 
 public static class OperatorCatalog

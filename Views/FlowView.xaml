@@ -350,7 +350,7 @@
                         <Border Style="{StaticResource AppleGuideCard}" Margin="12,4,12,10">
                             <TextBlock Style="{StaticResource AppleGuideText}" Text="{Binding SelectedOperatorDesc}" />
                         </Border>
-                        <ItemsControl ItemsSource="{Binding SelectedOperatorParams}" Margin="12,0,12,8">
+                        <ItemsControl ItemsSource="{Binding SelectedOperatorParams}" Margin="12,0,12,4">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Margin="0,0,0,9">
@@ -376,6 +376,51 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <!-- 视觉类算子：框出要看的那一块，并指定结果写进哪个变量 -->
+                        <StackPanel Visibility="{Binding SelectedOperatorUsesRoi, Converter={StaticResource KindVis}, ConverterParameter=True}">
+                            <Rectangle Style="{StaticResource AppleDivider}" />
+                            <TextBlock Style="{StaticResource AppleSubLabel}" Text="要看哪一块（在图上按住鼠标拖一个框）" Margin="14,6,14,4"
+                                       ToolTip="只有框里的内容参与计算；宽高填 0 表示整张图都算" />
+                            <ctrl:RoiImageView Height="240" Margin="12,0,12,8"
+                                               SourceImage="{Binding CurrentImageSource}"
+                                               RoiX="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=0}"
+                                               RoiY="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=0}"
+                                               RoiW="{Binding SelectedStep.RoiW, Mode=TwoWay, FallbackValue=0}"
+                                               RoiH="{Binding SelectedStep.RoiH, Mode=TwoWay, FallbackValue=0}" />
+                            <UniformGrid Columns="5" Margin="12,0,12,6">
+                                <StackPanel Margin="0,0,4,0">
+                                    <TextBlock Text="X" Style="{StaticResource AppleSubLabel}" FontSize="10" ToolTip="框左上角横坐标(像素)" />
+                                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,4,0">
+                                    <TextBlock Text="Y" Style="{StaticResource AppleSubLabel}" FontSize="10" ToolTip="框左上角纵坐标(像素)" />
+                                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,4,0">
+                                    <TextBlock Text="宽" Style="{StaticResource AppleSubLabel}" FontSize="10" ToolTip="框宽度(像素)，0=整张图" />
+                                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiW, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,4,0">
+                                    <TextBlock Text="高" Style="{StaticResource AppleSubLabel}" FontSize="10" ToolTip="框高度(像素)，0=整张图" />
+                                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiH, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="角度" Style="{StaticResource AppleSubLabel}" FontSize="10" ToolTip="把框转一个角度再用，斜着放的零件用它对齐" />
+                                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiAngle, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                                </StackPanel>
+                            </UniformGrid>
+                            <Rectangle Style="{StaticResource AppleDivider}" />
+                            <DockPanel Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="结果写入"
+                                           ToolTip="把这一步的实测值存进这个变量，后面判定、发PLC、存表都取它" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.OutputVar, Mode=TwoWay, FallbackValue=dMeasure}" />
+                            </DockPanel>
+                            <DockPanel Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="跑完读数是" />
+                                <TextBlock Text="{Binding SelectedStep.ActualValue, FallbackValue=还没运行}" VerticalAlignment="Center" FontSize="12"
+                                           Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                            </DockPanel>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 
