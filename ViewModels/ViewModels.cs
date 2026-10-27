@@ -4369,9 +4369,9 @@ public class FlowViewModel : ViewModelBase
 
         if (defects.Count == 0) return null;
 
-        if (CurrentImageSource == null) return null;
+        if (CurrentImageSource is not BitmapSource srcBmp) return null;
 
-        int w = CurrentImageSource.PixelWidth, h = CurrentImageSource.PixelHeight;
+        int w = srcBmp.PixelWidth, h = srcBmp.PixelHeight;
 
         if (w <= 0 || h <= 0) return null;
 
@@ -4777,9 +4777,9 @@ public class FlowViewModel : ViewModelBase
 
 
 
-    private BitmapImage? _currentImageSource;
+    private ImageSource? _currentImageSource;
 
-    public BitmapImage? CurrentImageSource { get => _currentImageSource; set => SetField(ref _currentImageSource, value); }
+    public ImageSource? CurrentImageSource { get => _currentImageSource; set => SetField(ref _currentImageSource, value); }
 
     /// <summary>「显示结果」画出来的那张图：圆、点、连线、大字结论。</summary>
     public ImageSource? ResultImage { get => _resultImage; set => SetField(ref _resultImage, value); }
@@ -5682,6 +5682,8 @@ public class FlowViewModel : ViewModelBase
 
             RunStep(step, matcher);
 
+            PublishPreview();
+
             _stepCursor = NextStepIndex(_stepCursor);
 
             Status = "单步完成 · 第" + step.Index + "步 " + step.Name;
@@ -6161,11 +6163,32 @@ public class FlowViewModel : ViewModelBase
 
             var step = flow.Steps[cursor];
 
-            SelectedStep = step;                       // 选中并自动跳到该行
+            // 单步出异常不能把整条流程带停：记下来继续跑下一步
+            try
 
-            Status = $"运行中 · {flow.Name} · 第{step.Index}步 {step.Name} · {DateTime.Now:HH:mm:ss}";
+            {
 
-            RunStep(step, matcher);                    // 在当前(UI)线程执行本步
+                SelectedStep = step;                   // 选中并自动跳到该行
+
+                Status = $"运行中 · {flow.Name} · 第{step.Index}步 {step.Name} · {DateTime.Now:HH:mm:ss}";
+
+                RunStep(step, matcher);                // 在当前(UI)线程执行本步
+
+                PublishPreview();
+
+            }
+
+            catch (Exception ex)
+
+            {
+
+                step.ActualValue = "异常：" + ex.Message;
+
+                step.StatusText = "出错";
+
+                Status = $"第{step.Index}步出错：{ex.Message}";
+
+            }
 
 
 
@@ -6195,6 +6218,13 @@ public class FlowViewModel : ViewModelBase
     }
 
 
+
+    /// <summary>把当前工作图刷到右侧预览，跑流程时能看见每一张图。</summary>
+    private void PublishPreview()
+    {
+        var bmp = MatToBitmapSource(_sharedImage);
+        if (bmp != null) CurrentImageSource = bmp;
+    }
 
     private void PublishProductResult(VisionFlow flow)
 
@@ -6273,6 +6303,8 @@ public class FlowViewModel : ViewModelBase
                 Status = $"运行中 · {flow.Name} · 第{cur.Index}步 {cur.Name} · {DateTime.Now:HH:mm:ss}";
 
                 RunStep(cur, matcher);
+
+                PublishPreview();
 
                 await Task.Delay(StepPaceMs, ct);
 
@@ -6544,15 +6576,22 @@ public class FlowViewModel : ViewModelBase
 
         {
 
-            await Task.Run(() => RunSingleFlowStepsAsync(_selectedFlow, _cts.Token));
+            // 必须在 UI 线程跑：切步骤会碰 DispatcherTimer / 预览位图，后台线程会抛异常把整条流程打断
+            await RunSingleFlowStepsAsync(_selectedFlow, _cts.Token);
 
         }
+
+        catch (OperationCanceledException) { }
 
         finally
 
         {
 
             bool cancelled = _cts != null && _cts.IsCancellationRequested;
+
+            var lastFrame = MatToBitmapSource(_sharedImage);
+
+            if (lastFrame != null) CurrentImageSource = lastFrame;
 
             _sharedImage?.Dispose();
 
