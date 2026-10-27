@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using System.Collections.Generic;
 
@@ -384,6 +384,68 @@ public class VisionFlowStep : ViewModelBase
     public bool ConfirmWrite { get => _confirmWrite; set => SetField(ref _confirmWrite, value); }
 
     private bool _confirmWrite;
+
+
+
+    // ===== OpenCVVision 移植工具共用的通用旋钮（界面上显示的是目录里的中文标签） =====
+
+    public string Mode { get => _mode; set => SetField(ref _mode, value); }
+
+    private string _mode = "";
+
+
+
+    public double SizeX { get => _sizeX; set => SetField(ref _sizeX, value); }
+
+    private double _sizeX = 5;
+
+
+
+    public double SizeY { get => _sizeY; set => SetField(ref _sizeY, value); }
+
+    private double _sizeY = 5;
+
+
+
+    public double Number1 { get => _number1; set => SetField(ref _number1, value); }
+
+    private double _number1;
+
+
+
+    public double Number2 { get => _number2; set => SetField(ref _number2, value); }
+
+    private double _number2 = 100;
+
+
+
+    public double Number3 { get => _number3; set => SetField(ref _number3, value); }
+
+    private double _number3 = 30;
+
+
+
+    public double Number4 { get => _number4; set => SetField(ref _number4, value); }
+
+    private double _number4 = 1000;
+
+
+
+    public double Factor { get => _factor; set => SetField(ref _factor, value); }
+
+    private double _factor = 1;
+
+
+
+    public string ModelFile { get => _modelFile; set => SetField(ref _modelFile, value); }
+
+    private string _modelFile = "";
+
+
+
+    public string LabelsFile { get => _labelsFile; set => SetField(ref _labelsFile, value); }
+
+    private string _labelsFile = "";
 
 
 
@@ -782,6 +844,10 @@ public class VisionFlowStep : ViewModelBase
     public string OutputVar { get => _outputVar; set => SetField(ref _outputVar, value); }
 
     private string _outputVar = "dMeasure";
+
+    public string AngleZero { get => _angleZero; set => SetField(ref _angleZero, value); }
+
+    private string _angleZero = "向上(12点)";
 
 
 
@@ -5962,6 +6028,8 @@ public class FlowViewModel : ViewModelBase
 
         _breakFlow = false;
 
+        _geo.Clear();
+
         var matcher = new RotatedTemplateMatcher();
 
         if (flow.FlowKind == "NodeGraph")
@@ -6978,9 +7046,9 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                "从亮到暗" => DvPolarity.BrightToDark,
+                "从亮到暗" or "由亮到暗" => DvPolarity.BrightToDark,
 
-                "两种都要" => DvPolarity.Any,
+                "两种都要" or "任意" => DvPolarity.Any,
 
                 _ => DvPolarity.DarkToBright
 
@@ -6992,7 +7060,7 @@ public class FlowViewModel : ViewModelBase
 
                 "最小二乘" => DvFitMethod.AlgebraicLeastSquares,
 
-                "带权(按边强弱)" => DvFitMethod.WeightedLeastSquares,
+                "带权(按边强弱)" or "抗干扰(权重)" => DvFitMethod.WeightedLeastSquares,
 
                 _ => DvFitMethod.OrthogonalLeastSquares
 
@@ -7996,6 +8064,62 @@ public class FlowViewModel : ViewModelBase
                 Done($"垂线角度={Math.Atan2(-l.Ldx, l.Ldy) * 180 / Math.PI:F2}° 过({p.Px:F2},{p.Py:F2})");
 
                 GeoPut(step, new GeoResult { HasLine = true, Lx = p.Px, Ly = p.Py, Ldx = -l.Ldy, Ldy = l.Ldx });
+
+                break;
+
+            }
+
+
+
+            case "AngleFromCenter":
+
+            {
+
+                var cen = GeoOf(flow, step.CompareSource, step); var pt = GeoOf(flow, step.CompareVar, step);
+
+                if (cen == null || pt == null) return Fail("前面没有中心和点可以用");
+
+                double cx = cen.HasCircle ? cen.Cx : cen.Px, cy = cen.HasCircle ? cen.Cy : cen.Py;
+
+                if (!cen.HasCircle && !cen.HasPoint) return Fail("中心那一步没有坐标");
+
+                if (!pt.HasPoint && !pt.HasCircle) return Fail("点那一步没有坐标");
+
+                double px = pt.HasPoint ? pt.Px : pt.Cx, py = pt.HasPoint ? pt.Py : pt.Cy;
+
+                double dx = px - cx, dy = py - cy;
+
+                if (Math.Abs(dx) < 0.5 && Math.Abs(dy) < 0.5) return Fail("点和中心太近，分不出方向");
+
+                double cw = Math.Atan2(dy, dx) * 180 / Math.PI;
+
+                double zero = step.AngleZero switch
+
+                {
+
+                    "向右(3点)" => 0.0,
+
+                    "向下(6点)" => 90.0,
+
+                    "向左(9点)" => 180.0,
+
+                    _ => 270.0,
+
+                };
+
+                double ang = step.InvertImage ? cw - zero : zero - cw;
+
+                while (ang <= -180) ang += 360;
+
+                while (ang > 180) ang -= 360;
+
+                double dist = Math.Sqrt(dx * dx + dy * dy);
+
+                Done($"角度={ang:F2}° 距离={dist:F2}", $"中心({cx:F1},{cy:F1}) 点({px:F1},{py:F1})");
+
+                GeoPut(step, new GeoResult { HasPoint = true, Px = px, Py = py, Value = ang });
+
+                SetVar(step.OutputVar, ang.ToString("F4"));
 
                 break;
 
@@ -9025,7 +9149,7 @@ public class FlowViewModel : ViewModelBase
 
                     case "LineInterp":
 
-                        mo.MoveLinear(step.TargetAxis, step.CompareVar, step.TargetX, step.TargetY, step.Speed > 0 ? step.Speed : 50);
+                        mo.MoveLinear(step.TargetAxis ?? "", step.CompareVar ?? "", step.TargetX, step.TargetY, step.Speed > 0 ? step.Speed : 50);
 
                         Done($"({step.TargetAxis}+{step.CompareVar}) 联动到 ({step.TargetX:F2},{step.TargetY:F2})");
 
@@ -9033,7 +9157,7 @@ public class FlowViewModel : ViewModelBase
 
                     case "ArcInterp":
 
-                        mo.MoveArc(step.TargetAxis, step.CompareVar, step.TargetX, step.TargetY, step.ExpectRadius, step.AngleStop, step.Speed > 0 ? step.Speed : 30);
+                        mo.MoveArc(step.TargetAxis ?? "", step.CompareVar ?? "", step.TargetX, step.TargetY, step.ExpectRadius, step.AngleStop, step.Speed > 0 ? step.Speed : 30);
 
                         Done($"圆弧 半径{step.ExpectRadius:F2} 跨{step.AngleStop:F0}°");
 
@@ -9124,6 +9248,270 @@ public class FlowViewModel : ViewModelBase
             }
 
 
+
+            // ===== OpenCVVision（Apache-2.0）移植来的图像处理与检测工具 =====
+
+            case "MorphOp":
+            case "BilateralOp":
+            case "EmphasizeOp":
+            case "LightDarkOp":
+            case "MaskRegionOp":
+            case "PyramidOp":
+            {
+                var src = _sharedImage;
+                if (src == null || src.Empty()) return Fail("没有图像");
+                Mat dst;
+                if (t == "MorphOp")
+                {
+                    var mt = step.Mode switch
+                    {
+                        "膨胀(放大)" => MorphTypes.Dilate, "开(去小毛刺)" => MorphTypes.Open, "闭(补小洞)" => MorphTypes.Close,
+                        "梯度(留边缘)" => MorphTypes.Gradient, "顶帽(亮小点)" => MorphTypes.TopHat, "黑帽(暗小点)" => MorphTypes.BlackHat,
+                        "击不中" => MorphTypes.HitMiss, _ => MorphTypes.Erode
+                    };
+                    var shape = step.MatchMode switch { "十字" => MorphShapes.Cross, "椭圆" => MorphShapes.Ellipse, _ => MorphShapes.Rect };
+                    using var el = Cv2.GetStructuringElement(shape,
+                        new Size(CaliperParam.Odd((int)Math.Max(1, step.SizeX)), CaliperParam.Odd((int)Math.Max(1, step.SizeY))));
+                    dst = new Mat();
+                    Cv2.MorphologyEx(src, dst, mt, el);
+                }
+                else if (t == "BilateralOp")
+                {
+                    dst = new Mat();
+                    Cv2.BilateralFilter(src, dst, CaliperParam.Odd((int)Math.Max(1, step.SizeX)),
+                        Math.Max(1, step.Number1), Math.Max(1, step.Number2));
+                }
+                else if (t == "EmphasizeOp")
+                {
+                    dst = ToolKit.Emphasize(src, (int)Math.Max(1, step.SizeX), (int)Math.Max(1, step.SizeY),
+                        step.Factor <= 0 ? 1 : step.Factor);
+                }
+                else if (t == "LightDarkOp")
+                {
+                    using var g = ToolKit.ToGray(src);
+                    dst = ToolKit.LightDarkFilter(g, (int)Math.Max(1, step.Number1), (int)Math.Max(1, step.Number2),
+                        step.Mode == "只留亮的" ? 1 : step.Mode == "明暗都留" ? 2 : 0,
+                        step.Number3, step.Number4);
+                }
+                else if (t == "MaskRegionOp")
+                {
+                    var box = StepRoiBox(step, src);
+                    dst = ToolKit.MaskRegion(src, new Rect((int)box.X, (int)box.Y, (int)box.Width, (int)box.Height),
+                        step.Mode == "挖掉框内" ? 1 : 0);
+                }
+                else
+                {
+                    int lv = (int)Math.Clamp(step.Number1 <= 0 ? 1 : step.Number1, 1, 6);
+                    dst = new Mat();
+                    if (step.Mode == "放大") { for (int i = 0; i < lv; i++) Cv2.PyrUp(src, dst); }
+                    else if (step.Mode == "取明暗层") { dst.Dispose(); dst = ToolKit.LaplacianPyramid(src, lv); }
+                    else { for (int i = 0; i < lv; i++) Cv2.PyrDown(src, dst); }
+                }
+                _sharedImage?.Dispose();
+                _sharedImage = dst;
+                Done("已处理", step.Name);
+                break;
+            }
+
+            case "HoughCirclesOp":
+            {
+                using var g = WorkGray();
+                if (g == null) return Fail("没有图像");
+                var circles = Cv2.HoughCircles(g, HoughModes.Gradient, 1.2, Math.Max(5, step.Number3),
+                    120, Math.Max(10, step.Number4), Math.Max(1, (int)step.Number1), Math.Max(1, (int)step.Number2));
+                Done($"找到 {circles.Length} 个圆", circles.Length > 0 ? $"最大半径 {circles.Max(c => c.Radius):F1}" : "没有达标的圆");
+                if (circles.Length > 0)
+                {
+                    var big = circles.OrderByDescending(c => c.Radius).First();
+                    GeoPut(step, new GeoResult { HasCircle = true, Cx = big.Center.X, Cy = big.Center.Y, R = big.Radius,
+                        HasPoint = true, Px = big.Center.X, Py = big.Center.Y, Value = circles.Length });
+                }
+                break;
+            }
+
+            case "ContourShapeOp":
+            {
+                using var g = WorkGray();
+                if (g == null) return Fail("没有图像");
+                using var bin = new Mat();
+                Cv2.Threshold(g, bin, step.ThreshLo > 0 ? step.ThreshLo : 128, 255, ThresholdTypes.BinaryInv | ThresholdTypes.Otsu);
+                var retrieval = step.MatchMode switch
+                {
+                    "找全部" => RetrievalModes.List, "找内孔" => RetrievalModes.CComp, "同层平铺" => RetrievalModes.Tree, _ => RetrievalModes.External
+                };
+                Cv2.FindContours(bin, out var contours, out _, retrieval, ContourApproximationModes.ApproxSimple);
+                var keep = contours.Where(c => Cv2.ContourArea(c) >= (step.AreaMin > 0 ? step.AreaMin : 10)).ToArray();
+                string detail = "没有轮廓";
+                if (keep.Length > 0)
+                {
+                    var c0 = keep.OrderByDescending(c => Cv2.ContourArea(c)).First();
+                    switch (step.Mode)
+                    {
+                        case "最小矩形":
+                            var rr = Cv2.MinAreaRect(c0);
+                            detail = $"{rr.Size.Width:F1}×{rr.Size.Height:F1} 角度{rr.Angle:F1}°";
+                            break;
+                        case "凸包":
+                            detail = $"凸包 {Cv2.ConvexHull(c0).Length} 个顶点";
+                            break;
+                        case "最小圆":
+                            Cv2.MinEnclosingCircle(c0, out _, out float rad);
+                            detail = $"半径 {rad:F2}";
+                            break;
+                        case "最小三角":
+                            Cv2.MinEnclosingTriangle(c0, out var tri);
+                            detail = $"三角 {tri?.Length ?? 0} 顶点";
+                            break;
+                        case "椭圆":
+                            detail = c0.Length >= 5 ? $"椭圆 {Cv2.FitEllipse(c0).Size.Width:F1}×{Cv2.FitEllipse(c0).Size.Height:F1}" : "点太少";
+                            break;
+                        default:
+                            var br = Cv2.BoundingRect(c0);
+                            detail = $"外接框 {br.Width}×{br.Height}";
+                            break;
+                    }
+                }
+                Done($"轮廓 {keep.Length} 个 · {detail}", step.Mode);
+                break;
+            }
+
+            case "BlobDetectorOp":
+            {
+                using var g = WorkGray();
+                if (g == null) return Fail("没有图像");
+                var bp = new SimpleBlobDetector.Params
+                {
+                    FilterByColor = true,
+                    BlobColor = (byte)(step.Mode == "亮斑" ? 255 : 0),
+                    FilterByArea = true,
+                    MinArea = (float)Math.Max(1, step.AreaMin),
+                    MaxArea = (float)(step.AreaMax <= 0 ? 100000000 : step.AreaMax),
+                    FilterByCircularity = step.Number1 > 0,
+                    MinCircularity = (float)Math.Clamp(step.Number1, 0, 1),
+                    MinThreshold = (float)Math.Max(10, step.ThreshLo),
+                    MaxThreshold = (float)Math.Max(200, step.ThreshHi),
+                    MinRepeatability = 2,
+                    MinDistBetweenBlobs = 5
+                };
+                using var det = SimpleBlobDetector.Create(bp);
+                var kb = det.Detect(g);
+                int cap = (int)(step.TopN > 0 ? step.TopN : 100);
+                int n = Math.Min(kb.Length, cap);
+                Done($"斑点 {n} 个", n > 0 ? $"第一个 ({kb[0].Pt.X:F0},{kb[0].Pt.Y:F0}) 直径 {kb[0].Size:F1}" : "没找到");
+                if (n > 0) GeoPut(step, new GeoResult { HasPoint = true, Px = kb[0].Pt.X, Py = kb[0].Pt.Y, Value = n });
+                break;
+            }
+
+            case "ConnectedCompOp":
+            {
+                using var g = WorkGray();
+                if (g == null) return Fail("没有图像");
+                using var bin = new Mat();
+                Cv2.Threshold(g, bin, step.ThreshLo > 0 ? step.ThreshLo : 128, 255, ThresholdTypes.Binary | ThresholdTypes.Otsu);
+                var labels = new Mat(); var stats = new Mat(); var centroids = new Mat();
+                int count = Cv2.ConnectedComponentsWithStats(bin, labels, stats, centroids, PixelConnectivity.Connectivity8);
+                int keep = 0;
+                using (var painter = step.InvertImage ? new Mat(stats.Rows, 3, MatType.CV_8UC3, new Scalar(0, 0, 0)) : null)
+                {
+                    for (int i = 1; i < count; i++)
+                    {
+                        int area = stats.At<int>(i, (int)ConnectedComponentsTypes.Area);
+                        int w = stats.At<int>(i, (int)ConnectedComponentsTypes.Width);
+                        int h = stats.At<int>(i, (int)ConnectedComponentsTypes.Height);
+                        if (area < (step.AreaMin > 0 ? step.AreaMin : 1)) continue;
+                        if (step.AreaMax > 0 && area > step.AreaMax) continue;
+                        if (step.Number1 > 0 && w < step.Number1) continue;
+                        if (step.Number2 > 0 && h < step.Number2) continue;
+                        keep++;
+                    }
+                }
+                stats.Dispose(); labels.Dispose(); centroids.Dispose();
+                Done($"共 {Math.Max(0, count - 1)} 块，达标 {keep} 块", step.InvertImage ? "已生成染色图" : "只统计");
+                break;
+            }
+
+            case "FeatureDetectOp":
+            {
+                using var g = WorkGray();
+                if (g == null) return Fail("没有图像");
+                var (kp, desc) = FeatureTools.Detect(string.IsNullOrEmpty(step.Mode) ? "ORB" : step.Mode, g,
+                    (int)(step.Number1 > 0 ? step.Number1 : 500));
+                desc.Dispose();
+                Done($"特征点 {kp.Length} 个", step.Mode);
+                if (kp.Length > 0) GeoPut(step, new GeoResult { HasPoint = true, Px = kp[0].Pt.X, Py = kp[0].Pt.Y, Value = kp.Length });
+                break;
+            }
+
+            case "FeatureRegisterOp":
+            {
+                var src = _sharedImage;
+                if (src == null || src.Empty()) return Fail("没有图像");
+                Mat? refImg = null;
+                if (!string.IsNullOrWhiteSpace(step.ImageSource) && File.Exists(step.ImageSource))
+                    refImg = Cv2.ImRead(step.ImageSource, ImreadModes.Color);
+                else if (_cachedImage != null && !_cachedImage.Empty()) refImg = _cachedImage;
+                if (refImg == null || refImg.Empty())
+                {
+                    Done("没有参考图，先把当前图存为背景（两图运算第一次运行会自动存）", "没配上");
+                    break;
+                }
+                var (matched, aligned) = FeatureTools.Register(string.IsNullOrEmpty(step.Mode) ? "ORB" : step.Mode,
+                    refImg, src, step.MatchMode == "FLANN(大数据快)");
+                if (refImg != _cachedImage) refImg.Dispose();
+                if (aligned == null) Done($"匹配 {matched} 对，不足以对齐（至少 3 对）", "没配上");
+                else
+                {
+                    _sharedImage?.Dispose(); _sharedImage = aligned;
+                    Done($"已按 {matched} 对特征点配准", "配准完成");
+                }
+                break;
+            }
+
+            case "LensCalibOp":
+            {
+                var folder = step.FolderPath ?? "";
+                if (string.IsNullOrWhiteSpace(folder) || !Directory.Exists(folder))
+                    return Fail("先指定放棋盘格照片的文件夹");
+                var (used, err) = LensCalibration.Shared.CalibrateFromFolder(folder,
+                    (int)Math.Max(4, step.SizeX), (int)Math.Max(4, step.SizeY),
+                    step.NominalValue > 0 ? step.NominalValue : 10);
+                if (used < 3) return Fail($"能用上的照片只有 {used} 张（至少 3 张，且要能自动找到角点）");
+                Done($"标定 {used} 张，重投影误差 {err:F4} mm", err < 0.5 ? "精度良好" : "误差偏大，建议重拍");
+                break;
+            }
+
+            case "LensUndistortOp":
+            {
+                var src = _sharedImage;
+                if (src == null || src.Empty()) return Fail("没有图像");
+                if (!LensCalibration.Shared.TryLoad()) return Fail("还没做过镜头标定");
+                var dst = LensCalibration.Shared.Undistort(src);
+                _sharedImage?.Dispose(); _sharedImage = dst;
+                Done("已按标定结果去畸变", $"误差 {LensCalibration.Shared.ReprojectError:F4} mm");
+                break;
+            }
+
+            case "DnnDetectOp":
+            {
+                var src = _sharedImage;
+                if (src == null || src.Empty()) return Fail("没有图像");
+                var model = DnnDetect.FindModel(step.ModelFile, ".onnx", ".weights");
+                if (model == null)
+                    return Fail($"没找到模型文件，请把 .onnx 或 .weights 放到 {DnnDetect.ModelDir}");
+                var cfg = string.IsNullOrWhiteSpace(step.CalcExpression) ? null : DnnDetect.FindModel(step.CalcExpression, ".cfg");
+                if (model.EndsWith(".weights") && cfg == null) return Fail("Darknet 权重还要填对应的 .cfg 文件");
+                var boxes = DnnDetect.Run(src, model, cfg, step.LabelsFile,
+                    step.Number1 > 0 ? step.Number1 : 0.4, step.Number2 > 0 ? step.Number2 : 0.45, out string err);
+                if (err.Length > 0) return Fail("模型跑失败：" + err);
+                var labels = DnnDetect.LoadLabels(step.LabelsFile);
+                Done($"AI 找到 {boxes.Count} 个目标",
+                    boxes.Count > 0 && labels.Count > boxes[0].Cls ? labels[(int)boxes[0].Cls] : $"{boxes.Count} 个");
+                GeoPut(step, new GeoResult { Value = boxes.Count,
+                    HasPoint = boxes.Count > 0,
+                    Px = boxes.Count > 0 ? boxes[0].X + boxes[0].W / 2 : 0,
+                    Py = boxes.Count > 0 ? boxes[0].Y + boxes[0].H / 2 : 0 });
+                break;
+            }
 
             default: return false;
 
@@ -9635,11 +10023,35 @@ public class FlowViewModel : ViewModelBase
 
                         };
 
-                        var list = Blob.Analyze(g, bp);
+                        var bbox = StepRoiBox(step, g);
 
-                        step.ActualValue = $"共 {list.Count} 块";
+                        Mat crop = g;
 
-                        step.ParamSummary = list.Count > 0 ? $"最大 {list[0].Area:F0} 像素" : "没有达标的块";
+                        bool cropped = step.RoiW > 2 && step.RoiH > 2 && bbox.Width > 2 && bbox.Height > 2;
+
+                        if (cropped) crop = new Mat(g, new Rect((int)bbox.X, (int)bbox.Y, (int)bbox.Width, (int)bbox.Height));
+
+                        var list = Blob.Analyze(crop, bp);
+
+                        if (cropped) crop.Dispose();
+
+                        double bx = cropped ? bbox.X : 0, by = cropped ? bbox.Y : 0;
+
+                        if (list.Count > 0)
+
+                        {
+
+                            double pcx = list[0].Centroid.X + bx, pcy = list[0].Centroid.Y + by;
+
+                            step.ActualValue = $"共 {list.Count} 块 最大中心=({pcx:F2},{pcy:F2})";
+
+                            step.ParamSummary = $"最大 {list[0].Area:F0} 像素";
+
+                            GeoPut(step, new GeoResult { HasPoint = true, Px = pcx, Py = pcy, Value = list.Count });
+
+                        }
+
+                        else step.ActualValue = "共 0 块";
 
                         step.StatusText = "已完成";
 

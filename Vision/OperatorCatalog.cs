@@ -42,6 +42,7 @@ public static class OperatorCatalog
     static readonly string[] POL = { "从暗到亮", "从亮到暗", "两种都要" };
     static readonly string[] FIT = { "最小二乘", "正交距离(更准)", "带权(按边强弱)" };
     static readonly string[] THMODE = { "自动", "固定值", "双阈值" };
+    static readonly string[] ZERO = { "向上(12点)", "向右(3点)", "向下(6点)", "向左(9点)" };
     static readonly string[] SRC = { "上一步结果", "第1步", "第2步", "第3步", "第4步", "第5步", "第6步", "第7步", "第8步", "第9步", "第10步" };
 
     static string ByStep(string h) => h + "：可以选上一步的结果，也可以直接选第几步的结果";
@@ -170,6 +171,12 @@ public static class OperatorCatalog
         O("CalcPointCircle", "点圆计算", "🟡", "Calc", "一个点到圆周的距离（在圆内还是圆外）。",
             C("点从哪来", "CompareSource", ByStep(""), SRC),
             C("圆从哪来", "CompareVar", ByStep(""), SRC)),
+        O("AngleFromCenter", "求角度", "🧭", "Calc", "算一个点相对中心偏了多少度（瓶底黑色线圈朝哪边就用它）。",
+            C("中心从哪来", "CompareSource", "选前面「找圆」那一步，圆心就当瓶底中心", SRC),
+            C("点从哪来", "CompareVar", "选前面「数块数」那一步，最大那块的中心就是线圈", SRC),
+            C("0度朝哪边", "AngleZero", "选「向上」就是时钟12点算0度，现场最好读", ZERO),
+            B("顺时针算正数", "InvertImage", "打开=顺时针为正（像钟表）；关掉=逆时针为正"),
+            T("结果写入", "OutputVar", "存进变量，后面判定、发PLC都取这个值")),
         O("MidPoint", "求中点", "◽", "Calc", "两个点的中点。",
             C("第一个点", "CompareSource", ByStep(""), SRC),
             C("第二个点", "CompareVar", ByStep(""), SRC)),
@@ -227,11 +234,11 @@ public static class OperatorCatalog
         O("ToGray", "转成黑白图", "🌑", "Color", "彩色图转成灰度图。大部分算法只看明暗，不看颜色。",
             C("取哪个通道", "PreprocessType", "只保留某一种颜色时选", new[] { "整图转灰", "只要红", "只要绿", "只要蓝" })),
         O("ColorSpace", "换颜色格式", "🎨", "Color", "在 RGB / HSV / 灰度之间转换，按颜色找东西时先做这步。",
-            C("转成", "MatchMode", "", new[] { "HSV", "灰度", "RGB", "BGR" })),
+            C("转成", "MatchMode", "", new[] { "HSV", "HLS", "灰度", "RGB", "BGR" })),
         O("SplitChannel", "拆通道", "🧵", "Color", "把彩色图拆成单通道图，挑最清楚的那一路去处理。",
             C("取哪一路", "ColorChannel", "", new[] { "R", "G", "B", "H", "S", "V" })),
         O("ImageMath", "两图运算", "➕", "Color", "两张图做加减或逻辑运算，常用于背景差分。",
-            C("怎么算", "Operator", "", new[] { "相加", "相减", "取绝对差", "求与", "求或" }),
+            C("怎么算", "Operator", "", new[] { "相加", "相减", "取绝对差", "求与", "求或", "求异或", "取较亮", "取较暗" }),
             T("另一张图", "ImageSource", "留空则用上一次缓存的图")),
         O("RotateImage", "把图转正", "🔄", "Color", "按角度旋转或左右上下翻转图像。",
             N("旋转角度(度)", "RoiAngle", "正值逆时针"),
@@ -395,6 +402,77 @@ public static class OperatorCatalog
             C("读还是写", "IoType", "", new[] { "读", "写" }),
             T("软元件地址", "IoChannel", "例如 DM100"),
             N("值", "TargetX", "")),
+        // ===== 以下来自开源项目 OpenCVVision（Apache-2.0）的工具移植 =====
+        O("MorphOp", "形态学处理", "⬛", "Color", "把黑白图上的块放大缩小、补洞、去毛刺（腐蚀/膨胀/开/闭/顶帽等）。",
+            C("做什么", "Mode", "", new[] { "腐蚀(缩小)", "膨胀(放大)", "开(去小毛刺)", "闭(补小洞)", "梯度(留边缘)", "顶帽(亮小点)", "黑帽(暗小点)", "击不中" }),
+            C("核形状", "MatchMode", "", new[] { "矩形", "十字", "椭圆" }),
+            N("核宽", "SizeX", ""), N("核高", "SizeY", "")),
+
+        O("BilateralOp", "保边去噪", "🌫", "Color", "只抹平小噪点、不糊掉边缘，金属和塑料件特别好用。",
+            N("邻域大小", "SizeX", ""), N("颜色差阈值", "Number1", "差值小于这个才互相平均"),
+            N("距离差阈值", "Number2", "")),
+
+        O("EmphasizeOp", "加强边缘", "✨", "Color", "把和周围平均亮度差别大的地方拉得更明显，让浅淡的边看得清。",
+            N("核宽", "SizeX", ""), N("核高", "SizeY", ""),
+            N("加强倍数", "Factor", "1=轻微，3=很强也容易放大噪点")),
+
+        O("LightDarkOp", "明暗筛选", "", "Color", "按局部背景只留明显更亮或更暗的部分，专门对付光照不均、反光。",
+            N("核大小", "Number1", "局部背景取样范围，默认 9"),
+            N("块宽", "Number2", "核必须能被它整除，默认 3"),
+            C("留哪边", "Mode", "", new[] { "只留暗的", "只留亮的", "明暗都留" }),
+            N("亮保留比例(%)", "Number3", "越大留得越多"), N("暗保留比例(%)", "Number4", "")),
+
+        O("MaskRegionOp", "只看这块", "🔲", "Color", "把不关心的区域涂黑，只留框内（或反过来只留框外），后面的处理就不会被干扰。",
+            C("怎么留", "Mode", "", new[] { "只留框内", "挖掉框内" })),
+
+        O("PyramidOp", "金字塔缩放", "🔻", "Color", "整张图缩小或放大几档，或取出明暗漂移层。",
+            C("做什么", "Mode", "", new[] { "缩小", "放大", "取明暗层" }),
+            N("做几层", "Number1", "1~6")),
+
+        O("HoughCirclesOp", "找一堆圆", "⭕", "Locate", "一次找出画面里所有大小相近的圆（孔、珠子、瓶盖）。",
+            N("最小半径", "Number1", ""), N("最大半径", "Number2", ""),
+            N("圆心最小间隔", "Number3", "防止同一个圆重复报"),
+            N("灵敏度", "Number4", "累加阈值，越小找到的圆越多也越容易误报")),
+
+        O("ContourShapeOp", "配外形框", "🔷", "Measure", "给找到的轮廓套一个外接框/最小矩形/凸包/最小圆/椭圆，输出尺寸角度。",
+            C("找轮廓方式", "MatchMode", "", new[] { "只找最外圈", "找全部", "找内孔", "同层平铺" }),
+            C("套什么外形", "Mode", "", new[] { "外接矩形", "最小矩形", "凸包", "最小圆", "最小三角", "椭圆" }),
+            N("最小面积", "AreaMin", "")),
+
+        O("BlobDetectorOp", "斑点检测", "🫧", "Measure", "按颜色、大小、圆度、凸性挑出斑点（黑点、气泡、脏点）。",
+            C("找哪种斑", "Mode", "", new[] { "暗斑", "亮斑" }),
+            N("最小面积", "AreaMin", ""), N("最大面积", "AreaMax", ""),
+            N("最圆程度", "Number1", "0~1，越接近 1 越圆"), N("最多几个", "TopN", "")),
+
+        O("ConnectedCompOp", "连通域染色", "🎨", "Measure", "把每一块独立区域染成不同颜色，可按面积/宽/高/位置筛掉不要的。",
+            N("最小面积", "AreaMin", ""), N("最大面积", "AreaMax", ""),
+            N("最小宽度", "Number1", ""), N("最小高度", "Number2", ""),
+            B("输出染色图", "InvertImage", "生成一张每块一色的图")),
+
+        O("FeatureDetectOp", "找特征点", "✳", "Locate", "自动找出图上有辨识度的角点/斑点，用来配准或比对。",
+            C("用哪种方法", "Mode", "", new[] { "ORB", "SIFT", "AKAZE", "BRISK", "FAST", "角点(GFTT)" }),
+            N("最多几个点", "Number1", "")),
+
+        O("FeatureRegisterOp", "特征配准", "🧷", "Locate", "把第二张图按特征点对齐到第一张（位置角度都自动纠正）。",
+            C("用哪种方法", "Mode", "", new[] { "ORB", "SIFT", "AKAZE", "BRISK", "FAST", "角点(GFTT)" }),
+            C("匹配器", "MatchMode", "", new[] { "暴力匹配", "FLANN(大数据快)" }),
+            T("参考图", "ImageSource", "对齐的目标图，留空用当前缓存图")),
+
+        O("LensCalibOp", "镜头标定", "🎥", "Calib", "拍一批棋盘格照片，算出镜头畸变并修正——尺寸测量精度靠它。",
+            N("横向内角点数", "SizeX", "11 格板填 10"),
+            N("纵向内角点数", "SizeY", ""),
+            N("每格多少毫米", "NominalValue", ""),
+            T("照片文件夹", "FolderPath", "放 10~20 张不同角度拍的棋盘格")),
+
+        O("LensUndistortOp", "去掉镜头畸变", "🫳", "Calib", "用上次标定的结果把当前图拉直，边缘不再拉伸变形。"),
+
+        O("DnnDetectOp", "AI 找目标", "🧠", "Code", "用训练好的模型找出目标位置（缺什么、装没装、有没有划伤）。",
+            T("模型文件", "ModelFile", ".onnx，或 .weights（要配 cfg）；放进步骤同目录 Data\\Models 可自动找"),
+            T("cfg 文件", "CalcExpression", "只有 Darknet 权重需要"),
+            T("类别名单", "LabelsFile", "一行一个类别名的 txt"),
+            N("置信度门槛", "Number1", "0~1，建议 0.4"),
+            N("重叠抑制", "Number2", "建议 0.45")),
+
     };
 
     static readonly Dictionary<string, OperatorDef> ByType = Build();
