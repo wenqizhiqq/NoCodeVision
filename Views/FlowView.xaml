@@ -41,8 +41,8 @@
         <DataTemplate x:Key="StepItemTemplate">
             <Grid Height="40">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="150" SharedSizeGroup="StepColLogic" />
-                    <ColumnDefinition Width="165" SharedSizeGroup="StepColFunc" />
+                    <ColumnDefinition Width="105" SharedSizeGroup="StepColLogic" />
+                    <ColumnDefinition Width="116" SharedSizeGroup="StepColFunc" />
                     <ColumnDefinition SharedSizeGroup="StepColStatus" />
                     <ColumnDefinition Width="110" SharedSizeGroup="StepColValue" />
                     <ColumnDefinition SharedSizeGroup="StepColOp" />
@@ -198,8 +198,8 @@
                     <!-- 表头 -->
                     <Grid Grid.Row="0" Height="36" Background="{StaticResource HoverBrush}" Margin="0">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="150" SharedSizeGroup="StepColLogic" />
-                            <ColumnDefinition Width="165" SharedSizeGroup="StepColFunc" />
+                            <ColumnDefinition Width="105" SharedSizeGroup="StepColLogic" />
+                            <ColumnDefinition Width="116" SharedSizeGroup="StepColFunc" />
                             <ColumnDefinition Width="95" SharedSizeGroup="StepColStatus" />
                             <ColumnDefinition Width="110" SharedSizeGroup="StepColValue" />
                             <ColumnDefinition Width="85" SharedSizeGroup="StepColOp" />
@@ -385,6 +385,27 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <!-- 显示结果：先看当前图，跑一次后这里就是画好的结果图 -->
+                        <StackPanel x:Name="ShowResultPreviewHost" Visibility="{Binding SelectedStep.StepType, Converter={StaticResource KindVis}, ConverterParameter=ShowResult}">
+                            <Rectangle Style="{StaticResource AppleDivider}" />
+                            <TextBlock Style="{StaticResource AppleSubLabel}" Text="预览（跑一次后这里就变成画好的结果图）" Margin="14,6,14,4" />
+                            <Border Margin="12,0,12,10" CornerRadius="8" ClipToBounds="True" Background="{StaticResource CanvasBrush}">
+                                <StackPanel>
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="还没有图：先在「拍张照片」选一张，或直接跑一次流程"
+                                           Margin="12,10,12,0"
+                                           Visibility="{Binding ResultPreview, Converter={StaticResource NullToVisibilityConverter}}" />
+                                <Image Source="{Binding ResultPreview}" Stretch="Uniform">
+                                    <Image.Height>
+                                        <MultiBinding Converter="{StaticResource AspectHeight}">
+                                            <Binding Path="ActualWidth" ElementName="ShowResultPreviewHost" />
+                                            <Binding Path="ResultPreview.PixelWidth" />
+                                            <Binding Path="ResultPreview.PixelHeight" />
+                                        </MultiBinding>
+                                    </Image.Height>
+                                </Image>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
                         <!-- 视觉类算子：框出要看的那一块，并指定结果写进哪个变量 -->
                         <StackPanel Visibility="{Binding SelectedOperatorUsesRoi, Converter={StaticResource KindVis}, ConverterParameter=True}">
                             <Rectangle Style="{StaticResource AppleDivider}" />
@@ -438,19 +459,26 @@
                 <Border Margin="0,0,0,12">
                     <Border.Style>
                         <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
-                            <Setter Property="Visibility" Value="Visible" />
+                            <Setter Property="Visibility" Value="Collapsed" />
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding ResultImage}" Value="{x:Null}">
-                                    <Setter Property="Visibility" Value="Collapsed" />
+                                <DataTrigger Binding="{Binding HasResultImage}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </Border.Style>
-                    <StackPanel>
+                    <StackPanel x:Name="ResultCardHost">
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="🖥 结果画面" />
                         <Border Margin="12,4,12,10" CornerRadius="8" ClipToBounds="True" Background="{StaticResource CanvasBrush}">
-                            <Image Source="{Binding ResultImage}" Stretch="Uniform"
-                                   Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}, Converter={StaticResource WidthToHeight}, ConverterParameter=0.7}" />
+                            <Image Source="{Binding ResultImage}" Stretch="Uniform">
+                                <Image.Height>
+                                    <MultiBinding Converter="{StaticResource AspectHeight}">
+                                        <Binding Path="ActualWidth" ElementName="ResultCardHost" />
+                                        <Binding Path="ResultImage.PixelWidth" />
+                                        <Binding Path="ResultImage.PixelHeight" />
+                                    </MultiBinding>
+                                </Image.Height>
+                            </Image>
                         </Border>
                     </StackPanel>
                 </Border>

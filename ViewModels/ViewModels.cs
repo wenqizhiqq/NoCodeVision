@@ -4798,12 +4798,31 @@ public class FlowViewModel : ViewModelBase
 
     private ImageSource? _currentImageSource;
 
-    public ImageSource? CurrentImageSource { get => _currentImageSource; set => SetField(ref _currentImageSource, value); }
+    public ImageSource? CurrentImageSource
+    {
+        get => _currentImageSource;
+        set { if (SetField(ref _currentImageSource, value)) OnPropertyChanged(nameof(ResultPreview)); }
+    }
 
     /// <summary>「显示结果」画出来的那张图：圆、点、连线、大字结论。</summary>
-    public ImageSource? ResultImage { get => _resultImage; set => SetField(ref _resultImage, value); }
+    public ImageSource? ResultImage
+    {
+        get => _resultImage;
+        set
+        {
+            if (!SetField(ref _resultImage, value)) return;
+            OnPropertyChanged(nameof(HasResultImage));
+            OnPropertyChanged(nameof(ResultPreview));
+        }
+    }
 
     private ImageSource? _resultImage;
+
+    /// <summary>有没有画好的结果图（卡片显隐用，布尔比 null 触发稳）。</summary>
+    public bool HasResultImage => _resultImage != null;
+
+    /// <summary>结果预览：画过就是结果图，没画过就用当前工作图，保证页面上总有东西看。</summary>
+    public ImageSource? ResultPreview => _resultImage ?? _currentImageSource;
 
 
 
