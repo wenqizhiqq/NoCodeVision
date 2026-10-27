@@ -3,11 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             mc:Ignorable="d"
-             PreviewMouseWheel="OnViewPreviewMouseWheel"
-             PreviewMouseDown="OnViewPreviewMouseDown"
-             PreviewMouseMove="OnViewPreviewMouseMove"
-             PreviewMouseUp="OnViewPreviewMouseUp">
+             mc:Ignorable="d">
 <!-- 温启志：18719361399  混淆: 温k启v志y：o1q8e7f1z9b3i6b1p3w9o9 -->
 
 
@@ -36,18 +32,19 @@
 
     <Border Background="{StaticResource PreviewBgBrush}" CornerRadius="12" ClipToBounds="True">
         <Grid x:Name="Root" Background="Transparent">
-            <!-- 像素画布：尺寸 = 图像像素尺寸；整体用 LayoutTransform 缩放以适配显示区。
-                 图像、ROI、叠加框都在此坐标系（图像像素）绘制，缩放由 LayoutTransform 统一处理，彻底消除 letterbox 偏移。 -->
+            <!-- 像素画布：尺寸 = 图像像素尺寸；整体用 RenderTransform 缩放/平移以适配显示区。
+                 用 RenderTransform 而不是 LayoutTransform：后者在布局阶段会被父容器重新摆放，
+                 拖动平移经常"拖不动"或一松手就弹回原位。 -->
             <Canvas x:Name="PixelCanvas" HorizontalAlignment="Left" VerticalAlignment="Top"
                     Background="Transparent"
                     MouseDown="OnMouseDown" MouseMove="OnMouseMove"
                     MouseUp="OnMouseUp">
-                <Canvas.LayoutTransform>
+                <Canvas.RenderTransform>
                     <TransformGroup>
                         <ScaleTransform x:Name="PixelScale" ScaleX="1" ScaleY="1" />
                         <TranslateTransform x:Name="PixelTranslate" X="0" Y="0" />
                     </TransformGroup>
-                </Canvas.LayoutTransform>
+                </Canvas.RenderTransform>
                 <Image x:Name="Img" Stretch="Fill" />
                 <Image x:Name="DefectLayer" Stretch="Fill" IsHitTestVisible="False" />
                 <Canvas x:Name="Layer" IsHitTestVisible="False">

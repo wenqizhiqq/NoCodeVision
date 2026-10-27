@@ -16,14 +16,20 @@ namespace NoCodeVision.Views.Controls
     /// <summary>
     /// 源图显示 + ROI 绘制 + 匹配/缺陷框叠加。
     /// 采用与 GrayMatch.Wpf 一致的做法：图像以原生像素尺寸渲染在 PixelCanvas 中，
-    /// 整体用 LayoutTransform（ScaleTransform）缩放适配显示区；ROI 与叠加框均在「图像像素」坐标系下绘制，
-    /// 因此随 LayoutTransform 一起缩放，无需手动计算 letterbox 偏移，彻底避免叠加框整体偏移的问题。
+    /// 整体用 RenderTransform 缩放/平移适配显示区；ROI 与叠加框均在「图像像素」坐标系下绘制，
+    /// 因此随变换一起缩放，无需手动计算 letterbox 偏移。
     /// </summary>
     public partial class RoiImageView : UserControl
     {
         public RoiImageView()
         {
             InitializeComponent();
+            // 用 handledEventsToo 注册：属性面板外面套着 ScrollViewer，中键事件可能被上层标记为已处理，
+            // XAML 里的 PreviewMouseDown="..." 这种写法就再也收不到，表现就是"中键拖不动"。
+            AddHandler(PreviewMouseDownEvent, new MouseButtonEventHandler(OnViewPreviewMouseDown), true);
+            AddHandler(PreviewMouseMoveEvent, new MouseEventHandler(OnViewPreviewMouseMove), true);
+            AddHandler(PreviewMouseUpEvent, new MouseButtonEventHandler(OnViewPreviewMouseUp), true);
+            AddHandler(PreviewMouseWheelEvent, new MouseWheelEventHandler(OnViewPreviewMouseWheel), true);
             SizeChanged += (_, _) => UpdateFit();
             Loaded += (_, _) =>
             {

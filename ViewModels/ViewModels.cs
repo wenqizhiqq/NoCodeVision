@@ -471,6 +471,22 @@ public class VisionFlowStep : ViewModelBase
 
     private string _folderPath = "";
 
+    public int CameraIndex { get => _cameraIndex; set => SetField(ref _cameraIndex, value); }
+
+    private int _cameraIndex;
+
+    public bool CameraLineScan { get => _cameraLineScan; set => SetField(ref _cameraLineScan, value); }
+
+    private bool _cameraLineScan;
+
+    public int CameraLineRate { get => _cameraLineRate; set => SetField(ref _cameraLineRate, value); }
+
+    private int _cameraLineRate = 10000;
+
+    public int CameraSpliceLines { get => _cameraSpliceLines; set => SetField(ref _cameraSpliceLines, value); }
+
+    private int _cameraSpliceLines = 1024;
+
 
 
     public double RoiX { get => _roiX; set => SetField(ref _roiX, value); }
@@ -3548,7 +3564,7 @@ public class FlowViewModel : ViewModelBase
 
     public string[] StatusOptions { get; } = { "未开始", "运行中", "已完成", "已跳过", "等待中", "错误", "超时", "已暂停", "通过", "不通过", "告警", "采集成功", "采集失败", "匹配成功", "匹配失败", "ROI 内", "ROI 外", "尺寸合格", "尺寸超差", "亮度正常", "亮度异常", "通讯正常", "通讯中断", "运动完成", "到位", "未到位", "动作完成" };
 
-    public string[] CaptureModes { get; } = { "采集相机", "打开文件夹", "打开文件" };
+    public string[] CaptureModes { get; } = { "采集相机", "迈德威视相机", "打开文件夹", "打开文件" };
 
     public string[] MatchModes { get; } = { "灰度匹配", "轮廓匹配" };
 
@@ -4585,6 +4601,42 @@ public class FlowViewModel : ViewModelBase
             }
     }
 
+    void RefreshMindVisionCameras()
+    {
+        MindVisionDevices.Clear();
+        MindVisionService.Instance.Refresh();
+        foreach (var d in MindVisionService.Instance.Devices) MindVisionDevices.Add(d.ToString());
+        MindVisionStatus = MindVisionService.Instance.Status;
+    }
+
+    void GrabMindVisionFrame()
+    {
+        if (_selectedStep == null) return;
+        var step = _selectedStep;
+        var mat = MindVisionService.Instance.Grab(step.CameraIndex, step.CameraLineScan,
+            step.CameraLineRate, step.CameraSpliceLines, out var why);
+        if (mat == null)
+        {
+            MindVisionStatus = why;
+            step.StatusText = "抓图失败";
+            step.ActualValue = why;
+            return;
+        }
+        using (mat)
+        {
+            var tmp = Path.Combine(NoCodeVision.Helpers.AppPaths.TempDirectory, $"ncv_mv_{DateTime.Now:yyyyMMddHHmmssfff}.png");
+            Cv2.ImWrite(tmp, mat);
+            step.ImageSource = tmp;
+            step.StatusText = "已采集";
+            step.ActualValue = $"相机图 {mat.Width}×{mat.Height}";
+            CurrentImagePath = tmp;
+            LoadCurrentImageSource();
+            _sharedImage?.Dispose();
+            _sharedImage = Cv2.ImRead(tmp, ImreadModes.Color);
+        }
+        MindVisionStatus = why;
+    }
+
     private void RebuildToolOptions()
     {
         ToolOptions.Clear();
@@ -4833,6 +4885,17 @@ public class FlowViewModel : ViewModelBase
 
     public ICommand PickImageCmd { get; }
 
+    // ===== 迈德威视相机（面阵 / 线扫） =====
+    public System.Collections.ObjectModel.ObservableCollection<string> MindVisionDevices { get; } = new();
+
+    public string MindVisionStatus { get => _mindVisionStatus; set => SetField(ref _mindVisionStatus, value); }
+
+    private string _mindVisionStatus = "点「🔄 刷新」枚举相机";
+
+    public ICommand RefreshCamerasCmd { get; }
+
+    public ICommand GrabCameraCmd { get; }
+
     public ICommand ConfirmTemplateCmd { get; }
 
     public ICommand StartMatchCmd { get; }
@@ -4940,6 +5003,10 @@ public class FlowViewModel : ViewModelBase
             Instance = this;
 
             NodeGraph = new NodeGraphViewModel(this);
+
+            RefreshCamerasCmd = new RelayCommand(_ => RefreshMindVisionCameras());
+
+            GrabCameraCmd = new RelayCommand(_ => GrabMindVisionFrame());
 
             RebuildToolOptions(); // 初始化工具箱（视觉分类）
 
@@ -5294,6 +5361,11 @@ public class FlowViewModel : ViewModelBase
 
             }
 
+            else if (_selectedStep.CaptureMode == "迈德威视相机")
+            {
+                GrabMindVisionFrame();
+                return;
+            }
             else // 采集相机
 
             {
@@ -6635,6 +6707,26 @@ public class FlowViewModel : ViewModelBase
                     step.ImageSource = tmp;
 
                     return frame.Clone();
+
+                }
+
+                case "迈德威视相机":
+
+                {
+
+                    var mat = MindVisionService.Instance.Grab(step.CameraIndex, step.CameraLineScan,
+
+                        step.CameraLineRate, step.CameraSpliceLines, out var why);
+
+                    if (mat == null) { step.ActualValue = why; return null; }
+
+                    var tmp = Path.Combine(NoCodeVision.Helpers.AppPaths.TempDirectory, $"ncv_mv_{DateTime.Now:yyyyMMddHHmmssfff}.png");
+
+                    Cv2.ImWrite(tmp, mat);
+
+                    step.ImageSource = tmp;
+
+                    return mat;
 
                 }
 

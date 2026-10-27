@@ -45,5 +45,24 @@
     </Content>
   </ItemGroup>
 
+  <!-- 迈德威视相机 SDK：装了 SDK 就自动带到输出目录；没装则跳过（代码里运行期会给出提示） -->
+  <ItemGroup Condition="Exists('$(MSBuildProgramFiles32)\MindVision\SDK\X64\MVCAMSDK_X64.dll')">
+    <None Include="$(MSBuildProgramFiles32)\MindVision\SDK\X64\MVCAMSDK_X64.dll">
+      <Link>MVCAMSDK_X64.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+    <None Include="$(MSBuildProgramFiles32)\MindVision\SDK\X64\MVImageProcess_X64.DLL">
+      <Link>MVImageProcess_X64.DLL</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+    <None Include="$(MSBuildProgramFiles32)\MindVision\SDK\X64\MindVision64.ax">
+      <Link>MindVision64.ax</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+  </ItemGroup>
+
 
 </Project>

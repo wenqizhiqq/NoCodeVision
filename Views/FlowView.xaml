@@ -589,6 +589,38 @@
                                       ItemsSource="{Binding CaptureModes}" SelectedItem="{Binding SelectedStep.CaptureMode, FallbackValue='打开文件'}" />
                             <Button Style="{StaticResource AppleBtn}" Content="📂 选择图片" Command="{Binding PickImageCmd}" Margin="12,0,0,0" />
                         </DockPanel>
+                        <!-- 迈德威视：面阵/线扫共用一块，勾了线扫才要行频和拼帧行数 -->
+                        <StackPanel>
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedStep.CaptureMode}" Value="迈德威视相机">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <Rectangle Style="{StaticResource AppleDivider}" />
+                            <DockPanel Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="相机" />
+                                <Button Style="{StaticResource AppleBtn}" Content="🔄 刷新" Command="{Binding RefreshCamerasCmd}" DockPanel.Dock="Right" Margin="8,0,0,0" />
+                                <Button Style="{StaticResource AppleBtn}" Content="📷 抓一张" Command="{Binding GrabCameraCmd}" DockPanel.Dock="Right" Margin="8,0,0,0" />
+                                <ComboBox Style="{StaticResource AppleComboBox}" ItemsSource="{Binding MindVisionDevices}"
+                                          SelectedIndex="{Binding SelectedStep.CameraIndex, Mode=TwoWay, FallbackValue=0}" />
+                            </DockPanel>
+                            <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding MindVisionStatus}" Margin="16,2,16,4" TextWrapping="Wrap" />
+                            <DockPanel Style="{StaticResource AppleRow}">
+                                <CheckBox Content="线扫" DockPanel.Dock="Left" Style="{StaticResource AppleCheckBox}"
+                                          IsChecked="{Binding SelectedStep.CameraLineScan, Mode=TwoWay}" ToolTip="线扫相机：靠行频一行一行拍，攒够「每帧行数」拼成一张图" />
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="行频(Hz)" Margin="16,0,6,0" />
+                                <TextBox Style="{StaticResource AppleTextField}" Width="80" DockPanel.Dock="Left"
+                                         Text="{Binding SelectedStep.CameraLineRate, Mode=TwoWay, FallbackValue=10000}" />
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="每帧行数" Margin="12,0,6,0" />
+                                <TextBox Style="{StaticResource AppleTextField}" Width="80"
+                                         Text="{Binding SelectedStep.CameraSpliceLines, Mode=TwoWay, FallbackValue=1024}" />
+                            </DockPanel>
+                        </StackPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding SelectedStep.ImageSource, FallbackValue='未选择图片'}" Margin="16,4,16,4" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
