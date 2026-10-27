@@ -301,7 +301,12 @@
         </Grid>
 
         <!-- 右侧：步骤属性（按步骤类型动态切换；脚本流程隐藏） -->
-        <ScrollViewer Grid.Column="2" Margin="16,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid Grid.Column="2" Margin="16,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <ScrollViewer.Style>
                 <Style TargetType="ScrollViewer">
                     <Setter Property="Visibility" Value="Visible" />
@@ -339,50 +344,6 @@
                             <ComboBox Grid.Column="3" Style="{StaticResource AppleComboBox}" ItemsSource="{Binding ToolOptions}" SelectedItem="{Binding SelectedTool}" />
                         </Grid>
                         <TextBlock Style="{StaticResource AppleGuideText}" Text="选好工具后点中间工具栏「➕ 添加」加入流程；切换工具会立即改写当前选中步骤，右侧属性面板同步切换。" Margin="14,0,14,4" TextWrapping="Wrap" />
-                    </StackPanel>
-                </Border>
-
-                <!-- 运行状态：选中哪一步就显示哪一步的状态 / 当前值 / 耗时 -->
-                <Border Margin="0,0,0,12">
-                    <Border.Style>
-                        <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding HasSelectedStep}" Value="True">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="📊 运行状态" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="流程" Width="70" />
-                            <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding Status}" TextWrapping="Wrap" VerticalAlignment="Center" />
-                        </DockPanel>
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="这一步" Width="70" />
-                            <TextBlock Style="{StaticResource AppleSubLabel}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
-                                <TextBlock.Text>
-                                    <MultiBinding StringFormat="{}{0} - {1}">
-                                        <Binding Path="SelectedStep.Function" />
-                                        <Binding Path="SelectedStep.Name" />
-                                    </MultiBinding>
-                                </TextBlock.Text>
-                            </TextBlock>
-                        </DockPanel>
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="状态" Width="70" />
-                            <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding SelectedStep.StatusText}" VerticalAlignment="Center" FontWeight="SemiBold" />
-                        </DockPanel>
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="当前值" Width="70" />
-                            <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding SelectedStep.ActualValue}" TextWrapping="Wrap" VerticalAlignment="Center" />
-                        </DockPanel>
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="耗时" Width="70" />
-                            <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding SelectedStep.CostMs, StringFormat={}{0:F1} ms}" VerticalAlignment="Center" />
-                        </DockPanel>
                     </StackPanel>
                 </Border>
 
@@ -506,34 +467,6 @@
                                            Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
                             </DockPanel>
                         </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <!-- 结果画面：运行后把圆、点、连线和大字结论画在图上 -->
-                <Border Margin="0,0,0,12">
-                    <Border.Style>
-                        <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding HasResultImage}" Value="True">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                    <StackPanel x:Name="ResultCardHost">
-                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="🖥 结果画面" />
-                        <Border Margin="12,4,12,10" CornerRadius="8" ClipToBounds="True" Background="{StaticResource CanvasBrush}">
-                            <Image Source="{Binding ResultImage}" Stretch="Uniform">
-                                <Image.Height>
-                                    <MultiBinding Converter="{StaticResource AspectHeight}">
-                                        <Binding Path="ActualWidth" ElementName="ResultCardHost" />
-                                        <Binding Path="ResultImage.PixelWidth" />
-                                        <Binding Path="ResultImage.PixelHeight" />
-                                    </MultiBinding>
-                                </Image.Height>
-                            </Image>
-                        </Border>
                     </StackPanel>
                 </Border>
 
@@ -2155,5 +2088,21 @@
 
             </StackPanel>
         </ScrollViewer>
+        <!-- 底部一行运行状态：始终可见，不跟着上面滚动 -->
+        <Border Grid.Row="1" Margin="0,6,0,4" Padding="12,6" CornerRadius="8"
+                Background="{StaticResource CanvasBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1">
+            <TextBlock FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis">
+                <TextBlock.Text>
+                    <MultiBinding StringFormat="{}{0} ｜ {1}：{2} ｜ 当前值 {3} ｜ {4:F1} ms">
+                        <Binding Path="Status" />
+                        <Binding Path="SelectedStep.Function" FallbackValue="未选中步骤" />
+                        <Binding Path="SelectedStep.StatusText" FallbackValue="—" />
+                        <Binding Path="SelectedStep.ValueText" FallbackValue="—" />
+                        <Binding Path="SelectedStep.CostMs" FallbackValue="0" />
+                    </MultiBinding>
+                </TextBlock.Text>
+            </TextBlock>
+        </Border>
+        </Grid>
     </Grid>
 </UserControl>
