@@ -20,9 +20,22 @@ public sealed class MindVisionService
     public string Status { get; private set; } = "未检测";
     public string LastError { get; private set; } = "";
 
+    private bool _probed;
+
+    /// <summary>有没有工业相机（只枚举一次，之后用缓存；界面点刷新会更新）。</summary>
+    public bool AnyDevice
+    {
+        get
+        {
+            if (!_probed) { Refresh(); _probed = true; }
+            return Devices.Count > 0;
+        }
+    }
+
     /// <summary>重新枚举相机（界面「🔄 刷新」按钮）。</summary>
     public void Refresh()
     {
+        _probed = true;
         Devices = MindVisionCamera.Enumerate();
         Status = !MindVisionCamera.SdkAvailable ? MindVisionCamera.SdkError
                : Devices.Count == 0 ? "SDK 正常，但没找到相机（查 USB/网口和电源）"

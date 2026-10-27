@@ -506,6 +506,18 @@ public class VisionFlowStep : ViewModelBase
 
     private int _cameraSpliceLines = 1024;
 
+    public string ModbusIp { get => _modbusIp; set => SetField(ref _modbusIp, value); }
+
+    private string _modbusIp = "";
+
+    public int ModbusPort { get => _modbusPort; set => SetField(ref _modbusPort, value); }
+
+    private int _modbusPort = 502;
+
+    public int ModbusUnit { get => _modbusUnit; set => SetField(ref _modbusUnit, value); }
+
+    private int _modbusUnit = 1;
+
 
 
     public double RoiX { get => _roiX; set => SetField(ref _roiX, value); }
@@ -6772,9 +6784,51 @@ public class FlowViewModel : ViewModelBase
 
                 {
 
+                    // ① 有工业相机（迈德威视）就先用它——真实 SDK 抓帧
+
+                    if (MindVisionCamera.SdkAvailable && MindVisionService.Instance.AnyDevice)
+
+                    {
+
+                        var mv = MindVisionService.Instance.Grab(step.CameraIndex, step.CameraLineScan,
+
+                            step.CameraLineRate, step.CameraSpliceLines, out var mvWhy);
+
+                        if (mv != null)
+
+                        {
+
+                            var mvPath = Path.Combine(NoCodeVision.Helpers.AppPaths.TempDirectory, $"ncv_mv_{DateTime.Now:yyyyMMddHHmmssfff}.png");
+
+                            Cv2.ImWrite(mvPath, mv);
+
+                            step.ImageSource = mvPath;
+
+                            return mv;
+
+                        }
+
+                        step.ActualValue = mvWhy;      // 工业相机没抓到，下面再试普通摄像头
+
+                    }
+
+                    // ② 普通 USB 摄像头（OpenCV）
+
                     using var cap = new VideoCapture(0);
 
-                    if (!cap.IsOpened()) return null;
+                    if (!cap.IsOpened())
+
+                    {
+
+                        step.ActualValue = !MindVisionCamera.SdkAvailable ? "没有可用相机：迈德威视 SDK 没装，也没有 USB 摄像头"
+
+                            : MindVisionService.Instance.Devices.Count == 0 ? "没有可用相机：SDK 正常但没找到工业相机，也没有 USB 摄像头"
+
+                            : (string.IsNullOrWhiteSpace(step.ActualValue) ? "没有可用相机" : step.ActualValue);
+
+                        return null;
+
+                    }
 
                     using var frame = new Mat();
 
@@ -7000,6 +7054,22 @@ public class FlowViewModel : ViewModelBase
 
 
 
+    /// <summary>把 bin 内的绝对路径换成相对路径（存盘用）。</summary>
+    private static void StoreStepPaths(VisionFlowStep s)
+    {
+        s.FolderPath = Helpers.AppPaths.ToStoredPath(s.FolderPath);
+        s.ImageSource = Helpers.AppPaths.ToStoredPath(s.ImageSource);
+        s.TemplateFile = Helpers.AppPaths.ToStoredPath(s.TemplateFile);
+    }
+
+    /// <summary>把相对路径还原成绝对路径（读盘用）。</summary>
+    private static void ResolveStepPaths(VisionFlowStep s)
+    {
+        s.FolderPath = Helpers.AppPaths.ResolvePath(s.FolderPath);
+        s.ImageSource = Helpers.AppPaths.ResolvePath(s.ImageSource);
+        s.TemplateFile = Helpers.AppPaths.ResolvePath(s.TemplateFile);
+    }
+
     private bool LoadState()
 
     {
@@ -7021,6 +7091,8 @@ public class FlowViewModel : ViewModelBase
             if (flows == null || flows.Count == 0) return false;
 
             NormalizeStepNames(flows);
+
+            foreach (var f in flows) foreach (var s in f.Steps) ResolveStepPaths(s);   // 相对路径 → 绝对路径
 
             _flows = new ObservableCollection<VisionFlow>(flows);
 
@@ -7054,9 +7126,27 @@ public class FlowViewModel : ViewModelBase
 
             if (!string.IsNullOrWhiteSpace(dir)) Directory.CreateDirectory(dir);
 
-            var json = JsonSerializer.Serialize(_flows, new JsonSerializerOptions { WriteIndented = true });
+            // 存盘时把 bin 里的路径写成相对路径，工程搬走也能用；写完立刻还原成绝对路径
 
-            File.WriteAllText(path, json);
+            try
+
+            {
+
+                foreach (var f in _flows) foreach (var s in f.Steps) StoreStepPaths(s);
+
+                var json = JsonSerializer.Serialize(_flows, new JsonSerializerOptions { WriteIndented = true });
+
+                File.WriteAllText(path, json);
+
+            }
+
+            finally
+
+            {
+
+                foreach (var f in _flows) foreach (var s in f.Steps) ResolveStepPaths(s);
+
+            }
 
         }
 
@@ -9333,9 +9423,9 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                if (!CommHub.Instance.IsOpen) return Fail("通讯通道没连上（去「通讯」页连上 Modbus-TCP 再跑）");
-
                 int wAddr = (int)Math.Round(step.RoiX);
+
+                if (wAddr < 0 || wAddr > 65535) return Fail("寄存器地址要在 0~65535 之间");
 
                 bool wCoil = step.IoType == "线圈";
 
@@ -9357,6 +9447,8 @@ public class FlowViewModel : ViewModelBase
 
                 double scale = step.Number1 > 0 ? step.Number1 : 1;
 
+                ushort regVal = 0;
+
                 string wCmd;
 
                 string shown;
@@ -9377,13 +9469,51 @@ public class FlowViewModel : ViewModelBase
 
                     long iv = (long)Math.Round(rawVal * scale);
 
-                    ushort u = unchecked((ushort)iv);
+                    regVal = unchecked((ushort)iv);
 
-                    wCmd = $"w {wAddr} {u}";
+                    wCmd = $"w {wAddr} {regVal}";
 
-                    shown = scale == 1 ? $"{rawVal:F2}" : $"{rawVal:F2}×{scale:0} = {u}";
+                    shown = scale == 1 ? $"{rawVal:F2}" : $"{rawVal:F2}×{scale:0} = {regVal}";
 
                 }
+
+                // ① 填了 PLC 地址：自己连、自己发、等它回执
+
+                if (!string.IsNullOrWhiteSpace(step.ModbusIp))
+
+                {
+
+                    var mb = Comm.ModbusMaster.Get(step.ModbusIp.Trim(), (int)step.ModbusPort, (int)step.ModbusUnit, out var connErr);
+
+                    if (mb == null) return Fail(connErr);
+
+                    string werr = "";
+
+                    bool ok = wCoil
+
+                        ? mb.WriteCoil((ushort)wAddr, rawVal != 0, out werr)
+
+                        : mb.WriteRegister((ushort)wAddr, regVal, out werr);
+
+                    if (!ok)
+
+                    {
+
+                        Comm.ModbusMaster.Drop(mb.Key);      // 掉线就断开，下次自动重连
+
+                        return Fail($"写 {wAddr} 失败：{werr}");
+
+                    }
+
+                    Done($"已写 {wAddr} ← {shown}", $"PLC {mb.Key} 已确认写入");
+
+                    break;
+
+                }
+
+                // ② 没填地址：走「通讯」页连好的通道
+
+                if (!CommHub.Instance.IsOpen) return Fail("通讯通道没连上：要么填 PLC 地址直连，要么去「通讯」页连一条");
 
                 try
 
@@ -9391,7 +9521,7 @@ public class FlowViewModel : ViewModelBase
 
                     System.Threading.Tasks.Task.Run(() => CommHub.Instance.SendAsync(wCmd)).GetAwaiter().GetResult();
 
-                    Done($"已写 {wAddr} ← {shown}", "已发到 PLC");
+                    Done($"已写 {wAddr} ← {shown}", "已发到通道");
 
                 }
 
@@ -9411,7 +9541,78 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                if (!CommHub.Instance.IsOpen) return Fail("通讯通道没连上");
+                if (!string.IsNullOrWhiteSpace(step.ModbusIp))
+
+                {
+
+                    int rAddr = (int)Math.Round(step.RoiX);
+
+                    bool rCoil = step.IoType == "线圈";
+
+                    var mb = Comm.ModbusMaster.Get(step.ModbusIp.Trim(), (int)step.ModbusPort, (int)step.ModbusUnit, out var connErr);
+
+                    if (mb == null) return Fail(connErr);
+
+                    if (rCoil)
+
+                    {
+
+                        var bits = mb.ReadCoils((ushort)rAddr, 1, out var cerr);
+
+                        if (bits == null) { Comm.ModbusMaster.Drop(mb.Key); return Fail($"读线圈失败：{cerr}"); }
+
+                        double bv = bits[0] ? 1 : 0;
+
+                        Done($"{rAddr} = {bv:F0}", $"PLC {mb.Key}");
+
+                        SetVar(step.OutputVar, bv.ToString("F0"));
+
+                        GeoPut(step, new GeoResult { Value = bv });
+
+                    }
+
+                    else
+
+                    {
+
+                        int cnt = t == "ModbusReadArr" ? (int)Math.Clamp(step.TopN, 1, 64) : 1;
+
+                        var regs = mb.ReadRegisters((ushort)rAddr, (ushort)cnt, false, out var rerr);
+
+                        if (regs == null) { Comm.ModbusMaster.Drop(mb.Key); return Fail($"读寄存器失败：{rerr}"); }
+
+                        if (t == "ModbusReadArr")
+
+                        {
+
+                            var key = string.IsNullOrWhiteSpace(step.LoopVar) ? "Modbus数组" : step.LoopVar.Trim();
+
+                            _arrays[key] = regs.Select(v => (double)v).ToList();
+
+                            Done($"读到 {regs.Length} 个：" + string.Join(",", regs), $"PLC {mb.Key}");
+
+                        }
+
+                        else
+
+                        {
+
+                            Done($"{rAddr} = {regs[0]}", $"PLC {mb.Key}");
+
+                            SetVar(step.OutputVar, regs[0].ToString());
+
+                            GeoPut(step, new GeoResult { Value = regs[0] });
+
+                        }
+
+                    }
+
+                    break;
+
+                }
+
+                if (!CommHub.Instance.IsOpen) return Fail("通讯通道没连上：要么填 PLC 地址直连，要么去「通讯」页连一条");
+
 
                 string addr = t == "KeyenceLink" ? (step.IoChannel ?? "") : ((int)step.RoiX).ToString();
 
