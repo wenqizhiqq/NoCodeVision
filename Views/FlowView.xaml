@@ -342,6 +342,50 @@
                     </StackPanel>
                 </Border>
 
+                <!-- 运行状态：选中哪一步就显示哪一步的状态 / 当前值 / 耗时 -->
+                <Border Margin="0,0,0,12">
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasSelectedStep}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="📊 运行状态" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="流程" Width="70" />
+                            <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding Status}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="这一步" Width="70" />
+                            <TextBlock Style="{StaticResource AppleSubLabel}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                                <TextBlock.Text>
+                                    <MultiBinding StringFormat="{}{0} - {1}">
+                                        <Binding Path="SelectedStep.Function" />
+                                        <Binding Path="SelectedStep.Name" />
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="状态" Width="70" />
+                            <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding SelectedStep.StatusText}" VerticalAlignment="Center" FontWeight="SemiBold" />
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="当前值" Width="70" />
+                            <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding SelectedStep.ActualValue}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource AppleRow}">
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="耗时" Width="70" />
+                            <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding SelectedStep.CostMs, StringFormat={}{0:F1} ms}" VerticalAlignment="Center" />
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+
                 <!-- 通用参数面板：算子在 Vision/OperatorCatalog.cs 里登记后自动出界面，不必再写 XAML -->
                 <Border Margin="0,0,0,12">
                     <Border.Style>
@@ -385,6 +429,16 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <!-- 通讯类步骤：不用跑流程就能测通不通 -->
+                        <StackPanel Visibility="{Binding SelectedStep.StepType, Converter={StaticResource KindVis}, ConverterParameter='ModbusWrite,ModbusRead,ModbusReadArr'}">
+                            <Rectangle Style="{StaticResource AppleDivider}" />
+                            <DockPanel Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="连接测试" />
+                                <Button Style="{StaticResource AppleBtn}" Content="🔌 测一下" Command="{Binding TestModbusCmd}" DockPanel.Dock="Right" Margin="8,0,0,0" />
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding ModbusStatus}" Margin="8,0,8,0"
+                                           TextWrapping="Wrap" VerticalAlignment="Center" />
+                            </DockPanel>
+                        </StackPanel>
                         <!-- 显示结果：先看当前图，跑一次后这里就是画好的结果图 -->
                         <StackPanel x:Name="ShowResultPreviewHost" Visibility="{Binding SelectedStep.StepType, Converter={StaticResource KindVis}, ConverterParameter=ShowResult}">
                             <Rectangle Style="{StaticResource AppleDivider}" />

@@ -518,6 +518,10 @@ public class VisionFlowStep : ViewModelBase
 
     private int _modbusUnit = 1;
 
+    public int ModbusTimeout { get => _modbusTimeout; set => SetField(ref _modbusTimeout, value); }
+
+    private int _modbusTimeout = 800;
+
 
 
     public double RoiX { get => _roiX; set => SetField(ref _roiX, value); }
@@ -3768,6 +3772,9 @@ public class FlowViewModel : ViewModelBase
 
     public bool SelectedOperatorUsesRoi => OperatorCatalog.Find(_selectedStep?.StepType)?.UsesRoi == true;
 
+    /// <summary>有没有选中步骤（右上角「运行状态」卡片显隐用）。</summary>
+    public bool HasSelectedStep => _selectedStep != null;
+
     /// <summary>右侧通用参数面板的五个绑定都靠它重算，切换工具后必须调一次。</summary>
     void RaiseOperatorPanel()
     {
@@ -3776,6 +3783,7 @@ public class FlowViewModel : ViewModelBase
         OnPropertyChanged(nameof(SelectedOperatorName));
         OnPropertyChanged(nameof(SelectedOperatorDesc));
         OnPropertyChanged(nameof(SelectedOperatorUsesRoi));
+        OnPropertyChanged(nameof(HasSelectedStep));
     }
 
 
@@ -4632,6 +4640,27 @@ public class FlowViewModel : ViewModelBase
             }
     }
 
+    /// <summary>测一下 PLC 连不连得上、地址读不读得到（不用跑整条流程）。</summary>
+    void TestModbusConnection()
+    {
+        if (_selectedStep == null) return;
+        var step = _selectedStep;
+        if (string.IsNullOrWhiteSpace(step.ModbusIp))
+        {
+            ModbusStatus = "没填 PLC 地址：填上 IP 直连，或者去「通讯」页连一条通道";
+            return;
+        }
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var mb = Comm.ModbusMaster.Get(step.ModbusIp.Trim(), (int)step.ModbusPort, (int)step.ModbusUnit,
+            out var err, Math.Max(200, step.ModbusTimeout));
+        if (mb == null) { ModbusStatus = $"✖ {err}（等了 {sw.ElapsedMilliseconds} 毫秒）"; return; }
+        int addr = (int)Math.Clamp(Math.Round(step.RoiX), 0, 65535);
+        var regs = mb.ReadRegisters((ushort)addr, 1, false, out var rerr);
+        ModbusStatus = regs != null
+            ? $"✔ 已连上 {mb.Key}，地址 {addr} 当前值 = {regs[0]}（{sw.ElapsedMilliseconds} 毫秒）"
+            : $"△ 连上了 {mb.Key}，但读地址 {addr} 失败：{rerr}";
+    }
+
     void RefreshMindVisionCameras()
     {
         MindVisionDevices.Clear();
@@ -4944,6 +4973,12 @@ public class FlowViewModel : ViewModelBase
 
     public ICommand RefreshCamerasCmd { get; }
 
+    public ICommand TestModbusCmd { get; }
+
+    public string ModbusStatus { get => _modbusStatus; set => SetField(ref _modbusStatus, value); }
+
+    private string _modbusStatus = "点「🔌 测一下」看能不能连上 PLC";
+
     public ICommand GrabCameraCmd { get; }
 
     public ICommand ConfirmTemplateCmd { get; }
@@ -5057,6 +5092,8 @@ public class FlowViewModel : ViewModelBase
             RefreshCamerasCmd = new RelayCommand(_ => RefreshMindVisionCameras());
 
             GrabCameraCmd = new RelayCommand(_ => GrabMindVisionFrame());
+
+            TestModbusCmd = new RelayCommand(_ => TestModbusConnection());
 
             RebuildToolOptions(); // 初始化工具箱（视觉分类）
 
@@ -6277,9 +6314,13 @@ public class FlowViewModel : ViewModelBase
     }
 
     /// <summary>把当前工作图刷到右侧预览，跑流程时能看见每一张图。</summary>
+    private Mat? _lastPreviewMat;
+
     private void PublishPreview()
     {
+        if (ReferenceEquals(_lastPreviewMat, _sharedImage)) return;   // 图没变就别重复转换
         var bmp = MatToBitmapSource(_sharedImage);
+        _lastPreviewMat = bmp == null ? null : _sharedImage;
         if (bmp != null) CurrentImageSource = bmp;
     }
 
@@ -6925,26 +6966,19 @@ public class FlowViewModel : ViewModelBase
         try
         {
             int w = mat.Width, h = mat.Height;
-            int ch = mat.Channels();
-            Mat? conv = null; Mat srcMat;
-            if (ch == 3) srcMat = mat;
-            else if (ch == 1) { conv = new Mat(); Cv2.CvtColor(mat, conv, ColorConversionCodes.GRAY2BGR); srcMat = conv; }
-            else if (ch == 4) { conv = new Mat(); Cv2.CvtColor(mat, conv, ColorConversionCodes.BGRA2BGR); srcMat = conv; }
-            else return null;
-            var wb = new System.Windows.Media.Imaging.WriteableBitmap(w, h, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null);
-            wb.Lock();
-            try
+            Mat bgra;
+            switch (mat.Channels())
             {
-                int stride = wb.BackBufferStride;
-                var px = new byte[stride * h];
-                var src = new byte[w * h * 3];
-                System.Runtime.InteropServices.Marshal.Copy(srcMat.Data, src, 0, src.Length);
-                for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) { int si = (y * w + x) * 3; int di = y * stride + x * 4; px[di] = src[si]; px[di + 1] = src[si + 1]; px[di + 2] = src[si + 2]; px[di + 3] = 255; }
-                System.Runtime.InteropServices.Marshal.Copy(px, 0, wb.BackBuffer, px.Length);
+                case 4: bgra = mat; break;                                   // 已经是 BGRA，直接用
+                case 3: bgra = new Mat(); Cv2.CvtColor(mat, bgra, ColorConversionCodes.BGR2BGRA); break;
+                case 1: bgra = new Mat(); Cv2.CvtColor(mat, bgra, ColorConversionCodes.GRAY2BGRA); break;
+                default: return null;
             }
-            finally { wb.Unlock(); }
+            var wb = new System.Windows.Media.Imaging.WriteableBitmap(w, h, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null);
+            // 一次整块拷贝（OpenCV 做颜色转换是 SIMD 的，比逐像素循环快一个数量级）
+            wb.WritePixels(new System.Windows.Int32Rect(0, 0, w, h), bgra.Data, w * h * 4, w * 4);
             wb.Freeze();
-            if (conv != null) conv.Dispose();
+            if (!ReferenceEquals(bgra, mat)) bgra.Dispose();
             return wb;
         }
         catch { return null; }
@@ -9483,7 +9517,7 @@ public class FlowViewModel : ViewModelBase
 
                 {
 
-                    var mb = Comm.ModbusMaster.Get(step.ModbusIp.Trim(), (int)step.ModbusPort, (int)step.ModbusUnit, out var connErr);
+                    var mb = Comm.ModbusMaster.Get(step.ModbusIp.Trim(), (int)step.ModbusPort, (int)step.ModbusUnit, out var connErr, Math.Max(200, step.ModbusTimeout));
 
                     if (mb == null) return Fail(connErr);
 
@@ -9549,7 +9583,7 @@ public class FlowViewModel : ViewModelBase
 
                     bool rCoil = step.IoType == "线圈";
 
-                    var mb = Comm.ModbusMaster.Get(step.ModbusIp.Trim(), (int)step.ModbusPort, (int)step.ModbusUnit, out var connErr);
+                    var mb = Comm.ModbusMaster.Get(step.ModbusIp.Trim(), (int)step.ModbusPort, (int)step.ModbusUnit, out var connErr, Math.Max(200, step.ModbusTimeout));
 
                     if (mb == null) return Fail(connErr);
 
