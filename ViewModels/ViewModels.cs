@@ -222,9 +222,28 @@ public class VisionFlowStep : ViewModelBase
 
 
 
-    public string ActualValue { get => _actualValue; set => SetField(ref _actualValue, value); }
+    public string ActualValue
+    {
+        get => _actualValue;
+        set { if (SetField(ref _actualValue, value)) OnPropertyChanged(nameof(ValueText)); }
+    }
 
     private string _actualValue = "";
+
+    /// <summary>步骤列表「当前值」列显示什么：是角度就只显示多少度，其余照原样。</summary>
+    public string ValueText
+    {
+        get
+        {
+            var v = _actualValue ?? "";
+            if (StepType == "AngleFromCenter")
+            {
+                var m = System.Text.RegularExpressions.Regex.Match(v, @"角度=([-+]?\d+\.?\d*)");
+                if (m.Success) return m.Groups[1].Value + "°";
+            }
+            return v;
+        }
+    }
 
 
 
@@ -4676,7 +4695,7 @@ public class FlowViewModel : ViewModelBase
 
     private CancellationTokenSource? _cts;
 
-    private const int StepPaceMs = 250;
+    // 每步之间只让界面刷一次（渲染/滚动/按钮状态），不再空等固定毫秒
 
 
 
@@ -6192,9 +6211,9 @@ public class FlowViewModel : ViewModelBase
 
 
 
-            // 让 UI 重绘、滚动到当前行、并响应暂停/停止点击
+            // 让 UI 重绘、滚动到当前行、并响应暂停/停止点击（只让出一次消息循环，不空等）
 
-            await Task.Delay(StepPaceMs, ct);
+            await PulseUiAsync();
 
 
 
@@ -6218,6 +6237,13 @@ public class FlowViewModel : ViewModelBase
     }
 
 
+
+    /// <summary>让出一次消息循环：界面该重绘的重绘、按钮该变的变，但不额外等待。</summary>
+    private static async Task PulseUiAsync()
+    {
+        try { await System.Windows.Threading.Dispatcher.Yield(System.Windows.Threading.DispatcherPriority.Background); }
+        catch { }
+    }
 
     /// <summary>把当前工作图刷到右侧预览，跑流程时能看见每一张图。</summary>
     private void PublishPreview()
@@ -6306,7 +6332,7 @@ public class FlowViewModel : ViewModelBase
 
                 PublishPreview();
 
-                await Task.Delay(StepPaceMs, ct);
+                await PulseUiAsync();
 
                 cur = NextGraphNode(flow, cur);
 
