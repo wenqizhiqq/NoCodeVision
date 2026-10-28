@@ -3476,17 +3476,44 @@ public class FlowViewModel : ViewModelBase
     // 新建「流程 / 脚本流程」时预置的完整 5 步流水线：采集 → 模板匹配 → 缺陷检测 → 测量 → 通讯
 
     /// <summary>弹「新建流程」对话框选模板；取消返回 null。</summary>
-    string? PromptFlowTemplate(string title)
+    static System.Collections.Generic.List<NoCodeVision.Views.AddFlowDialog.Option> Opts(
+        params (string Key, string Title, string Desc)[] items) =>
+        items.Select(i => new NoCodeVision.Views.AddFlowDialog.Option { Key = i.Key, Title = i.Title, Desc = i.Desc }).ToList();
+
+    /// <summary>新建流程弹窗：每个按钮给的例子不一样，名称框默认按「类型-序号」填好。</summary>
+    bool PromptFlow(string title, string defaultName, System.Collections.Generic.List<NoCodeVision.Views.AddFlowDialog.Option> items,
+        out string key, out string name)
     {
+        key = "empty"; name = defaultName;
         try
         {
-            var dlg = new NoCodeVision.Views.AddFlowDialog(title)
+            var dlg = new NoCodeVision.Views.AddFlowDialog(title, defaultName, items)
             {
                 Owner = System.Windows.Application.Current?.MainWindow
             };
-            return dlg.ShowDialog() == true ? dlg.SelectedKey : null;
+            if (dlg.ShowDialog() != true) return false;
+            key = dlg.SelectedKey;
+            if (!string.IsNullOrWhiteSpace(dlg.FlowName)) name = dlg.FlowName;
+            return true;
         }
-        catch { return "empty"; }
+        catch { return true; }   // 弹窗本身出问题时按默认值继续，别让「添加」点了没反应
+    }
+
+    /// <summary>只改名：同一个对话框，不给例子清单。</summary>
+    bool PromptRename(string defaultName, out string name)
+    {
+        name = defaultName;
+        try
+        {
+            var dlg = new NoCodeVision.Views.AddFlowDialog("重命名流程", defaultName, null)
+            {
+                Owner = System.Windows.Application.Current?.MainWindow
+            };
+            if (dlg.ShowDialog() != true) return false;
+            if (!string.IsNullOrWhiteSpace(dlg.FlowName)) name = dlg.FlowName;
+            return true;
+        }
+        catch { return true; }
     }
 
     VisionFlowStep MkStep(int idx, string tool, string name, Action<VisionFlowStep>? cfg = null)
@@ -3551,6 +3578,57 @@ public class FlowViewModel : ViewModelBase
                 MkStep(3, "读二维码", "读内容", s => { s.CompareSource = "第2步"; s.UseDpm = true; s.OutputVar = "qrText"; }),
                 MkStep(4, "TCP 发送", "发给MES", s => { s.TcpHost = "127.0.0.1"; s.TcpPort = 9000; s.CompareSource = "第3步"; s.LineEnd = "换行 LF"; s.TcpTimeout = 1500; }),
                 MkStep(5, "显示结果", "画到图上", s => { s.CompareSource = "第3步"; s.CompareVar = "第2步"; s.MeasureType = "圆和点"; s.NotifyMessage = "QR"; }),
+            };
+            return;
+        }
+        // 脚本流程的例子：只换脚本内容，不搭步骤
+        if (key == "lua-empty")
+        {
+            flow.ScriptContent = "-- 空白脚本：可用接口 vision.* / plc.* / motion.* / print(...)\n-- 例：\n-- local score = vision.match(\"tpl_A.png\")\n-- if score >= 0.85 then plc.write(200, 1) end\n";
+            return;
+        }
+        if (key == "lua-match")
+        {
+            flow.ScriptContent = "-- 示例：抓图 → 模板匹配 → 分数判定 → 写 PLC\nlocal score = vision.grab_and_match(\"tpl_A.png\")   -- 抓一帧并匹配模板，返回 0~1\nlocal threshold = 0.85\nprint(\"匹配分数: \" .. string.format(\"%.3f\", score))\n\nif score >= threshold then\n    plc.write(200, 1)                      -- 合格：发到位信号\n    plc.write(201, math.floor(score * 1000))  -- 把分数放大成整数一起下发\n    print(\"合格，已通知机台\")\nelse\n    plc.write(200, 0)                       -- 不合格：复位信号\n    plc.write(202, 1)                       -- 报警\n    print(\"不合格，已报警\")\nend\n\nsleep(50)\n";
+            return;
+        }
+        if (key == "lua-loop")
+        {
+            flow.ScriptContent = "-- 示例：连续采 10 次取平均，再一次性下发\nlocal sum, n = 0, 10\nfor i = 1, n do\n    local s = vision.grab_and_match(\"tpl_A.png\")\n    sum = sum + s\n    sleep(20)\nend\nlocal avg = sum / n\nprint(\"平均分数: \" .. string.format(\"%.3f\", avg))\nplc.write(210, math.floor(avg * 1000))\n";
+            return;
+        }
+        // 运控例子：上电 → 回零 → 走位 → 等条件 → 开吸盘
+        if (key == "motion")
+        {
+            flow.Steps = new ObservableCollection<VisionFlowStep>
+            {
+                MkStep(1, "轴上电解锁", "使能", s => { s.TargetAxis = "X"; s.SwitchState = "上电解锁"; }),
+                MkStep(2, "轴回原点", "建立零点", s => { s.TargetAxis = "X"; s.HomeOffset = 0; s.Timeout = 8000; }),
+                MkStep(3, "轴走到位置", "去取料位", s => { s.TargetAxis = "X"; s.TargetX = 250; s.Speed = 120; s.InPosTimeout = 3000; }),
+                MkStep(4, "等条件", "等到位信号", s => { s.WaitCondition = "DI_3=通"; s.WaitTime = 3000; }),
+                MkStep(5, "写开关量", "开吸盘", s => { s.IoChannel = "DO_1"; s.SwitchState = "通"; s.ConfirmWrite = true; }),
+            };
+            return;
+        }
+        // 节点图例子：三个节点已经连好线
+        if (key == "node")
+        {
+            var nCap = MkStep(1, "拍张照片", "取图", s => { s.CaptureMode = "打开文件夹"; s.NodeX = 60; s.NodeY = 120; });
+            var nCircle = MkStep(2, "找圆", "找圆", s =>
+            {
+                s.NodeX = 360; s.NodeY = 120; s.ExpectRadius = 0; s.CaliperLength = 60; s.SamplingStep = 6;
+                s.EdgePolarity = "从亮到暗"; s.FitMethod = "正交距离(更准)"; s.OutputVar = "dRadius";
+            });
+            var nJudge = MkStep(3, "判个数对不对", "判定", s =>
+            {
+                s.NodeX = 660; s.NodeY = 120; s.CompareSource = "第2步"; s.AreaMin = 100; s.AreaMax = 400;
+            });
+            flow.Steps = new ObservableCollection<VisionFlowStep> { nCap, nCircle, nJudge };
+            // 默认输出口的名字是空串，写成「出」会静默连不上线
+            flow.Links = new ObservableCollection<FlowNodeLink>
+            {
+                new FlowNodeLink { FromId = nCap.NodeId, FromPort = "", ToId = nCircle.NodeId },
+                new FlowNodeLink { FromId = nCircle.NodeId, FromPort = "", ToId = nJudge.NodeId },
             };
             return;
         }
@@ -5418,9 +5496,13 @@ public class FlowViewModel : ViewModelBase
 
         AddFlowCmd = new RelayCommand(_ =>
         {
-            var key = PromptFlowTemplate("添加逻辑视觉流程");
-            if (key == null) return;
-            var flow = new VisionFlow { Name = $"逻辑视觉流程-{Flows.Count + 1}", Icon = "🔀" };
+            if (!PromptFlow("添加逻辑视觉流程", $"逻辑视觉流程-{Flows.Count + 1}", Opts(
+                ("empty", "空白流程", "不放任何步骤，点上方「➕ 添加」自己一步步搭。"),
+                ("bottle", "示例：瓶底线圈角度", "拍张照片 → 找圆定中心 → 去掉红圈 → 数块找线圈 → 求角度 → 写 Modbus → 判定 → 显示结果（8 步，图在「瓶底线圈角度」工程里）"),
+                ("zeroshot", "示例：零样本查瑕疵", "拍张照片 → 零样本查瑕疵（和标准图比差异，不用训练）→ 判个数 → 显示结果（4 步）"),
+                ("qr", "示例：二维码定位发送", "拍张照片 → 图里找图案定位码 → 读二维码（点阵码增强）→ TCP 发送 → 显示结果（5 步）"),
+                ("barcode", "示例：条码定位发送", "拍张照片 → 图里找图案定位条码 → 读条码 → TCP 发送 → 显示结果（5 步）")), out var key, out var name)) return;
+            var flow = new VisionFlow { Name = name, Icon = "🔀" };
             ApplyFlowTemplate(flow, key);
             Flows.Add(flow);
             SelectedFlow = flow;
@@ -5467,9 +5549,11 @@ public class FlowViewModel : ViewModelBase
 
         AddScriptFlowCmd = new RelayCommand(_ =>
         {
-            var key = PromptFlowTemplate("添加脚本流程");
-            if (key == null) return;
-            var flow = new VisionFlow { Name = $"脚本流程-{Flows.Count + 1}", Icon = "📝", FlowKind = "Script" };
+            if (!PromptFlow("添加脚本流程", $"脚本流程-{Flows.Count + 1}", Opts(
+                ("lua-empty", "空白脚本", "只给几行注释，接口怎么调用写在里面。"),
+                ("lua-match", "示例：匹配分数判定后写PLC", "抓图 → 模板匹配 → 分数和阈值比 → 合格写 PLC，不合格复位并打印"),
+                ("lua-loop", "示例：连采 10 次取平均", "循环抓图取分数、累计求平均，再一次性下发结果")), out var key, out var name)) return;
+            var flow = new VisionFlow { Name = name, Icon = "📝", FlowKind = "Script" };
             ApplyFlowTemplate(flow, key);
             Flows.Add(flow);
             SelectedFlow = flow;
@@ -5496,9 +5580,10 @@ public class FlowViewModel : ViewModelBase
 
         AddMotionFlowCmd = new RelayCommand(_ =>
         {
-            var key = PromptFlowTemplate("添加运控流程");
-            if (key == null) return;
-            var flow = new VisionFlow { Name = $"运控流程-{Flows.Count + 1}", Icon = "🕹" };
+            if (!PromptFlow("添加运控流程", $"运控流程-{Flows.Count + 1}", Opts(
+                ("empty", "空白运控流程", "点上方「➕ 添加 → 运控」自己挑轴 / IO 步骤。"),
+                ("motion", "示例：上电→回零→走位→等到位→吸料", "轴上电解锁 → 回原点 → 走到取料位 → 等条件 → 写开关量开吸盘（5 步）")), out var key, out var name)) return;
+            var flow = new VisionFlow { Name = name, Icon = "🕹" };
             ApplyFlowTemplate(flow, key);
             Flows.Add(flow);
             SelectedFlow = flow;
@@ -5509,13 +5594,11 @@ public class FlowViewModel : ViewModelBase
 
         AddNodeGraphFlowCmd = new RelayCommand(_ =>
         {
-            var next = Flows.Count + 1;
-            var flow = new VisionFlow
-            {
-                Name = $"节点图流程-{next}",
-                Icon = "🕸",
-                FlowKind = "NodeGraph"
-            };
+            if (!PromptFlow("添加节点图流程", $"节点图流程-{Flows.Count + 1}", Opts(
+                ("empty", "空白画布", "从左边算子库把节点拖出来，自己连线。"),
+                ("node", "示例：拍照→找圆→判定", "三个节点已经连好线，改参数就能跑")), out var key, out var name)) return;
+            var flow = new VisionFlow { Name = name, Icon = "🕸", FlowKind = "NodeGraph" };
+            ApplyFlowTemplate(flow, key);
             Flows.Add(flow);
             SelectedFlow = flow;
         }, _ => true);
@@ -5528,13 +5611,9 @@ public class FlowViewModel : ViewModelBase
 
             if (_selectedFlow == null) return;
 
-            var owner = System.Windows.Application.Current?.MainWindow;
+            if (!PromptRename(_selectedFlow.Name, out var newName)) return;
 
-            var newName = Views.InputDialog.Show(owner, "请输入新流程名称：", _selectedFlow.Name);
-
-            if (!string.IsNullOrWhiteSpace(newName))
-
-                _selectedFlow.Name = newName.Trim();
+            if (!string.IsNullOrWhiteSpace(newName)) _selectedFlow.Name = newName.Trim();
 
         }, _ => _selectedFlow != null);
 

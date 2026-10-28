@@ -15,52 +15,39 @@ public partial class AddFlowDialog : Window
 
     public string SelectedKey { get; private set; } = "empty";
 
-    public AddFlowDialog(string title = "新建流程")
+    /// <summary>输入框里的流程名称（空的话调用方用默认名）。</summary>
+    public string FlowName => NameBox.Text?.Trim() ?? "";
+
+    /// <summary>
+    /// items = 这个按钮对应的示例清单（不同按钮不一样）；传 null 表示只改名、不选模板。
+    /// </summary>
+    public AddFlowDialog(string title, string defaultName, List<Option>? items)
     {
         InitializeComponent();
         Title = title;
         TitleText.Text = title;
+        NameBox.Text = defaultName;
 
-        var items = new List<Option>
+        if (items == null || items.Count == 0)
         {
-            new()
-            {
-                Key = "empty",
-                Title = "空白流程",
-                Desc = "不放任何步骤，自己从右侧「工具箱」一步步加。",
-            },
-            new()
-            {
-                Key = "bottle",
-                Title = "示例：瓶底线圈角度",
-                Desc = "拍张照片 → 找圆定中心 → 去掉红圈 → 数块找黑色线圈 → 求角度 → 写 Modbus → 判角度 → 显示结果（8 步，图片在「瓶底线圈角度」工程文件夹里）",
-            },
-            new()
-            {
-                Key = "barcode",
-                Title = "示例：条码定位发送",
-                Desc = "拍张照片 → 图里找图案（模板匹配框住条码）→ 读条码（Code128，难码增强）→ TCP 发送给 MES → 显示结果（5 步，标签图在「条码识别」工程文件夹里）",
-            },
-            new()
-            {
-                Key = "qr",
-                Title = "示例：二维码定位发送",
-                Desc = "拍张照片 → 图里找图案（模板匹配定位码）→ 读二维码（金属点阵码增强）→ TCP 发送给 MES → 显示结果（5 步，图片在「二维码识别」工程文件夹里）",
-            },
-            new()
-            {
-                Key = "zeroshot",
-                Title = "示例：零样本查瑕疵",
-                Desc = "拍张照片 → 零样本查瑕疵（和标准图比差异，不用训练）→ 判个数 → 显示结果（4 步）",
-            },
-        };
-        TemplateList.ItemsSource = items;
-        TemplateList.SelectedIndex = 0;
+            // 只改名的场景：把模板清单收起来，名称框顶上去
+            TemplateList.Visibility = System.Windows.Visibility.Collapsed;
+            HintText.Text = "改个名就行，回车或点「确定」生效。";
+            NameLabel.Text = "新名称";
+        }
+        else
+        {
+            TemplateList.ItemsSource = items;
+            TemplateList.SelectedIndex = 0;
+        }
+
+        Loaded += (_, _) => { NameBox.Focus(); NameBox.SelectAll(); };
     }
 
     private void OK_Click(object sender, RoutedEventArgs e)
     {
         if (TemplateList.SelectedItem is Option o) SelectedKey = o.Key;
+        if (string.IsNullOrWhiteSpace(NameBox.Text)) NameBox.Text = "未命名流程";
         DialogResult = true;
     }
 

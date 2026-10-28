@@ -9,6 +9,7 @@
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
@@ -16,10 +17,28 @@
             <StackPanel Grid.Row="0" Margin="0,0,0,12">
                 <TextBlock x:Name="TitleText" Style="{StaticResource AppleLabel}" FontSize="17" FontWeight="SemiBold" Text="新建流程" />
                 <TextBlock Style="{StaticResource AppleGuideText}" Margin="0,6,0,0" TextWrapping="Wrap"
+                           x:Name="HintText"
                            Text="先选一个起点：空白流程自己一步步搭；也可以从示例改——示例里的步骤和参数都能再调。" />
             </StackPanel>
 
-            <ListBox x:Name="TemplateList" Grid.Row="1" Style="{StaticResource AppleListBox}"
+            <!-- 名称：默认按「类型-序号」填好，直接改就行 -->
+            <Grid Grid.Row="1" Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" x:Name="NameLabel" Text="流程名称" VerticalAlignment="Center" Margin="0,0,10,0"
+                           Foreground="{StaticResource TextSecondaryBrush}" />
+                <Border Grid.Column="1" Background="{StaticResource CanvasBrush}" CornerRadius="8" BorderBrush="{StaticResource LineBrush}"
+                        BorderThickness="1" Padding="10,0" Height="34">
+                    <TextBox x:Name="NameBox" Style="{StaticResource AppleTextField}" TextAlignment="Left" MinWidth="0"
+                             HorizontalAlignment="Stretch" VerticalAlignment="Center" FontSize="13" BorderThickness="0"
+                             Background="Transparent" ToolTip="已经按「类型-序号」起好名，不满意直接改" />
+                </Border>
+            </Grid>
+
+            <TextBlock Grid.Row="1" x:Name="SpacerForRename" Visibility="Collapsed" />
+            <ListBox x:Name="TemplateList" Grid.Row="2" Style="{StaticResource AppleListBox}"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                 <ListBox.Resources>
                     <Style TargetType="ListBoxItem" BasedOn="{StaticResource AppleListBoxItem}">
@@ -37,7 +56,7 @@
                 </ListBox.ItemTemplate>
             </ListBox>
 
-            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
                 <Button Style="{StaticResource AppleBtnSecondary}" Content="取消" Click="Cancel_Click" />
                 <Button Style="{StaticResource AppleBtn}" Content="创建" Click="OK_Click" Margin="10,0,0,0" />
             </StackPanel>
