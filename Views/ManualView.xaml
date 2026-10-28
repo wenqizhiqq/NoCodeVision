@@ -1,206 +1,643 @@
-<UserControl x:Class="NoCodeVision.Views.ManualView"
+﻿<UserControl x:Class="NoCodeVision.Views.ManualView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d">
-<!-- 温启志：18719361399  混淆: 温k启o志f：w1q8o7y1h9a3h6b1y3g9b9 -->
-
-
-
+<!-- 温启志：18719361399  说明书页：写给完全没用过的人，按「点哪里 → 看到什么 → 注意什么」一步一步来 -->
 
     <UserControl.Resources>
-        <!-- 模块条目：名称 + 说明 -->
+        <!-- 步骤序号圆点 -->
+        <Style x:Key="ManualNum" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource AccentSoftBrush}" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Width" Value="24" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="Margin" Value="0,1,10,0" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+        <Style x:Key="ManualNumText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="ManualStepTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style x:Key="ManualBody" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="LineHeight" Value="19" />
+            <Setter Property="Margin" Value="0,3,0,0" />
+        </Style>
+        <Style x:Key="ManualSee" TargetType="TextBlock" BasedOn="{StaticResource ManualBody}">
+            <Setter Property="Foreground" Value="{StaticResource AccentDarkBrush}" />
+        </Style>
+        <Style x:Key="ManualWarn" TargetType="TextBlock" BasedOn="{StaticResource ManualBody}">
+            <Setter Property="Foreground" Value="#B45309" />
+        </Style>
+        <!-- 页面地图 / 术语表的一行 -->
         <Style x:Key="ManualItem" TargetType="StackPanel">
-            <Setter Property="Margin" Value="16,4,16,12" />
+            <Setter Property="Margin" Value="16,0,16,10" />
         </Style>
         <Style x:Key="ManualItemTitle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontSize" Value="13" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
         </Style>
-        <Style x:Key="ManualItemBody" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12.5" />
-            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
-            <Setter Property="TextWrapping" Value="Wrap" />
-            <Setter Property="Margin" Value="0,2,0,0" />
+        <Style x:Key="ManualItemBody" TargetType="TextBlock" BasedOn="{StaticResource ManualBody}">
+            <Setter Property="FontSize" Value="12" />
         </Style>
-        <Style x:Key="ManualStep" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-            <Setter Property="TextWrapping" Value="Wrap" />
-            <Setter Property="Margin" Value="16,2,16,8" />
-        </Style>
-        <Style x:Key="ManualStepIndex" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource AccentSoftBrush}" />
-            <Setter Property="CornerRadius" Value="11" />
-            <Setter Property="Width" Value="22" />
-            <Setter Property="Height" Value="22" />
-            <Setter Property="Margin" Value="0,0,8,0" />
+        <Style x:Key="ManualSection" TargetType="Border" BasedOn="{StaticResource AppleGroupCard}">
+            <Setter Property="Padding" Value="0,8,0,14" />
+            <Setter Property="Margin" Value="0,0,0,12" />
         </Style>
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="0,2,0,8">
+        <StackPanel Margin="0,2,8,20">
 
-            <!-- 标题 -->
             <TextBlock Style="{StaticResource iOSTitle}" Text="软件说明书" />
-
-            <!-- 简介 -->
-            <Border Style="{StaticResource AppleHintBubble}">
-                <TextBlock FontSize="12.5" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap">
-                    <Run Text="NoCodeVision 是一款" /><Run Text="无代码视觉软件" FontWeight="Bold" /><Run Text="，采用 Apple / iOS 风格界面（圆角、半透明、淡蓝主色、紧凑布局）。无需编写代码，即可通过表格化配置完成 相机采集、视觉检测、运控联动、通讯交互与流程编排，面向工业自动化视觉检测场景。温启志：18719361399，地址：东莞长安" />
+            <Border Style="{StaticResource AppleHintBubble}" Margin="0,4,0,12">
+                <TextBlock FontSize="12.5" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" LineHeight="20">
+                    这本说明书是写给<Run FontWeight="Bold">第一次用、也不会编程</Run>的人看的。照着第一部分从头做一遍（大约 5 分钟，只用电脑里的图片，不用接相机、不用接 PLC），就能跑出一个真正的检测结果。后面几节讲每一页是干什么的、参数怎么填、出了问题怎么查。
                 </TextBlock>
             </Border>
 
-            <!-- 顶部导航与功能模块 -->
-            <Border Style="{StaticResource AppleGroupCard}" Padding="0,8,0,12">
+            <!-- ==================== 先记住三件事 ==================== -->
+            <Border Style="{StaticResource ManualSection}">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="一、顶部导航与功能模块" />
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="开始之前，先记住三件事" />
+                    <Grid Margin="16,2,16,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource ManualNum}">
+                            <TextBlock Style="{StaticResource ManualNumText}" Text="1" />
+                        </Border>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Style="{StaticResource ManualStepTitle}" Text="「流程」就是一张步骤清单，从上往下执行" />
+                            <TextBlock Style="{StaticResource ManualBody}" Text="软件干活不看别的，只看流程里的步骤：第一步拍图、第二步找图案、第三步量尺寸……一路跑到底。一个工程里可以有很多个流程，比如「主流程」「复位流程」「另一个产品的流程」。" />
+                        </StackPanel>
+                    </Grid>
+                    <Grid Margin="16,2,16,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource ManualNum}">
+                            <TextBlock Style="{StaticResource ManualNumText}" Text="2" />
+                        </Border>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Style="{StaticResource ManualStepTitle}" Text="每一步叫一个「算子」，就是「这一步要干的事」" />
+                            <TextBlock Style="{StaticResource ManualBody}" Text="比如「拍张照片」是拿一张图，「图里找图案」是在图里找目标位置，「量尺寸」是量一个尺寸并判合格，「TCP 发送」是把结果发出去。算子不是代码，是现成的功能块，你把它们排好顺序就行。" />
+                        </StackPanel>
+                    </Grid>
+                    <Grid Margin="16,2,16,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource ManualNum}">
+                            <TextBlock Style="{StaticResource ManualNumText}" Text="3" />
+                        </Border>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Style="{StaticResource ManualStepTitle}" Text="选中一步，右边就是它的参数：按小圆数字 1、2、3 从上往下填" />
+                            <TextBlock Style="{StaticResource ManualBody}" Text="右边每一行左边都有一个蓝色小圆数字，那就是填写顺序；顶部那条「操作顺序：1 … → 2 …」是同一件事的文字版。不用记、不用背，照着数字从上往下走就不会漏。" />
+                            <TextBlock Style="{StaticResource ManualSee}" Text="提示：数字不连续（比如 1、2、4）不是出错——3 那一行只在特定选项下才会出现。" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ==================== 一、5 分钟跑通 ==================== -->
+            <Border Style="{StaticResource ManualSection}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="一、5 分钟跑通第一个检测（只用电脑里的图片）" />
+
+                    <Grid Margin="16,2,16,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource ManualNum}">
+                            <TextBlock Style="{StaticResource ManualNumText}" Text="1" />
+                        </Border>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Style="{StaticResource ManualStepTitle}" Text="点顶部中间的「流程」" />
+                            <TextBlock Style="{StaticResource ManualBody}" Text="页面分成三块：左边是流程方案列表，中间是步骤列表（这张表就是流程本身），右边是选中那一步的参数。" />
+                            <TextBlock Style="{StaticResource ManualSee}" Text="你会看到：底部状态栏写「配置自动保存中」或「已保存」——改任何东西都会自动存，不用手动保存。" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="16,2,16,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource ManualNum}">
+                            <TextBlock Style="{StaticResource ManualNumText}" Text="2" />
+                        </Border>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Style="{StaticResource ManualStepTitle}" Text="点左边的「添加逻辑视觉」，选一个示例模板" />
+                            <TextBlock Style="{StaticResource ManualBody}" Text="弹窗里会让你选模板、填名字（名字已经帮你起好了，不改也行）。第一次用建议选「示例：零样本查瑕疵」——它只要一张没问题的标准图，就能找出划伤、脏污、缺料，不用训练模型。点「确定」。" />
+                            <TextBlock Style="{StaticResource ManualSee}" Text="你会看到：左边多了一个流程，中间出现 4 个步骤——拍张照片 / 零样本查瑕疵 / 判个数对不对 / 显示结果。" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="16,2,16,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource ManualNum}">
+                            <TextBlock Style="{StaticResource ManualNumText}" Text="3" />
+                        </Border>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Style="{StaticResource ManualStepTitle}" Text="点第 1 步「拍张照片」，把图片文件夹选上" />
+                            <TextBlock Style="{StaticResource ManualBody}" Text="用模板的话，这里已经配好了：1 采集方式 是「打开文件夹」，3 图片文件夹 指向软件自带的一组瓶底图片。想换成自己的图，就点那个蓝色大按钮「选文件夹」重选一个；想一张一张手动挑图，把 1 采集方式 改成「打开文件」。" />
+                            <TextBlock Style="{StaticResource ManualSee}" Text="你会看到：2 图像源、3 图片文件夹 自动填好了，下面还有一行小字「共 N 张，这次用第 k 张：文件名」。" />
+                            <TextBlock Style="{StaticResource ManualWarn}" Text="注意：图片建议放在软件目录 bin 下的 Projects 里（选文件夹时按提示放）。图被移走、改名、或者整个工程拷到别的电脑，会提示「文件夹不存在」，这时重新点「选文件夹」选一次就行。" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="16,2,16,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource ManualNum}">
+                            <TextBlock Style="{StaticResource ManualNumText}" Text="4" />
+                        </Border>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Style="{StaticResource ManualStepTitle}" Text="4~10 这几行先不用管" />
+                            <TextBlock Style="{StaticResource ManualBody}" Text="它们分别是曝光、增益、触发模式、像素格式、分辨率、图像格式、自动曝光 / 保存原图——只有接相机时才要动。用电脑里的图片，这几行保持默认就好。" />
+                            <TextBlock Style="{StaticResource ManualSee}" Text="你会看到：标题「相机参数（只有选相机才用，用本地图片这几行不用动）」，就是提醒这件事。" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="16,2,16,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource ManualNum}">
+                            <TextBlock Style="{StaticResource ManualNumText}" Text="5" />
+                        </Border>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Style="{StaticResource ManualStepTitle}" Text="在下面的图上按住鼠标拖一个框" />
+                            <TextBlock Style="{StaticResource ManualBody}" Text="这一步要检测哪里，就在图上那一片按住左键拖一个框。不拖框 = 整张图都看。框的坐标会自动填到下面的 X / Y / 宽 / 高，不用手算。拖错了就再拖一次，拖到框外就是取消。" />
+                            <TextBlock Style="{StaticResource ManualSee}" Text="你会看到：框边上有可以拖的小方块，下面的数字跟着变。" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="16,2,16,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource ManualNum}">
+                            <TextBlock Style="{StaticResource ManualNumText}" Text="6" />
+                        </Border>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Style="{StaticResource ManualStepTitle}" Text="点第 2 步「零样本查瑕疵」，给它一张标准图" />
+                            <TextBlock Style="{StaticResource ManualBody}" Text="模板已经带了一张标准图，就是 2 标准图 那一行；想换成自己的，点「选标准图」挑一张同款产品、没有瑕疵的照片。3~6 是配准方式、灵敏度、最小缺陷面积、允许几个，第一次全部用默认值。" />
+                            <TextBlock Style="{StaticResource ManualWarn}" Text="注意：标准图和被测的件要在同一个工位、同样的灯光下拍，不然会误报。灵敏度越大越敏感，先默认，误报了再往下调。" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="16,2,16,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource ManualNum}">
+                            <TextBlock Style="{StaticResource ManualNumText}" Text="7" />
+                        </Border>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Style="{StaticResource ManualStepTitle}" Text="点上方的「▶▶ 全部运行」" />
+                            <TextBlock Style="{StaticResource ManualBody}" Text="流程从上往下跑一遍。跑完看三处：中间表格的「当前值/耗时」、第 3 步「判个数对不对」的结论（Pass / NG）、最后一步「显示结果」里画在图上红框标出的缺陷位置。" />
+                            <TextBlock Style="{StaticResource ManualSee}" Text="你会看到：右侧状态从「就绪」变成「运行中」，最后变成「已完成」或「NG」；有缺陷的图上会出现红框。" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="16,2,16,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource ManualNum}">
+                            <TextBlock Style="{StaticResource ManualNumText}" Text="8" />
+                        </Border>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Style="{StaticResource ManualStepTitle}" Text="想一步一步看，就用「▶ 单步运行」" />
+                            <TextBlock Style="{StaticResource ManualBody}" Text="每点一次只走一步，方便看哪一步不对；「⏸ 暂停」停一下，「⏹ 停止」直接结束。想换一张图再跑：采集方式是「打开文件夹」的话，每跑一次会自动换下一张，不用重新选。" />
+                            <TextBlock Style="{StaticResource ManualSee}" Text="做到这里，你已经完成了一次完整的检测。接下来只是把它接到真实的相机和 PLC 上。" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ==================== 二、界面地图 ==================== -->
+            <Border Style="{StaticResource ManualSection}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="二、界面地图：顶部 9 个页面分别是干什么的" />
                     <StackPanel Style="{StaticResource ManualItem}">
                         <TextBlock Style="{StaticResource ManualItemTitle}" Text="项目" />
-                        <TextBlock Style="{StaticResource ManualItemBody}" Text="管理检测项目（新建 / 打开 / 删除），每个项目包含相机、运控、通讯、变量、流程等配置。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="工程的新建 / 打开 / 删除；工程名字、存放路径、自动保存、日志、通讯默认参数、安全设置。第一次用先来这里确认工程存在哪里。" />
                     </StackPanel>
                     <Rectangle Style="{StaticResource AppleDivider}" />
                     <StackPanel Style="{StaticResource ManualItem}">
                         <TextBlock Style="{StaticResource ManualItemTitle}" Text="相机" />
-                        <TextBlock Style="{StaticResource ManualItemBody}" Text="配置相机参数、采集图像、ROI 与测量工具（如几何测量、缺陷检测）。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="实时预览、曝光与增益、图像调整、触发与采集、分辨率与像素格式、ROI / 高级 / 保存。调相机拍得清不清楚，用这一页。" />
                     </StackPanel>
                     <Rectangle Style="{StaticResource AppleDivider}" />
                     <StackPanel Style="{StaticResource ManualItem}">
                         <TextBlock Style="{StaticResource ManualItemTitle}" Text="运控" />
-                        <TextBlock Style="{StaticResource ManualItemBody}" Text="配置轴 / IO / 气缸等运动控制硬件与动作，经 HardwareManager 真实驱动。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="轴参数、IO 参数、气缸参数、点位参数、料盘格参数、控制卡参数，以及实时运控调试。要动电机、开阀、气缸，先在这里把硬件配好。" />
                     </StackPanel>
                     <Rectangle Style="{StaticResource AppleDivider}" />
                     <StackPanel Style="{StaticResource ManualItem}">
                         <TextBlock Style="{StaticResource ManualItemTitle}" Text="通讯" />
-                        <TextBlock Style="{StaticResource ManualItemBody}" Text="配置通讯方式（Modbus TCP/RTU、Socket、串口、OPC UA、PLC 等），实现与外部设备真实连通。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="串口 / 网口 / UDP / Modbus-TCP / MQTT / HTTP / WebSocket 的连接参数。先把通道连上，流程里的「发数据」「Modbus 写」才有地方发。" />
                     </StackPanel>
                     <Rectangle Style="{StaticResource AppleDivider}" />
                     <StackPanel Style="{StaticResource ManualItem}">
                         <TextBlock Style="{StaticResource ManualItemTitle}" Text="变量" />
-                        <TextBlock Style="{StaticResource ManualItemBody}" Text="以表格维护流程中使用的变量（名称 + 可编辑值），可在脚本中读写。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="用表格维护流程里用到的变量（名字 + 值）。流程里的「结果写入」填的就是这里的名字，后面的判定、发 PLC、存表都读它。" />
                     </StackPanel>
                     <Rectangle Style="{StaticResource AppleDivider}" />
                     <StackPanel Style="{StaticResource ManualItem}">
-                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="流程" />
-                        <TextBlock Style="{StaticResource ManualItemBody}" Text="可视化编排检测流水线（步骤表），支持脚本流程（Lua 编辑器）。" />
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="流程（最常用）" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="编排检测步骤的地方，日常 90% 的时间在这一页。下面第三节专门讲。" />
                     </StackPanel>
                     <Rectangle Style="{StaticResource AppleDivider}" />
                     <StackPanel Style="{StaticResource ManualItem}">
                         <TextBlock Style="{StaticResource ManualItemTitle}" Text="工程师" />
-                        <TextBlock Style="{StaticResource ManualItemBody}" Text="项目参数与高级配置入口（含表格化时序确定性编排）。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="系统信息、运行模式、日志级别、调试日志，以及轴 / IO / 气缸的手动调试按钮。现场排查硬件时用。" />
                     </StackPanel>
                     <Rectangle Style="{StaticResource AppleDivider}" />
                     <StackPanel Style="{StaticResource ManualItem}">
                         <TextBlock Style="{StaticResource ManualItemTitle}" Text="操作员" />
-                        <TextBlock Style="{StaticResource ManualItemBody}" Text="面向产线操作员的一键运行界面（Run / Pause / Stop / E-Stop / Reset）。" />
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-
-            <!-- 快速上手 -->
-            <Border Style="{StaticResource AppleGroupCard}" Padding="0,8,0,12">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="二、快速上手（5 步）" />
-                    <DockPanel LastChildFill="False" Margin="16,4,16,2">
-                        <Border Style="{StaticResource ManualStepIndex}" DockPanel.Dock="Left">
-                            <TextBlock Text="1" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <TextBlock Style="{StaticResource ManualStep}" Text="在「项目」页新建项目并打开。" VerticalAlignment="Center" />
-                    </DockPanel>
-                    <DockPanel LastChildFill="False" Margin="16,4,16,2">
-                        <Border Style="{StaticResource ManualStepIndex}" DockPanel.Dock="Left">
-                            <TextBlock Text="2" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <TextBlock Style="{StaticResource ManualStep}" Text="在「相机」页连接相机、采集一张样图、框选 ROI。" VerticalAlignment="Center" />
-                    </DockPanel>
-                    <DockPanel LastChildFill="False" Margin="16,4,16,2">
-                        <Border Style="{StaticResource ManualStepIndex}" DockPanel.Dock="Left">
-                            <TextBlock Text="3" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <TextBlock Style="{StaticResource ManualStep}" Text="在「运控」「通讯」页配置硬件与通讯方式。" VerticalAlignment="Center" />
-                    </DockPanel>
-                    <DockPanel LastChildFill="False" Margin="16,4,16,2">
-                        <Border Style="{StaticResource ManualStepIndex}" DockPanel.Dock="Left">
-                            <TextBlock Text="4" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <TextBlock Style="{StaticResource ManualStep}" Text="在「变量」页定义流程所需变量。" VerticalAlignment="Center" />
-                    </DockPanel>
-                    <DockPanel LastChildFill="False" Margin="16,4,16,2">
-                        <Border Style="{StaticResource ManualStepIndex}" DockPanel.Dock="Left">
-                            <TextBlock Text="5" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <TextBlock Style="{StaticResource ManualStep}" Text="在「流程」页添加检测 / 运动 / 通讯步骤，或编写 Lua 脚本，最后到「操作员」页运行。" VerticalAlignment="Center" />
-                    </DockPanel>
-                </StackPanel>
-            </Border>
-
-            <!-- 表格化时序确定性编排 -->
-            <Border Style="{StaticResource AppleGroupCard}" Padding="0,8,0,12">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="三、表格化时序确定性编排（核心功能）" />
-                    <StackPanel Style="{StaticResource ManualItem}">
-                        <TextBlock Style="{StaticResource ManualItemBody}" Text="为达到确定性同步，流程步骤表提供两列关键配置：" />
-                    </StackPanel>
-                    <StackPanel Style="{StaticResource ManualItem}">
-                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="时序标记（Timing Marker）" />
-                        <TextBlock Style="{StaticResource ManualItemBody}" Text="如 T+0ms / T+5ms / 5 / 留空（顺延上一步）。表示相对启动时刻的预期触发时间。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="给产线操作工用的运行界面：主要是「运行 / 暂停 / 停止 / 急停 / 复位」几个大按钮和检测状态。参数不要在这页改。" />
                     </StackPanel>
                     <Rectangle Style="{StaticResource AppleDivider}" />
                     <StackPanel Style="{StaticResource ManualItem}">
-                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="同步组（Sync Group）" />
-                        <TextBlock Style="{StaticResource ManualItemBody}" Text="如 GroupA。同组多步将在同一总线周期原子触发，用于多轴同步、IO 与运动对齐。" />
-                    </StackPanel>
-                    <Rectangle Style="{StaticResource AppleDivider}" />
-                    <StackPanel Style="{StaticResource ManualItem}">
-                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="⏱ 时序编译" />
-                        <TextBlock Style="{StaticResource ManualItemBody}" Text="执行编译期冲突检测：① 同步组内动作单周期可行性；② 相对时延 ≥ 总线周期分辨率；③ 同步组间资源争用（轴/IO 冲突）。结果在右侧编排卡片与状态栏提示。" />
-                    </StackPanel>
-                    <Rectangle Style="{StaticResource AppleDivider}" />
-                    <StackPanel Style="{StaticResource ManualItem}">
-                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="▶ 时序运行" />
-                        <TextBlock Style="{StaticResource ManualItemBody}" Text="确定性仿真，回填每步实际时刻、偏差与超阈报警（偏差 = 实际 − 预期，超过「偏差报警阈值」即报警）。可在右侧编排卡片编辑时序标记 / 同步组 / 总线周期 / 偏差阈值。" />
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="说明书" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="就是你现在看的这一页。" />
                     </StackPanel>
                 </StackPanel>
             </Border>
 
-            <!-- 运行面板按钮颜色约定 -->
-            <Border Style="{StaticResource AppleGroupCard}" Padding="0,8,0,12">
+            <!-- ==================== 三、流程页 ==================== -->
+            <Border Style="{StaticResource ManualSection}">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="四、运行面板按钮颜色约定" />
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="三、流程页怎么用（重点）" />
+
                     <StackPanel Style="{StaticResource ManualItem}">
-                        <TextBlock Style="{StaticResource ManualItemBody}">
-                            <Run Text="● 运行 Run：" Foreground="#34C759" FontWeight="Bold" /><Run Text="绿色，启动流程。" />
-                        </TextBlock>
-                        <TextBlock Style="{StaticResource ManualItemBody}" Margin="0,4,0,0">
-                            <Run Text="● 暂停 Pause：" Foreground="#FF9500" FontWeight="Bold" /><Run Text="橙色，暂停流程。" />
-                        </TextBlock>
-                        <TextBlock Style="{StaticResource ManualItemBody}" Margin="0,4,0,0">
-                            <Run Text="● 停止 Stop：" Foreground="#FF3B30" FontWeight="Bold" /><Run Text="红色，停止流程。" />
-                        </TextBlock>
-                        <TextBlock Style="{StaticResource ManualItemBody}" Margin="0,4,0,0">
-                            <Run Text="● 急停 E-Stop：" Foreground="#FF3B30" FontWeight="Bold" /><Run Text="红色，紧急停止（最高优先）。" />
-                        </TextBlock>
-                        <TextBlock Style="{StaticResource ManualItemBody}" Margin="0,4,0,0">
-                            <Run Text="● 复位 Reset：" Foreground="#007AFF" FontWeight="Bold" /><Run Text="蓝色，复位状态。" />
-                        </TextBlock>
-                        <TextBlock Style="{StaticResource ManualItemBody}" Margin="0,6,0,0" Foreground="{StaticResource TextPrimaryBrush}">
-                            说明：运行面板的按钮真实驱动硬件，非伪造状态切换。
-                        </TextBlock>
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="3.1 四种流程，先挑一种" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="左边四个「添加…」按钮都会弹窗让你选模板、填名字：" />
+                    </StackPanel>
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 添加逻辑视觉：一行一步的步骤表，最常用，建议先用这个。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 添加脚本流程：写 Lua 脚本，最灵活，但要会写代码；里面已经放了可照抄的示例。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 添加运控：专门编轴、IO、气缸这类动作流程（也可以混在逻辑视觉流程里加）。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 添加节点图：把算子当方块拖到画布上，用线连先后顺序，适合分支多、步骤多的情况。" />
+                        <TextBlock Style="{StaticResource ManualSee}" Text="模板里带「示例：…」的都是已经配好的整套流程，可以先跑通再改成自己的。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="3.2 加一步算子" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="点上方「➕ 添加」→ 左边选分类（视觉 / OpenCVVision / 运控 / 通讯 / 更多）→ 右边点算子。每个算子下面有一句说明，写着它是干什么的，看说明挑就行。" />
+                        <TextBlock Style="{StaticResource ManualWarn}" Text="菜单不会自己关：可以连着加好几个算子，点菜单外面才关。加完想删，就选中那一行按「🗑 删除」。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="3.3 右边的参数，按小圆数字从上往下填" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 有些行只在特定选项下出现：采集方式选「打开文件夹」才有「图片文件夹」；选「迈德威视相机」才有「相机 / 线扫」。看不到不是坏了。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 空着不填 = 用默认值，不确定就先空着。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 路径那几行，点行尾那个小按钮（文件夹图标）选文件或文件夹，别手打路径。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="3.4 上面那几个运行按钮" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="▶▶ 全部运行 = 从头跑到底；▶ 单步运行 = 点一次走一步；⏸ 暂停 / ⏹ 停止 = 随时控制；右边的小药丸显示当前状态。每步右边的「耗时(ms)」可以看哪一步慢。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="3.5 节点图流程怎么操作" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 从左边算子库把算子按住拖到右边画布，就是一个节点；" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 节点是自上而下走的：从节点下方的圆点按住拖到下一个节点上方的圆点，连上线就是先后顺序；" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 鼠标中键（或右键）按住拖动 = 平移画布，滚轮 = 缩放，左键在空白处拖动 = 框选多个节点；" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 右下角小地图：点一下或按住拖蓝框，画布立刻跳到那块；" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 判断类节点下方有「真 / 假」两个出口，可以分别连到不同的下一步；右键节点可以删除。" />
                     </StackPanel>
                 </StackPanel>
             </Border>
 
-            <!-- 通讯能力 -->
-            <Border Style="{StaticResource AppleGroupCard}" Padding="0,8,0,12">
+            <!-- ==================== 四、三种常用做法 ==================== -->
+            <Border Style="{StaticResource ManualSection}">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="五、通讯能力" />
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="四、三种最常见的用法" />
+
                     <StackPanel Style="{StaticResource ManualItem}">
-                        <TextBlock Style="{StaticResource ManualItemBody}" TextWrapping="Wrap">
-                            支持 Modbus TCP / Modbus RTU、TCP / UDP Socket、串口（RS232 / RS485）、OPC UA、PLC（S7 / 三菱 / 欧姆龙 / 台达等）等主流工业通讯方式。可在「通讯」页与「流程 · 通讯指令」步骤中配置并使用，通过原生传输实现真实连通。
-                        </TextBlock>
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="4.1 只用电脑里的图片（离线调参）" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="第 1 步「拍张照片」：1 采集方式 选「打开文件夹」→ 点「选文件夹」。之后每点一次运行就自动换下一张，适合先把参数调好再上机台。" />
                     </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="4.2 接相机实时检测" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="1) 第 1 步「拍张照片」的 1 采集方式 选「迈德威视相机」；" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="2) 11 相机：点「🔄 刷新」→ 下拉里选相机 → 点「📷 抓一张」确认能出图；" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="3) 4 曝光 / 5 增益：数字越大越亮（曝光单位是微秒）。调到产品清楚、不反光、不过曝为止；" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="4) 线扫相机才勾「线扫」，再填行频和每帧行数；普通面阵相机不用管；" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="5) 回「流程」点「▶▶ 全部运行」；要连续跑就到「操作员」页按运行。" />
+                        <TextBlock Style="{StaticResource ManualSee}" Text="用的不是迈德威视相机：采集方式选「采集相机」，走系统相机 / 采集卡。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="4.3 把结果发给 PLC 或 MES" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 发 PLC：加一步「Modbus 写」，填 PLC 地址 / 端口 / 单元号（留空就用「通讯」页已经连好的通道）、要写的地址和值；值可以选「某一步的结果」，比如把角度乘以 100 写成整数再发。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 发 MES / 上位机：加一步「TCP 发送」，填 IP、端口、要发的内容（可以选某一步的结果，比如读到的二维码字符串）和行尾换行方式。" />
+                        <TextBlock Style="{StaticResource ManualWarn}" Text="凡是通讯类的步骤，参数页都有「🔌 测一下」：先在参数页点它、看到连接成功，再把这一步放进流程跑。否则一跑就卡在这里。" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ==================== 五、填参数三条规矩 ==================== -->
+            <Border Style="{StaticResource ManualSection}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="五、填参数的三条规矩" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="1. 序号就是顺序：右边的小圆数字从小到大，从上往下填，别跳着填。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="2. 能在图上拖的就在图上拖：框区域、框模板都用鼠标拖，不要手算坐标；宽、高填 0 表示整张图。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="3. 路径一律用行尾那个小按钮选（不用手打）：软件存的是相对路径，整个工程拷到别的电脑还能用；别用 C 盘临时目录里的图。" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ==================== 六、出问题怎么查 ==================== -->
+            <Border Style="{StaticResource ManualSection}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="六、出问题了按症状查" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="提示「文件夹不存在」" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="图片被移走 / 改名了，或者工程拷到别的电脑上路径变了。重新点一次「选文件夹」，选到现在的位置。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="条码 / 二维码读不出来" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="先看图里的码有多大：一个黑白格不到 3 个像素基本读不出来。办法：镜头靠近一点、换个分辨率高一点的相机、在图上把码框住再读；点阵码（DPM，直接打在金属上的）把「难读码增强」勾上。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="连不上 PLC / 数据发不出去" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="先点参数页的「🔌 测一下」，它会告诉你具体原因（拒绝连接 / 地址不通 / 超时）。再检查 IP、端口、单元号、网线，以及对方有没有开连接。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="点运行没反应" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="看右下角状态是不是「就绪」，以及第 1 步的 2 图像源 是不是空的。为空的，先按第 3 步把图选上。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="判定一直 NG / 一直 OK" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="看「判一下对不对」那一步的条件表达式，和中间表格里的「当前值」对不对得上。零样本查瑕疵的话，先确认标准图和被测件是同一工位、同样的光；灵敏度先调回默认再慢慢加。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="结果图上没有画东西" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="「显示结果」里 1 画哪一步结果 选错了步，或者那一步本来就没有可画的结果（比如只吐了一个数字）。改成前一步试试。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="老工程的节点图叠在一起" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="那些步骤从来没在画布上摆过，所以没有坐标。打开时会自动竖着排开，你拖开之后位置会记住。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="跑得慢" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="看每步右边的「耗时(ms)」，找出最慢的一步。模板匹配把「金字塔层数」调高、框小一点、最大匹配数调小会快很多；整图处理的算子改成只框目标区域。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="改坏了想恢复" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="软件是自动保存的，没有撤销。稳妥的做法：改之前先「添加逻辑视觉」建一个副本流程（换个名字），在副本上试；确认没问题再删掉旧的。" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ==================== 七、术语表 ==================== -->
+            <Border Style="{StaticResource ManualSection}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="七、术语表（看不懂的词都在这）" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="流程 / 步骤 / 算子" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="流程 = 一整张步骤清单；步骤 = 清单里的一行；算子 = 这一步用的是哪种功能（拍照片、量尺寸…）。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="ROI" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="就是你在图上拖出来的那个框，意思是「只看这一块」。框越小算得越快，也越不容易被旁边的干扰。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="模板 / 标准图" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="模板 = 事先框下来的一小块图案，用来在别的图里找它在哪；标准图 = 一张没问题的整图，用来和被测件对比找差异。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="阈值 / 灵敏度" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="判合格不合格的那条线。相似度 0.85 表示「像到 85% 以上才算找到」；灵敏度越大越容易报缺陷，也越容易误报。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="变量" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="给结果起个名字存起来，比如把测量值存成 dMeasure，后面的判定、发 PLC、存文件都用这个名字取它。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="Modbus / TCP" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="两种和外部设备说话的规矩。Modbus 一般用来读写 PLC 的寄存器 / 线圈；TCP 是直接把一段文字发给对方的软件（比如 MES）。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="触发" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="让软件开始跑一次检测。可以是点按钮、定时、相机硬触发，或者收到 PLC 的一个信号。" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ==================== 八、关于软件 / 商业化 ==================== -->
+            <Border Style="{StaticResource ManualSection}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource AppleSectionHeader}" Text="八、关于这套软件：购买、授权与服务" />
+
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="8.1 软件是什么" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="NoCodeVision（无代码视觉）——面向工业自动化的视觉检测软件。不用写代码，把「拍照片、找图案、量尺寸、查瑕疵、读码、发数据」这些现成算子按顺序排好，就是一条检测流程；相机、运控、PLC、MES 都能接。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 适用：3C 零件、五金冲压、瓶盖瓶底、注塑件、包装、连接器等的外观检测与定位引导、尺寸测量、读码追溯。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 运行环境：Windows 10 / 11（64 位）工控机或办公电脑；图像来源支持本地文件 / 文件夹，以及迈德威视面阵、线扫工业相机（其他品牌可定制对接）。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 版本号：打开「工程师 → 系统信息」可以看到当前版本，报问题时请一并截图。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 版权：本软件著作权归作者所有，未经书面授权不得复制、转售、反编译或用于第三方设备交付。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="8.2 先试后买" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="软件里自带多套示例工程和测试图片（瓶底线圈角度、零样本查瑕疵、二维码定位发送、条码定位发送）。可以先用你自己的产品图片把检测效果跑出来，看判得准不准、节拍够不够，确认能用再谈购买——不靠演示视频拍板，靠你自己的件拍板。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="8.3 授权方式" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 按「一台工位 / 一台电脑」授权；多点位、多产线可以打包授权，单价更低。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 授权与这台电脑的机器码绑定（或配加密锁），拷到别的电脑不能直接用。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 换电脑、重装系统前先联系我解绑，正常换机不额外收费。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 同一台电脑上的流程、工程数量不限，操作员界面数量不限。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="8.4 购买流程（一步一步来）" />
+                    </StackPanel>
+                    <Grid Margin="16,0,16,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource ManualNum}">
+                            <TextBlock Style="{StaticResource ManualNumText}" Text="1" />
+                        </Border>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Style="{StaticResource ManualStepTitle}" Text="说清检测需求" />
+                            <TextBlock Style="{StaticResource ManualBody}" Text="要测什么产品、看哪些缺陷或尺寸、精度要求、节拍（一秒几个）、现场有没有相机和 PLC、要和谁通讯。" />
+                        </StackPanel>
+                    </Grid>
+                    <Grid Margin="16,0,16,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource ManualNum}">
+                            <TextBlock Style="{StaticResource ManualNumText}" Text="2" />
+                        </Border>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Style="{StaticResource ManualStepTitle}" Text="寄样件或发图片试样" />
+                            <TextBlock Style="{StaticResource ManualBody}" Text="给几个 OK 件和几个 NG 件（或用现场相机、手机拍清楚的照片），我先跑一遍，把能测到什么程度、误判大概多少讲清楚。" />
+                        </StackPanel>
+                    </Grid>
+                    <Grid Margin="16,0,16,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource ManualNum}">
+                            <TextBlock Style="{StaticResource ManualNumText}" Text="3" />
+                        </Border>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Style="{StaticResource ManualStepTitle}" Text="出方案和报价单" />
+                            <TextBlock Style="{StaticResource ManualBody}" Text="按「软件授权 + 调试服务 + 定制开发」分项报价，写清授权台数、服务年限、交付内容和验收标准。价格、条款以正式报价单和合同为准。" />
+                        </StackPanel>
+                    </Grid>
+                    <Grid Margin="16,0,16,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource ManualNum}">
+                            <TextBlock Style="{StaticResource ManualNumText}" Text="4" />
+                        </Border>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Style="{StaticResource ManualStepTitle}" Text="签合同、付定金" />
+                            <TextBlock Style="{StaticResource ManualBody}" Text="确认授权台数和服务内容后签合同；可按约定开增值税普通发票或专用发票。" />
+                        </StackPanel>
+                    </Grid>
+                    <Grid Margin="16,0,16,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource ManualNum}">
+                            <TextBlock Style="{StaticResource ManualNumText}" Text="5" />
+                        </Border>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Style="{StaticResource ManualStepTitle}" Text="交付 + 调试到验收" />
+                            <TextBlock Style="{StaticResource ManualBody}" Text="装好软件、配好相机和通讯、把流程调到能稳定判定，陪产到你的人会自己操作，双方按验收标准签字。" />
+                        </StackPanel>
+                    </Grid>
+                    <Grid Margin="16,0,16,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource ManualNum}">
+                            <TextBlock Style="{StaticResource ManualNumText}" Text="6" />
+                        </Border>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Style="{StaticResource ManualStepTitle}" Text="验收后进入服务期" />
+                            <TextBlock Style="{StaticResource ManualBody}" Text="付尾款，进入质保与服务期；后续加算子、改流程、对接新设备都可以继续找我。" />
+                        </StackPanel>
+                    </Grid>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="8.5 购买后包含哪些服务" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 安装部署、相机与通讯调通、参数调到能稳定判定；" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 现场或远程培训：操作工学会「运行 / 暂停 / 停止 / 急停 / 复位」，工程人员学会改参数、加算子、加流程；" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 现有算子的参数调整不限次数（换产品、换规格自己改就行）；" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 服务期内免费提供功能更新与问题修复；" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 远程支持：微信 / 电话随时联系，停产类问题优先处理；上门服务按合同约定。" />
+                        <TextBlock Style="{StaticResource ManualWarn}" Text="具体的服务年限、响应时间、上门次数以合同或报价单为准。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="8.6 可以定制的范围" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 新算子：你们产品特有的缺陷类型、特殊打光、特殊测量方式；" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 设备对接：PLC（S7 / 三菱 MC / 欧姆龙 FINS / 基恩士）、机器人、上位机 MES、扫码枪、称重、激光位移；" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 数据与报表：检测数据存 Excel / 数据库、图片存档、按工单统计良率；" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 界面定制：把界面和算子名字改成你们车间习惯的叫法，操作工更不容易点错；" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 二次开发与源码授权：单独洽谈。" />
+                    </StackPanel>
+                    <Rectangle Style="{StaticResource AppleDivider}" />
+
+                    <StackPanel Style="{StaticResource ManualItem}">
+                        <TextBlock Style="{StaticResource ManualItemTitle}" Text="8.7 使用与责任提醒" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 现场安全必须由有资质的人员按安规设计（急停回路、安全光栅、机械限位），不能只依赖软件判断；" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 判定标准（什么算合格）由使用方确认；换料、换灯、换镜头后要重新校验；" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 请定期备份工程目录（软件目录下的 Projects 文件夹），换电脑或重装系统前一定要先备份；" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="• 软件按现状提供，因现场硬件、光学条件、使用方式导致的结果偏差不在质保范围，但会协助排查。" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ==================== 联系方式 ==================== -->
+            <Border Style="{StaticResource AppleHintBubble}" Margin="0,0,0,8">
+                <StackPanel>
+                    <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Text="联系 / 购买 / 技术支持" />
+                    <TextBlock FontSize="12.5" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,6,0,0" LineHeight="21">
+                        <Run Text="温启志　电话 / 微信：18719361399" /><LineBreak />
+                        <Run Text="地址：广东省东莞市长安镇" /><LineBreak />
+                        <Run Text="服务时间：周一至周六 9:00–18:00（停产等紧急问题随时打）" />
+                    </TextBlock>
+                    <TextBlock FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,8,0,0" LineHeight="19">
+                        <Run Text="报问题时请一次给全：" /><Run Text="软件版本（工程师 → 系统信息截图）、出问题的流程名和步骤、你点了什么、提示什么、现场照片或截图。" /><LineBreak />
+                        <Run Text="要报价请一次给全：产品照片（OK 和 NG 各几张）、要测什么、精度要求、节拍、现场相机型号、要对接的设备。" />
+                    </TextBlock>
                 </StackPanel>
             </Border>
 
