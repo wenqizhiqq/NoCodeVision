@@ -1,4 +1,4 @@
-// 空状态提示用的值转换器：把 SelectedFlow 转为「无流程 / 流程无步骤」提示的可见性。
+﻿// 空状态提示用的值转换器：把 SelectedFlow 转为「无流程 / 流程无步骤」提示的可见性。
 // 作者：温启志 编写 ▢ 联系 wx:187-1936-1399
 using System;
 using System.Globalization;
@@ -39,12 +39,19 @@ public sealed class AspectHeightConverter : IMultiValueConverter
 {
     public object Convert(object[] values, Type targetType, object? parameter, CultureInfo culture)
     {
-        double w = values.Length > 0 && values[0] is double d0 ? d0 : 0;
-        double iw = values.Length > 1 && values[1] is double d1 ? d1 : 0;
-        double ih = values.Length > 2 && values[2] is double d2 ? d2 : 0;
+        double w = Num(values, 0);
+        double iw = Num(values, 1);
+        double ih = Num(values, 2);
         if (w <= 0) return 0d;
         if (iw <= 0 || ih <= 0) return w * 0.7;
         return w * Math.Clamp(ih / iw, 0.45, 1.45);
+    }
+
+    // BitmapSource.PixelWidth/PixelHeight 是 int，老写法只认 double，竖图一律退化成 0.7 倍宽度
+    static double Num(object[] values, int i)
+    {
+        if (values.Length <= i) return 0;
+        return values[i] switch { double d => d, int n => n, float f => f, _ => 0 };
     }
 
     public object[] ConvertBack(object value, Type[] targetTypes, object? parameter, CultureInfo culture)

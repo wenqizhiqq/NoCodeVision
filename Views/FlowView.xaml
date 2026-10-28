@@ -1,4 +1,4 @@
-<UserControl x:Class="NoCodeVision.Views.FlowView"
+﻿<UserControl x:Class="NoCodeVision.Views.FlowView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -413,7 +413,8 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <!-- 右侧面板的滚动条常驻：图上拖框区域/预览图的高度是按面板宽度算的，滚动条若时有时无，宽度跟着变，图就会一直放大缩小 -->
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled">
             <ScrollViewer.Style>
                 <Style TargetType="ScrollViewer">
                     <Setter Property="Visibility" Value="Visible" />
@@ -554,7 +555,7 @@
                         <StackPanel x:Name="ShowResultPreviewHost" Visibility="{Binding SelectedStep.StepType, Converter={StaticResource KindVis}, ConverterParameter='ShowResult,ZeroShotAnomaly'}">
                             <Rectangle Style="{StaticResource AppleDivider}" />
                             <TextBlock Style="{StaticResource AppleSubLabel}" Text="预览（跑一次后这里就变成画好的结果图）" Margin="14,6,14,4" />
-                            <Border Margin="12,0,12,10" CornerRadius="8" ClipToBounds="True" Background="{StaticResource CanvasBrush}">
+                            <Border x:Name="ShowResultPreviewBox" Margin="12,0,12,10" CornerRadius="8" ClipToBounds="True" Background="{StaticResource CanvasBrush}">
                                 <StackPanel>
                                 <TextBlock Style="{StaticResource AppleSubLabel}" Text="还没有图：先在「拍张照片」选一张，或直接跑一次流程"
                                            Margin="12,10,12,0"
@@ -562,7 +563,7 @@
                                 <Image Source="{Binding ResultPreview}" Stretch="Uniform">
                                     <Image.Height>
                                         <MultiBinding Converter="{StaticResource AspectHeight}">
-                                            <Binding Path="ActualWidth" ElementName="ShowResultPreviewHost" />
+                                            <Binding Path="ActualWidth" ElementName="ShowResultPreviewBox" />
                                             <Binding Path="ResultPreview.PixelWidth" />
                                             <Binding Path="ResultPreview.PixelHeight" />
                                         </MultiBinding>
@@ -658,87 +659,14 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="📷 拍张照片" /> — 给后续步骤提供一张图</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选采集方式  →  2 点旁边按钮（选图片 / 选文件夹 / 拍一张）拿到图  →  3 在下方图上拖一个框（不框=整张图）  →  4 跑流程。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选「采集方式」，再点右边那个按钮把图拿到 → 2~3 这一步用的就是这张图（选「打开文件夹」时每跑一次换下一张）→ 4~10 只有接相机才用，用本地图片这几行不用动 → 11~12 用迈德威视相机时才出现 → 最后在下面的图上拖一个框（不框=整张图），然后跑流程。" />
                             </StackPanel>
                         </Border>
-                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="相机参数" />
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="先拿到一张图" />
                         <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="图像源" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ImageSource, Converter={StaticResource BinPath}, FallbackValue=''}" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <!-- 「打开文件夹」时把文件夹亮出来：不然只看到一个空图像源，不知道图从哪来 -->
-                        <StackPanel Visibility="{Binding SelectedStep.CaptureMode, Converter={StaticResource KindVis}, ConverterParameter=打开文件夹}">
-                            <DockPanel Style="{StaticResource AppleRow}">
-                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="图片文件夹"
-                                           ToolTip="流程每跑一次这一步换下一张，跑完一轮从头开始" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.FolderPath, Converter={StaticResource BinPath}, FallbackValue='还没选'}" />
-                            </DockPanel>
-                            <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding CaptureFolderInfo, FallbackValue=''}"
-                                       Margin="16,0,16,6" TextWrapping="Wrap" />
-                            <Rectangle Style="{StaticResource AppleDivider}" />
-                        </StackPanel>
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="曝光(us)" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Exposure, FallbackValue=8000}" Width="100" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="增益" ToolTip="画面信号放大倍数。调高会变亮，但噪点也变多" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Gain, FallbackValue=10}" Width="100" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="触发模式" />
-                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="140"
-                                      ItemsSource="{Binding CaptureTriggerModes}" SelectedItem="{Binding SelectedStep.TriggerMode, FallbackValue='连续采集'}" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="像素格式" />
-                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="140"
-                                      ItemsSource="{Binding CapturePixelFormats}" SelectedItem="{Binding SelectedStep.PixelFormat, FallbackValue='RGB8'}" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <Grid Margin="16,8,16,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" Margin="0,0,6,0">
-                                <TextBlock Text="分辨率宽(px)" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ImageWidth, FallbackValue=2448}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
-                            </StackPanel>
-                            <StackPanel Grid.Column="1" Margin="6,0,0,0">
-                                <TextBlock Text="分辨率高(px)" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ImageHeight, FallbackValue=2048}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
-                            </StackPanel>
-                        </Grid>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="图像格式" />
-                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
-                                      ItemsSource="{Binding ImageFormats}" SelectedItem="{Binding SelectedStep.ImageFormat, FallbackValue='PNG'}" />
-                        </DockPanel>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <Grid Margin="16,4,16,4">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                <CheckBox Content="自动曝光"
-                                          IsChecked="{Binding SelectedStep.AutoExposure, Converter={StaticResource IntToBoolConverter}}"
-                                          Style="{StaticResource AppleCheckBox}" />
-                            </StackPanel>
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                <CheckBox Content="保存原图"
-                                          IsChecked="{Binding SelectedStep.SaveImage, Converter={StaticResource IntToBoolConverter}}"
-                                          Style="{StaticResource AppleCheckBox}" />
-                            </StackPanel>
-                        </Grid>
-                        <Rectangle Style="{StaticResource AppleDivider}" />
-                        <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="采集方式" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="140"
                                       ItemsSource="{Binding CaptureModes}" SelectedItem="{Binding SelectedStep.CaptureMode, FallbackValue='打开文件'}" />
@@ -761,6 +689,115 @@
                                 </Button.Style>
                             </Button>
                         </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
+                        </Border>
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="图像源" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ImageSource, Converter={StaticResource BinPath}, FallbackValue=''}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <!-- 「打开文件夹」时把文件夹亮出来：不然只看到一个空图像源，不知道图从哪来 -->
+                        <StackPanel Visibility="{Binding SelectedStep.CaptureMode, Converter={StaticResource KindVis}, ConverterParameter=打开文件夹}">
+                            <DockPanel Style="{StaticResource AppleRow}">
+                            <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                                <TextBlock Style="{StaticResource OpBadgeText}" Text="3" />
+                            </Border>
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="图片文件夹"
+                                           ToolTip="流程每跑一次这一步换下一张，跑完一轮从头开始" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.FolderPath, Converter={StaticResource BinPath}, FallbackValue='还没选'}" />
+                            </DockPanel>
+                            <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding CaptureFolderInfo, FallbackValue=''}"
+                                       Margin="16,0,16,6" TextWrapping="Wrap" />
+                            <Rectangle Style="{StaticResource AppleDivider}" />
+                        </StackPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <TextBlock Style="{StaticResource AppleSectionHeader}" Text="相机参数（只有选相机才用，用本地图片这几行不用动）" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="4" />
+                        </Border>
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="曝光(us)" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Exposure, FallbackValue=8000}" Width="100" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="5" />
+                        </Border>
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="增益" ToolTip="画面信号放大倍数。调高会变亮，但噪点也变多" />
+                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Gain, FallbackValue=10}" Width="100" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="6" />
+                        </Border>
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="触发模式" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="140"
+                                      ItemsSource="{Binding CaptureTriggerModes}" SelectedItem="{Binding SelectedStep.TriggerMode, FallbackValue='连续采集'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="7" />
+                        </Border>
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="像素格式" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="140"
+                                      ItemsSource="{Binding CapturePixelFormats}" SelectedItem="{Binding SelectedStep.PixelFormat, FallbackValue='RGB8'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="8" />
+                        </Border>
+                            <Grid Margin="6,0,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                                    <TextBlock Text="分辨率宽(px)" Style="{StaticResource AppleSubLabel}" FontSize="10" />
+                                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ImageWidth, FallbackValue=2448}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Margin="6,0,0,0">
+                                    <TextBlock Text="分辨率高(px)" Style="{StaticResource AppleSubLabel}" FontSize="10" />
+                                    <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ImageHeight, FallbackValue=2048}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
+                                </StackPanel>
+                            </Grid>
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="9" />
+                        </Border>
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="图像格式" />
+                            <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
+                                      ItemsSource="{Binding ImageFormats}" SelectedItem="{Binding SelectedStep.ImageFormat, FallbackValue='PNG'}" />
+                        </DockPanel>
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                        <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="10" />
+                        </Border>
+                            <Grid Margin="6,0,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <CheckBox Content="自动曝光"
+                                              IsChecked="{Binding SelectedStep.AutoExposure, Converter={StaticResource IntToBoolConverter}}"
+                                              Style="{StaticResource AppleCheckBox}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <CheckBox Content="保存原图"
+                                              IsChecked="{Binding SelectedStep.SaveImage, Converter={StaticResource IntToBoolConverter}}"
+                                              Style="{StaticResource AppleCheckBox}" />
+                                </StackPanel>
+                            </Grid>
+                        </DockPanel>
                         <!-- 迈德威视：面阵/线扫共用一块，勾了线扫才要行频和拼帧行数 -->
                         <StackPanel>
                             <StackPanel.Style>
@@ -775,6 +812,9 @@
                             </StackPanel.Style>
                             <Rectangle Style="{StaticResource AppleDivider}" />
                             <DockPanel Style="{StaticResource AppleRow}">
+                            <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                                <TextBlock Style="{StaticResource OpBadgeText}" Text="11" />
+                            </Border>
                                 <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="相机" />
                                 <Button Style="{StaticResource AppleBtn}" Content="🔄 刷新" Command="{Binding RefreshCamerasCmd}" DockPanel.Dock="Right" Margin="8,0,0,0" />
                                 <Button Style="{StaticResource AppleBtn}" Content="📷 抓一张" Command="{Binding GrabCameraCmd}" DockPanel.Dock="Right" Margin="8,0,0,0" />
@@ -783,6 +823,9 @@
                             </DockPanel>
                             <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding MindVisionStatus}" Margin="16,2,16,4" TextWrapping="Wrap" />
                             <DockPanel Style="{StaticResource AppleRow}">
+                            <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                                <TextBlock Style="{StaticResource OpBadgeText}" Text="12" />
+                            </Border>
                                 <CheckBox Content="线扫" DockPanel.Dock="Left" Style="{StaticResource AppleCheckBox}"
                                           IsChecked="{Binding SelectedStep.CameraLineScan, Mode=TwoWay}" ToolTip="线扫相机：靠行频一行一行拍，攒够「每帧行数」拼成一张图" />
                                 <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="行频(Hz)" Margin="16,0,6,0" />
@@ -858,7 +901,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🎯 图里找图案" /> — 在图里找到目标的位置</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 在源图上框住要找的图案  →  2 点「确定模板」  →  3 设相似度阈值  →  4 点「开始匹配」；低于阈值算没找到。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：先在右边源图上按住拖一个框，把要找的图案框住，点「确定模板」→ 1 选匹配模式 → 2~5 找不准时再微调：结果排序 / 边缘填充 / 最小匹配间距 / 启用掩膜 → 6 模板文件：想换图复用就从这里改。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="图里找图案" />
@@ -904,6 +947,9 @@
                         </StackPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="匹配模式" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="130"
                                       ItemsSource="{Binding MatchModes}" SelectedItem="{Binding SelectedStep.MatchMode, FallbackValue='灰度匹配'}" />
@@ -1061,29 +1107,44 @@
                         </Grid>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="结果排序" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="130"
                                       ItemsSource="{Binding SortBys}" SelectedItem="{Binding SelectedStep.SortBy, FallbackValue='相似度'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="3" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="边缘填充" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="130"
                                       ItemsSource="{Binding BorderModes}" SelectedItem="{Binding SelectedStep.BorderMode, FallbackValue='常数填充'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="4" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="最小匹配间距(px)" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.MinDistance, FallbackValue=10}" Width="100" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="5" />
+                        </Border>
                             <CheckBox Content="启用掩膜(忽略背景)"
                                       IsChecked="{Binding SelectedStep.UseMask, Converter={StaticResource IntToBoolConverter}}"
                                       Style="{StaticResource AppleCheckBox}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="6" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="模板文件" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.TemplateFile, FallbackValue=''}" />
                         </DockPanel>
@@ -1133,7 +1194,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="📐 量尺寸" /> — 量一个几何量并判合格</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 在右边图上框出要量的地方  →  2 选测量类型  →  3 填标称值与公差  →  4 填输出变量名  →  5 跑流程，看「实测值 / 判定」" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：先在下面图上框出要量的地方 → 1 选测量类型 → 2~3 填标称值和公差（合格不合格就看这两个）→ 4~5 单位和保留小数位 → 6 实测值写进哪个变量 → 7~9 量不准再微调卡尺数 / 边缘极性 / 边缘阈值 → 10 ROI 坐标就是上面拖的框，不用手填。" />
                             </StackPanel>
                         </Border>
                         <!-- 1. 测量摘要：明确回答「测量了什么」 -->
@@ -1173,80 +1234,93 @@
 
                         <!-- 2. 测量规格：两列紧凑布局 + 每个参数带 ToolTip -->
                         <TextBlock Grid.Row="1" Style="{StaticResource AppleSectionHeader}" Text="测量规格" Margin="16,0,16,6"/>
-                        <Grid Grid.Row="2" Margin="16,0,16,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <DockPanel Grid.Column="0" Grid.Row="0" Style="{StaticResource AppleRow}">
+                            <DockPanel Style="{StaticResource AppleRow}">
+                            <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                                <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
+                            </Border>
                                 <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="测量类型" ToolTip="要测量的几何量：圆径、边距、角度、面积、中心距"/>
                                 <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
                                           ItemsSource="{Binding MeasureTypes}" SelectedItem="{Binding SelectedStep.MeasureType, FallbackValue='圆径'}" />
                             </DockPanel>
-                            <DockPanel Grid.Column="1" Grid.Row="0" Style="{StaticResource AppleRow}">
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                            <DockPanel Style="{StaticResource AppleRow}">
+                            <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                                <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
+                            </Border>
                                 <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="标称值" ToolTip="目标理论值，实测值围绕此值判定 OK/NG"/>
                                 <TextBox DockPanel.Dock="Left" Style="{StaticResource AppleTextField}" Width="80"
                                          Text="{Binding SelectedStep.NominalValue, FallbackValue=12.00}" />
                             </DockPanel>
-
-                            <DockPanel Grid.Column="0" Grid.Row="1" Style="{StaticResource AppleRow}">
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                            <DockPanel Style="{StaticResource AppleRow}">
+                            <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                                <TextBlock Style="{StaticResource OpBadgeText}" Text="3" />
+                            </Border>
                                 <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="公差(±)" ToolTip="允许偏离标称值的最大范围"/>
                                 <TextBox DockPanel.Dock="Left" Style="{StaticResource AppleTextField}" Width="80"
                                          Text="{Binding SelectedStep.Tolerance, FallbackValue=0.05}" />
                             </DockPanel>
-                            <DockPanel Grid.Column="1" Grid.Row="1" Style="{StaticResource AppleRow}">
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                            <DockPanel Style="{StaticResource AppleRow}">
+                            <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                                <TextBlock Style="{StaticResource OpBadgeText}" Text="4" />
+                            </Border>
                                 <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="单位" ToolTip="测量结果与标称值的显示单位"/>
                                 <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="100"
                                           ItemsSource="{Binding MeasureUnits}" SelectedItem="{Binding SelectedStep.MeasureUnit, FallbackValue='像素'}" />
                             </DockPanel>
-
-                            <DockPanel Grid.Column="0" Grid.Row="2" Style="{StaticResource AppleRow}">
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                            <DockPanel Style="{StaticResource AppleRow}">
+                            <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                                <TextBlock Style="{StaticResource OpBadgeText}" Text="5" />
+                            </Border>
                                 <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="小数位" ToolTip="测量结果保留的小数位数"/>
                                 <TextBox DockPanel.Dock="Left" Style="{StaticResource AppleTextField}" Width="80"
                                          Text="{Binding SelectedStep.Decimals, FallbackValue=3}" />
                             </DockPanel>
-                            <DockPanel Grid.Column="1" Grid.Row="2" Style="{StaticResource AppleRow}">
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                            <DockPanel Style="{StaticResource AppleRow}">
+                            <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                                <TextBlock Style="{StaticResource OpBadgeText}" Text="6" />
+                            </Border>
                                 <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="输出变量" ToolTip="测量结果写入的变量名，供后续步骤或脚本读取"/>
                                 <TextBox DockPanel.Dock="Left" Style="{StaticResource AppleTextField}" Width="100"
                                          Text="{Binding SelectedStep.OutputVar, FallbackValue='dMeasure'}" />
                             </DockPanel>
-                        </Grid>
 
                         <!-- 3. 算法参数：同样两列 + ToolTip -->
                         <TextBlock Grid.Row="3" Style="{StaticResource AppleSectionHeader}" Text="算法参数" Margin="16,4,16,6"/>
-                        <Grid Grid.Row="4" Margin="16,0,16,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <DockPanel Grid.Column="0" Grid.Row="0" Style="{StaticResource AppleRow}">
+                            <DockPanel Style="{StaticResource AppleRow}">
+                            <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                                <TextBlock Style="{StaticResource OpBadgeText}" Text="7" />
+                            </Border>
                                 <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="卡尺数" ToolTip="边缘搜索时沿轮廓采集的测量点数，越多越稳定但越慢"/>
                                 <TextBox DockPanel.Dock="Left" Style="{StaticResource AppleTextField}" Width="80"
                                          Text="{Binding SelectedStep.CaliperCount, FallbackValue=20}" />
                             </DockPanel>
-                            <DockPanel Grid.Column="1" Grid.Row="0" Style="{StaticResource AppleRow}">
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                            <DockPanel Style="{StaticResource AppleRow}">
+                            <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                                <TextBlock Style="{StaticResource OpBadgeText}" Text="8" />
+                            </Border>
                                 <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="边缘极性" ToolTip="边缘灰度变化方向：由亮到暗 / 由暗到亮 / 任意"/>
                                 <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
                                           ItemsSource="{Binding EdgePolarities}" SelectedItem="{Binding SelectedStep.EdgePolarity, FallbackValue='由亮到暗'}" />
                             </DockPanel>
-
-                            <DockPanel Grid.Column="0" Grid.Row="1" Style="{StaticResource AppleRow}">
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                            <DockPanel Style="{StaticResource AppleRow}">
+                            <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                                <TextBlock Style="{StaticResource OpBadgeText}" Text="9" />
+                            </Border>
                                 <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="边缘阈值" ToolTip="判定边缘的最小灰度差，越小越灵敏"/>
                                 <TextBox DockPanel.Dock="Left" Style="{StaticResource AppleTextField}" Width="80"
                                          Text="{Binding SelectedStep.EdgeThreshold, FallbackValue=20}" />
                             </DockPanel>
-                            <DockPanel Grid.Column="1" Grid.Row="1" Style="{StaticResource AppleRow}">
+                        <Rectangle Style="{StaticResource AppleDivider}" />
+                            <DockPanel Style="{StaticResource AppleRow}">
+                            <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                                <TextBlock Style="{StaticResource OpBadgeText}" Text="10" />
+                            </Border>
                                 <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="ROI 坐标" ToolTip="感兴趣区域：X/Y 为左上角坐标，W/H 为宽高，可直接在下方图中拖拽绘制"/>
                                 <UniformGrid Columns="4" Width="130">
                                     <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=0}" FontSize="11" Padding="4,2" />
@@ -1255,7 +1329,6 @@
                                     <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiH, Mode=TwoWay, FallbackValue=80}" FontSize="11" Padding="4,2" />
                                 </UniformGrid>
                             </DockPanel>
-                        </Grid>
 
                         <!-- 5. ROI 预览说明（图像在右侧） -->
                         <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI 预览：在右侧图中拖拽绘制区域，测量算法只在该区域内搜索边缘。" Margin="16,8,16,4" />
@@ -1299,37 +1372,55 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="✅ 判一下对不对" /> — 用条件决定合格 / 不合格</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选要判的变量或上一步结果  →  2 写比较式（如 score >= 0.85）  →  3 定合格 / 不合格后怎么走。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 写比较式（如 score >= 0.85），或者 4~5 选一个变量、指定拿谁跟它比 → 2~3 定好真 / 假两条路各走哪一步 → 6 备注写给人看的。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="判一下对不对" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="条件表达式" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.LogicExpression, FallbackValue='score >= 0.85'}" Width="180" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="True 分支" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="Pass" Width="80" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="3" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="False 分支" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="NG" Width="80" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="4" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="比较变量" ToolTip="拿这一步的结果和哪个变量做比较" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.CompareVar, FallbackValue='score'}" Width="120" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="5" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="比较来源" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="140"
                                       ItemsSource="{Binding CompareSources}" SelectedItem="{Binding SelectedStep.CompareSource, FallbackValue='匹配分数'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="6" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="备注" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Remark, FallbackValue=''}" />
                         </DockPanel>
@@ -1352,45 +1443,66 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="📤 报结果" /> — 把结果写到 PLC / 变量</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 填输出地址与值  →  2 选触发方式  →  3 要确认外部真收到就勾「写后读校验」。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1~2 填输出地址和要输出的值 → 3~4 选输出类型与数据类型（要和 PLC 那边收法一致）→ 5 选触发方式 → 6 选失败怎么办 → 7 想确认对方真收到了就勾「写后读校验」。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="报结果" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="输出地址" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.OutputAddress, FallbackValue='PLC_D200'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="输出值" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.OutputValue, FallbackValue=1}" Width="80" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="3" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="输出类型" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
                                       ItemsSource="{Binding OutputTypes}" SelectedItem="{Binding SelectedStep.OutputType, FallbackValue='PLC'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="4" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="数据类型" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
                                       ItemsSource="{Binding DataTypes}" SelectedItem="{Binding SelectedStep.DataType, FallbackValue='整数'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="5" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="触发方式" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
                                       ItemsSource="{Binding OutputTriggers}" SelectedItem="{Binding SelectedStep.Trigger, FallbackValue='立即'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="6" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="失败处理" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
                                       ItemsSource="{Binding OnFails}" SelectedItem="{Binding SelectedStep.OnFail, FallbackValue='忽略'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="7" />
+                        </Border>
                             <CheckBox Content="写后读校验"
                                       IsChecked="{Binding SelectedStep.Verify, Converter={StaticResource IntToBoolConverter}}"
                                       Style="{StaticResource AppleCheckBox}" />
@@ -1420,12 +1532,15 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🔍 挑瑕疵" /> — 和标准图比，找出不一样的地方</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 先载入一张标准图  →  2 在图上框出要比的区域  →  3 调差异阈值  →  4 点「开始检测缺陷」；红色即可疑缺陷。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：先在下面图上框出要比的区域、再载入一张标准图 → 1 差异阈值：差多少算异常，越小越敏感也越容易误报 → 2 最小面积占比：太小的不算，滤掉噪点 → 3 全局亮度阈值：整张图亮度超了先报警（打光不对）→ 4~7 边缘容差 / 边缘梯度 / 腐蚀核 / 膨胀核都是微调，不确定就用默认 → 然后点「开始检测缺陷」，红色即可疑缺陷。" />
                             </StackPanel>
                         </Border>
                         <!-- 缺陷检测预览图见右侧列 -->
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="缺陷参数" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="差异阈值" ToolTip="和标准图比，差多少算异常。数值越小越敏感，也越容易误报" />
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
                                 <Slider Minimum="1" Maximum="254" Value="{Binding SelectedStep.DiffThreshold, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
@@ -1434,6 +1549,9 @@
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="最小面积占比" />
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
                                 <Slider Minimum="0.001" Maximum="0.05" Value="{Binding SelectedStep.MinAreaFrac, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
@@ -1442,6 +1560,9 @@
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="3" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="全局亮度阈值" ToolTip="整张图亮度超过这个值就报警，用来发现打光异常" />
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
                                 <Slider Minimum="1" Maximum="254" Value="{Binding SelectedStep.GlobalBrightnessThresh, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
@@ -1450,6 +1571,9 @@
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="4" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="边缘容差" />
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
                                 <Slider Minimum="0" Maximum="30" Value="{Binding SelectedStep.EdgeTolerance, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
@@ -1458,6 +1582,9 @@
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="5" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="边缘梯度" />
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
                                 <Slider Minimum="1" Maximum="254" Value="{Binding SelectedStep.EdgeGradThresh, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
@@ -1466,6 +1593,9 @@
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="6" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="腐蚀核" />
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
                                 <Slider Minimum="0" Maximum="15" Value="{Binding SelectedStep.ErodeSize, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
@@ -1474,6 +1604,9 @@
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="7" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="膨胀核" />
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
                                 <Slider Minimum="0" Maximum="15" Value="{Binding SelectedStep.DilateSize, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
@@ -1555,23 +1688,32 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🦾 动轴" /> — 让指定轴走到目标位置</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选目标轴  →  2 选运动类型  →  3 填 XYZ 与速度（越大走得越快）  →  4 设到位超时，防止卡死。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选目标轴 → 2~3 选运动类型和运动模式 → 中间填目标位置和速度（数值越大走得越快）→ 4 设到位超时(ms)，防止卡死 → 5 要不要给伺服上使能。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="动轴" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="目标轴" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="150"
                                       ItemsSource="{Binding AxisNames}" SelectedItem="{Binding SelectedStep.TargetAxis, FallbackValue='X轴'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="运动类型" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="150"
                                       ItemsSource="{Binding MoveTypes}" SelectedItem="{Binding SelectedStep.MoveType, FallbackValue='绝对运动'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="3" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="运动模式" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="150"
                                       ItemsSource="{Binding MoveModes}" SelectedItem="{Binding SelectedStep.MoveMode, FallbackValue='点位运动'}" />
@@ -1628,11 +1770,17 @@
                         </Grid>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="4" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="到位超时(ms)" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.InPosTimeout, FallbackValue=5000}" Width="100" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="5" />
+                        </Border>
                             <CheckBox Content="伺服使能"
                                       IsChecked="{Binding SelectedStep.ServoOn, Converter={StaticResource IntToBoolConverter}}"
                                       Style="{StaticResource AppleCheckBox}" />
@@ -1656,23 +1804,32 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🔌 IO 控制" /> — 打开 / 关闭一个数字信号</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选 IO 通道与类型  →  2 勾「开」输出高电平  →  3 要等信号稳定再往下走就勾「等待完成」。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选 IO 类型 → 2 选通道 → 3 填输出值（勾「开」输出高电平）→ 4 要等信号稳定再往下走就勾「等待完成」。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="IO 控制" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="IO 类型" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
                                       ItemsSource="{Binding IoTypes}" SelectedItem="{Binding SelectedStep.IoType, FallbackValue='输出'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="IO 通道" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="140" IsEditable="True"
                                       ItemsSource="{Binding IoChannels}" SelectedItem="{Binding SelectedStep.IoChannel, FallbackValue='DO_0'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="3" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="输出值" />
                             <CheckBox Content="开"
                                       IsChecked="{Binding SelectedStep.IoValue, Converter={StaticResource IntToBoolConverter}}"
@@ -1680,6 +1837,9 @@
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="4" />
+                        </Border>
                             <CheckBox Content="等待完成"
                                       IsChecked="{Binding SelectedStep.WaitDone, Converter={StaticResource IntToBoolConverter}}"
                                       Style="{StaticResource AppleCheckBox}" />
@@ -1703,32 +1863,47 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🟢 伸缩气缸" /> — 让气缸伸出 / 缩回</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选气缸  →  2 选动作（伸 / 缩）  →  3 填到位、缩回传感器  →  4 设超时时间，收不到信号会报警。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选气缸 → 2 选动作（伸 / 缩）→ 3~4 填到位和缩回传感器 → 5 设超时时间，收不到信号会报警。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="伸缩气缸" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="气缸名称" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.CylName, FallbackValue='气缸1'}" Width="140" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="动作" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
                                       ItemsSource="{Binding CylActions}" SelectedItem="{Binding SelectedStep.CylAction, FallbackValue='伸出'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="3" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="到位传感器" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.SensorIn, FallbackValue='IN_0'}" Width="100" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="4" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="缩回传感器" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.SensorOut, FallbackValue='IN_1'}" Width="100" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="5" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="动作超时(ms)" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.CylTimeout, FallbackValue=3000}" Width="100" />
                         </DockPanel>
@@ -1751,22 +1926,31 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="⏱ 等一会" /> — 等一段时间或等一个条件</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选等时间还是等条件  →  2 填毫秒数或表达式（如 signal == 1），满足才继续往下走。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选等时间还是等条件 → 2 填毫秒数，或 3 填表达式（如 signal == 1），满足才继续往下走。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="等一会" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="等待类型" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
                                       ItemsSource="{Binding WaitTypes}" SelectedItem="{Binding SelectedStep.WaitType, FallbackValue='时间'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="等待时间(ms)" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.WaitTime, FallbackValue=1000}" Width="100" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="3" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="等待条件" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.WaitCondition, FallbackValue='signal == 1'}" />
                         </DockPanel>
@@ -1789,28 +1973,40 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="📡 发数据" /> — 通过串口 / 网口发一条指令</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选通讯通道  →  2 选指令类型  →  3 填编码与指令内容  →  4 发送（常用来给 PLC / 设备下动作）。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选通讯通道 → 2 选指令类型 → 3 选编码 → 4 填指令内容（常用来给 PLC / 设备下动作）。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="发数据" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="通讯通道" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.CommChannel, FallbackValue='PLC-串口'}" Width="140" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="指令类型" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
                                       ItemsSource="{Binding CommCmds}" SelectedItem="{Binding SelectedStep.CommCmd, FallbackValue='发送'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="3" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="编码" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
                                       ItemsSource="{Binding CommEncodings}" SelectedItem="{Binding SelectedStep.CommEncoding, FallbackValue='ASCII'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="4" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="指令内容" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.CommContent, FallbackValue='M100=1'}" />
                         </DockPanel>
@@ -1834,17 +2030,23 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🎨 看颜色" /> — 统计 / 判定某区域的颜色</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 在图上框出要看的区域  →  2 选检测通道与目标色  →  3 调容差  →  4 运行后看输出变量里的命中数量。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：先在下面图上框出要看的区域 → 1 选检测通道 → 2 填目标颜色（支持 #RRGGBB）→ 3 命中数量写进哪个变量。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="看颜色" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="检测通道" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
                                       ItemsSource="{Binding ColorChannels}" SelectedItem="{Binding SelectedStep.ColorChannel, FallbackValue='灰度'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="目标颜色" ToolTip="目标颜色，支持 #RRGGBB" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.TargetColor, FallbackValue='#FF0000'}" Width="120" />
                         </DockPanel>
@@ -1862,6 +2064,9 @@
                         </Grid>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="3" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="输出变量" ToolTip="命中结果写入的变量名" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.OutputVar, FallbackValue='colorHit'}" Width="120" />
                         </DockPanel>
@@ -1884,17 +2089,23 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🔢 数有几个" /> — 数出图里有多少个目标</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 在图上框出要数的区域  →  2 设最小面积过滤噪声  →  3 结果写入输出变量。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：先在下面图上框出要数的区域 → 1 选计数来源 → 2 ROI 坐标就是上面拖的框，不用手填 → 3 数量写进哪个变量。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="数有几个" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="计数来源" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="140"
                                       ItemsSource="{Binding CountSources}" SelectedItem="{Binding SelectedStep.CountSource, FallbackValue='上一步结果'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="ROI 坐标" ToolTip="检测区域：X/Y 左上角，W/H 宽高" />
                             <UniformGrid Columns="4" Width="200">
                                 <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=0}" FontSize="11" Padding="4,2" />
@@ -1917,6 +2128,9 @@
                         </Grid>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="3" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="输出变量" ToolTip="数量结果写入的变量名" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.CountOutputVar, FallbackValue='nCount'}" Width="120" />
                         </DockPanel>
@@ -1939,17 +2153,23 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🔖 扫条码" /> — 读出二维码 / 条码里的文字</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 在图上框出码所在区域  →  2 选码类型  →  3 运行读出内容，写进输出变量供后续使用。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：先在下面图上框出码所在的区域 → 1 选码类型 → 2 读出来的内容写进哪个变量，供后面判定或发出去。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="扫条码" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="码类型" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="140"
                                       ItemsSource="{Binding CodeTypes}" SelectedItem="{Binding SelectedStep.CodeType, FallbackValue='QR'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="输出变量" ToolTip="识别出的内容写入的变量名" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.CodeOutputVar, FallbackValue='sCode'}" Width="120" />
                         </DockPanel>
@@ -1972,17 +2192,23 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🔤 认文字" /> — 把图里的文字读成字符串</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 在图上框出文字所在区域  →  2 选识别语言  →  3 运行读出文字，写进输出变量用于比对或记录。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：先在下面图上框出文字所在的区域 → 1 选识别语言 → 2 ROI 坐标就是上面拖的框 → 3 读出来的文字写进哪个变量。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="认文字" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="识别语言" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="140"
                                       ItemsSource="{Binding OcrLangs}" SelectedItem="{Binding SelectedStep.OcrLang, FallbackValue='数字'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="ROI 坐标" ToolTip="识别区域：X/Y 左上角，W/H 宽高" />
                             <UniformGrid Columns="4" Width="200">
                                 <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=0}" FontSize="11" Padding="4,2" />
@@ -1993,6 +2219,9 @@
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="3" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="输出变量" ToolTip="识别出的文字写入的变量名" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.OcrOutputVar, FallbackValue='sText'}" Width="120" />
                         </DockPanel>
@@ -2015,21 +2244,30 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🔀 走哪一条" /> — 按真假走不同后续步骤</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 写条件表达式  →  2 填真分支的步骤名  →  3 填假分支的步骤名，运行后按真假分流。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 写条件表达式 → 2 填真走哪一步 → 3 填假走哪一步，运行后按真假分流。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="走哪一条" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="条件表达式" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.BranchCondition, FallbackValue='score >= 0.85'}" Width="180" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="真分支步骤" ToolTip="条件成立时要执行的步骤名" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.BranchTrue, FallbackValue='合格分支'}" Width="140" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="3" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="假分支步骤" ToolTip="条件不成立时要执行的步骤名" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.BranchFalse, FallbackValue='不合格分支'}" Width="140" />
                         </DockPanel>
@@ -2052,27 +2290,39 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🔁 重复做" /> — 重复执行一段步骤</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选按次数还是按条件  →  2 填次数或继续条件（如 i &lt; 10）  →  3 设循环变量，它用来计数。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选按次数还是按条件 → 2 填次数，或 3 填继续条件（如 i &lt; 10）→ 4 设循环变量名，它用来计数。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="重复做" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="循环类型" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
                                       ItemsSource="{Binding LoopTypes}" SelectedItem="{Binding SelectedStep.LoopType, FallbackValue='次数'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="循环次数" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.LoopCount, FallbackValue=3}" Width="80" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="3" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="循环条件" ToolTip="循环类型为「条件」时生效" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.LoopCondition, FallbackValue='i &lt; 10'}" Width="140" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="4" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="循环变量" ToolTip="计数变量名，如 i" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.LoopVar, FallbackValue='i'}" Width="80" />
                         </DockPanel>
@@ -2095,11 +2345,14 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="📑 调子流程" /> — 调用另一个已建好的流程</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 填要调用的子流程名称（左侧流程方案里的名字）  →  2 跑到这一步会先把那个流程执行完再继续。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 填要调用的子流程名字（就是左侧流程方案里的名字）→ 跑到这一步会先把那个流程执行完再继续。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="调子流程" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="子流程名" ToolTip="左侧流程方案里的流程名称" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.SubFlowName, FallbackValue=''}" Width="180" />
                         </DockPanel>
@@ -2122,16 +2375,22 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🧮 算个数" /> — 用公式算出一个新值</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 在表达式里写运算（如 a + b * 2，可用前面步骤的变量）  →  2 填结果写入哪个变量。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 在表达式里写运算（如 a + b * 2，可以用前面步骤的变量）→ 2 填结果写进哪个变量。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="算个数" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="表达式" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.CalcExpression, FallbackValue='a + b * 2'}" Width="200" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="输出变量" ToolTip="计算结果写入的变量名" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.CalcOutputVar, FallbackValue='result'}" Width="120" />
                         </DockPanel>
@@ -2154,22 +2413,31 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="💾 存文件" /> — 把结果存成文件</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选保存格式与路径  →  2 填要存的字段（逗号分隔，如 time,score,result）  →  3 运行后落盘，用于报表与追溯。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选保存格式 → 2 填保存路径 → 3 填要存的字段（逗号分隔，如 time,score,result）→ 运行后落盘，用于报表和追溯。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="存文件" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="保存格式" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
                                       ItemsSource="{Binding SaveFormats}" SelectedItem="{Binding SelectedStep.SaveFormat, FallbackValue='CSV'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="保存路径" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.SavePath, FallbackValue='Data/result.csv'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="3" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="保存字段" ToolTip="逗号分隔，如 time,score,result" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.SaveFields, FallbackValue='time,score,result'}" />
                         </DockPanel>
@@ -2192,22 +2460,31 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="💬 弹提示" /> — 给用户一个提醒</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 填提示内容  →  2 选提示方式与级别  →  3 运行到这一步就弹给操作员（完成 / 报警 / 分步引导）。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 填提示内容 → 2 选提示方式 → 3 选提示级别，运行到这一步就弹给操作员（完成 / 报警 / 分步引导）。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="弹提示" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="提示内容" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.NotifyMessage, FallbackValue='检测完成'}" Width="200" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="提示方式" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
                                       ItemsSource="{Binding NotifyTypes}" SelectedItem="{Binding SelectedStep.NotifyType, FallbackValue='弹窗'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                            <TextBlock Style="{StaticResource OpBadgeText}" Text="3" />
+                        </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="提示级别" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
                                       ItemsSource="{Binding NotifyLevels}" SelectedItem="{Binding SelectedStep.NotifyLevel, FallbackValue='信息'}" />
@@ -2231,7 +2508,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="📝 Lua 脚本" /> — 用脚本做灵活的逻辑</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 在下方写 Lua 脚本  →  2 需要时调 vision / plc 等接口  →  3 点运行，看输出面板的打印。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：先在下面的编辑框里写 Lua 脚本 → 需要时调 vision / plc 等接口 → 点运行，看输出面板的打印。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="Lua 脚本" />
