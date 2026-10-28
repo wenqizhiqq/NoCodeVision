@@ -98,15 +98,16 @@
         <SolidColorBrush x:Key="NodeCommBg" Color="#FFF0F0" />
         <SolidColorBrush x:Key="NodeCommLine" Color="#D64545" />
 
-        <!-- 算子节点：图标 + 序号·功能，页脚=步骤名/运行状态；左入右出（判断类出「真/假」两个口） -->
+        <!-- 算子节点：整张图从上往下走。页眉=入端口(骑在上边框)+图标标题，正文=步骤名/运行状态，页脚=出端口(骑在下边框)；
+             判断类页脚并排两个口「真 / 假」。端口用负 margin 探出边框，连线自然就是竖着的。 -->
         <DataTemplate x:Key="NodeItemTemplate">
-            <nodify:Node Width="196"
+            <nodify:Node Width="200"
                          Header="{Binding}"
-                         Footer="{Binding Subtitle}"
-                         Input="{Binding Input}"
-                         Output="{Binding Outputs}"
+                         Content="{Binding Subtitle}"
+                         Footer="{Binding}"
                          Background="{StaticResource SurfaceBrush}"
                          Foreground="{StaticResource TextPrimaryBrush}"
+                         ContentBrush="{StaticResource CanvasBrush}"
                          FooterBrush="{StaticResource CanvasBrush}">
                 <nodify:Node.Style>
                     <Style TargetType="{x:Type nodify:Node}" BasedOn="{StaticResource {x:Type nodify:Node}}">
@@ -170,14 +171,44 @@
                 </nodify:Node.Style>
                 <nodify:Node.HeaderTemplate>
                     <DataTemplate>
-                        <StackPanel Orientation="Horizontal" Margin="2,0">
-                            <ctrl:AppleIconTile Glyph="{Binding Glyph}" TileSize="20" />
-                            <TextBlock Text="{Binding Title}" Margin="7,0,0,0" VerticalAlignment="Center"
-                                       FontSize="12" FontWeight="SemiBold"
-                                       Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type nodify:Node}}, Path=BorderBrush}" />
+                        <StackPanel>
+                            <nodify:NodeInput Orientation="Vertical" HorizontalAlignment="Center"
+                                              DataContext="{Binding InputPort}" Margin="0,-25,0,0" />
+                            <StackPanel Orientation="Horizontal" Margin="2,2,2,0">
+                                <ctrl:AppleIconTile Glyph="{Binding Glyph}" TileSize="20" />
+                                <TextBlock Text="{Binding Title}" Margin="7,0,0,0" VerticalAlignment="Center"
+                                           FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type nodify:Node}}, Path=BorderBrush}" />
+                            </StackPanel>
                         </StackPanel>
                     </DataTemplate>
                 </nodify:Node.HeaderTemplate>
+
+                <!-- 页脚：出端口排在节点下边框上（判断类的「真 / 假」两个并排） -->
+                <nodify:Node.FooterTemplate>
+                    <DataTemplate>
+                        <ItemsControl ItemsSource="{Binding Outputs}" HorizontalAlignment="Center" Margin="0,-4,0,0">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <nodify:NodeOutput Orientation="Vertical" Margin="12,-6,12,-25" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </DataTemplate>
+                </nodify:Node.FooterTemplate>
+
+                <!-- 正文：步骤名 / 运行状态 -->
+                <nodify:Node.ContentTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}" FontSize="11" Margin="2,3,2,1" TextTrimming="CharacterEllipsis"
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                    </DataTemplate>
+                </nodify:Node.ContentTemplate>
                 <nodify:Node.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="删除该节点" Command="{Binding DeleteCommand}" />

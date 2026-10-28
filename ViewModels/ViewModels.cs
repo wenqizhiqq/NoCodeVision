@@ -3661,15 +3661,15 @@ public class FlowViewModel : ViewModelBase
         // 节点图例子：三个节点已经连好线
         if (key == "node")
         {
-            var nCap = MkStep(1, "拍张照片", "取图", s => { s.CaptureMode = "打开文件夹"; s.NodeX = 60; s.NodeY = 120; });
+            var nCap = MkStep(1, "拍张照片", "取图", s => { s.CaptureMode = "打开文件夹"; s.NodeX = 300; s.NodeY = 60; });
             var nCircle = MkStep(2, "找圆", "找圆", s =>
             {
-                s.NodeX = 360; s.NodeY = 120; s.ExpectRadius = 0; s.CaliperLength = 60; s.SamplingStep = 6;
+                s.NodeX = 300; s.NodeY = 300; s.ExpectRadius = 0; s.CaliperLength = 60; s.SamplingStep = 6;
                 s.EdgePolarity = "从亮到暗"; s.FitMethod = "正交距离(更准)"; s.OutputVar = "dRadius";
             });
             var nJudge = MkStep(3, "判个数对不对", "判定", s =>
             {
-                s.NodeX = 660; s.NodeY = 120; s.CompareSource = "第2步"; s.AreaMin = 100; s.AreaMax = 400;
+                s.NodeX = 300; s.NodeY = 540; s.CompareSource = "第2步"; s.AreaMin = 100; s.AreaMax = 400;
             });
             flow.Steps = new ObservableCollection<VisionFlowStep> { nCap, nCircle, nJudge };
             // 默认输出口的名字是空串，写成「出」会静默连不上线
