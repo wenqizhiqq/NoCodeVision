@@ -1194,6 +1194,14 @@ public class VisionFlowStep : ViewModelBase
 
 // 编写：温启志 ‖ 微信：187①936①399
 
+/// <summary>「➕ 添加」菜单的一级项：分类 + 它下面的算子。</summary>
+public sealed class ToolGroup
+{
+    public string Name { get; init; } = "";
+
+    public System.Collections.Generic.List<string> Tools { get; init; } = new();
+}
+
 public class VisionFlow : ViewModelBase
 
 {
@@ -1217,6 +1225,11 @@ public class VisionFlow : ViewModelBase
 
     /// <summary>流程角色显示文本。</summary>
     public string RoleText => FlowRole == "Reset" ? "复位流程" : "主流程";
+
+    /// <summary>列表里双击名字就地改名的编辑态（同一时刻只让一个流程在改）。</summary>
+    public bool IsEditing { get => _isEditing; set => SetField(ref _isEditing, value); }
+
+    private bool _isEditing;
 
     public string ScriptContent { get; set; } = "-- 脚本流程示例：视觉 + 运控 + 计算\n-- 1) 视觉：采集图像并匹配模板\nlocal ok = vision.grab()                  -- 抓取一帧图像\nlocal score = vision.match(\"tpl_A.png\") -- 模板匹配，返回相似度 0~1\nprint(\"匹配分数: \" .. tostring(score))\n\n-- 2) 计算：判定是否合格，并换算位移量\nlocal threshold = 0.85\nlocal pass = score >= threshold\nlocal dx = (score - threshold) * 100     -- 分数差 → 位移量(px)\nlocal dist = math.sqrt(dx * dx)           -- 用 math 做计算\nprint(\"是否合格: \" .. tostring(pass) .. \"  位移量: \" .. tostring(dist))\n\n-- 3) 运控：合格则驱动 PLC/轴动作，不合格报警\nif pass then\n    plc.write(200, 1)                     -- 触发运动 / 输出\n    plc.write(201, math.floor(dist))      -- 下发放大后的位移量\n    print(\"运控：已发送到位指令\")\nelse\n    plc.write(200, 0)                     -- 复位 / 报警\n    print(\"运控：未达标，已停止\")\nend\n\nsleep(50)\n";
 
@@ -3923,6 +3936,33 @@ public class FlowViewModel : ViewModelBase
 
 
 
+    /// <summary>把某个工具变成当前流程末尾的一个步骤（「➕ 添加」按钮和两级菜单共用）。</summary>
+    void AddStepOf(string? tool)
+    {
+        if (_selectedFlow == null || string.IsNullOrWhiteSpace(tool)) return;
+        var next = _selectedFlow.Steps.Count + 1;
+        var (icon, type) = ToolToIconType(tool);
+        var step = new VisionFlowStep
+        {
+            Index = next,
+            Function = tool,
+            Name = $"{tool}{next}",
+            ParamSummary = "-",
+            Timeout = 3000,
+            CostMs = 0,
+            ActualValue = "-",
+            Icon = icon,
+            StepType = type,
+            LuaScript = type == "Lua" ? "-- 在下方编写 Lua 脚本\nlocal score = vision.match(\"tpl_A.png\")\nif score >= 0.85 then\n    plc.write(200, 1)\nend" : ""
+        };
+        _selectedFlow.Steps.Add(step);
+        Reindex(_selectedFlow);
+        SelectedStep = step;
+        IsAddMenuOpen = false;
+    }
+
+
+
     public VisionFlowStep? SelectedStep
 
     {
@@ -4672,6 +4712,19 @@ public class FlowViewModel : ViewModelBase
     // ===== 工具箱：右侧页面按分类（视觉/运控/通讯）选工具，➕添加 按所选工具新增步骤 =====
     public string[] ToolCategories { get; } = { "视觉", "OpenCVVision", "运控", "通讯", "更多" };
 
+    /// <summary>「➕ 添加」按钮上的两级菜单：一级 = 分类，二级 = 算子，点算子直接加进步骤。</summary>
+    public System.Collections.Generic.List<ToolGroup> ToolGroups { get; } = new();
+
+    /// <summary>添加菜单开没开（加完一步自己收起来）。</summary>
+    public bool IsAddMenuOpen { get => _isAddMenuOpen; set => SetField(ref _isAddMenuOpen, value); }
+
+    private bool _isAddMenuOpen;
+
+    /// <summary>添加菜单当前停在哪个分类上。</summary>
+    public ToolGroup? SelectedToolGroup { get => _selectedToolGroup; set => SetField(ref _selectedToolGroup, value); }
+
+    private ToolGroup? _selectedToolGroup;
+
     public ObservableCollection<string> ToolOptions { get; } = new();
 
     private string _selectedToolCategory = "视觉";
@@ -4857,6 +4910,24 @@ public class FlowViewModel : ViewModelBase
             _ => new[] { "拍张照片", "图里找图案", "挑瑕疵", "量尺寸" },
         };
         foreach (var t in options) ToolOptions.Add(t);
+
+        // 两级菜单：一次把各分类的算子全列出来（空分类不显示）
+        ToolGroups.Clear();
+        foreach (var cat in ToolCategories)
+        {
+            var tools = cat switch
+            {
+                "运控" => new[] { "动轴", "开关电", "伸缩气缸", "等一会" },
+                "通讯" => new[] { "TCP 发送" }
+                    .Concat(OperatorCatalog.All.Where(o => o.Group == "Comm" && o.Name != "TCP 发送").Select(o => o.Name))
+                    .Concat(new[] { "发数据" }).ToArray(),
+                "OpenCVVision" => OperatorCatalog.All.Where(o => o.Group == "OpenCVVision").Select(o => o.Name).ToArray(),
+                "更多" => OperatorCatalog.All.Where(o => o.Group != "OpenCVVision").Select(o => o.Name).ToArray(),
+                _ => new[] { "拍张照片", "图里找图案", "挑瑕疵", "量尺寸" },
+            };
+            if (tools.Length == 0) continue;
+            ToolGroups.Add(new ToolGroup { Name = cat, Tools = tools.OrderBy(t => t).ToList() });
+        }
         if (!ToolOptions.Contains(SelectedTool))
             SelectedTool = ToolOptions.FirstOrDefault() ?? "";
     }
@@ -5075,6 +5146,12 @@ public class FlowViewModel : ViewModelBase
     public ICommand DeleteFlowCmd { get; }
 
     public ICommand AddStepCmd { get; }
+
+    /// <summary>两级菜单里点某个算子 = 直接把它加到当前流程末尾。</summary>
+    public ICommand AddStepWithCmd { get; }
+
+    /// <summary>列表里双击流程名进入改名。</summary>
+    public ICommand BeginRenameFlowCmd { get; }
 
     public ICommand DeleteStepCmd { get; }
 
@@ -5370,48 +5447,20 @@ public class FlowViewModel : ViewModelBase
 
 
 
-        AddStepCmd = new RelayCommand(_ =>
+        AddStepCmd = new RelayCommand(_ => AddStepOf(SelectedTool), _ => _selectedFlow != null);
+
+
+
+        AddStepWithCmd = new RelayCommand(p => AddStepOf(p as string), _ => _selectedFlow != null);
+
+
+
+        BeginRenameFlowCmd = new RelayCommand(p =>
 
         {
-
-            if (_selectedFlow == null) return;
-
-            var next = _selectedFlow.Steps.Count + 1;
-
-            var (icon, type) = ToolToIconType(SelectedTool);
-
-            var step = new VisionFlowStep
-
-            {
-
-                Index = next,
-
-                Function = SelectedTool,
-
-                Name = $"{SelectedTool}{next}",
-
-                ParamSummary = "-",
-
-                Timeout = 3000,
-
-                CostMs = 0,
-
-                ActualValue = "-",
-
-                Icon = icon,
-
-                StepType = type,
-
-                LuaScript = type == "Lua" ? "-- 在下方编写 Lua 脚本\nlocal score = vision.match(\"tpl_A.png\")\nif score >= 0.85 then\n    plc.write(200, 1)\nend" : ""
-
-            };
-
-            _selectedFlow.Steps.Add(step);
-
-            Reindex(_selectedFlow);
-
-            SelectedStep = step;
-
+            if (p is not VisionFlow target) return;
+            foreach (var f in Flows) f.IsEditing = ReferenceEquals(f, target);
+            target.IsEditing = true;
         }, _ => _selectedFlow != null);
 
 
