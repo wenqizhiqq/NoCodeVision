@@ -28,6 +28,8 @@
     <PackageReference Include="MQTTnet" Version="4.3.7.1207" />
     <PackageReference Include="Nodify" Version="7.3.0" />
     <PackageReference Include="ZXing.Net" Version="0.16.9" />
+    <!-- 点阵(DPM)二维码解码用：原生 zxing-cpp 的 .NET 封装，识别率明显高于托管 ZXing.Net（自带 win-x64 原生库） -->
+    <PackageReference Include="ZXingCpp" Version="0.5.3" />
   </ItemGroup>
 
   <ItemGroup>

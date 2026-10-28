@@ -148,6 +148,10 @@ public class RotatedTemplateMatcher : IDisposable
                 _source.CopyTo(_sourceGray);
             else
                 Cv2.CvtColor(_source, _sourceGray, ColorConversionCodes.BGR2GRAY);
+            // DisposeSource() 已经释放了 _sourceContour；这里不重建的话，换第二张图时
+            // UseContour 的 setter 会因为「值没变」直接 return，于是拿灰度源图去配轮廓模板，
+            // 匹配位置整个错掉（和 LoadSource 的处理保持一致）。
+            if (UseContour) { _sourceContour?.Dispose(); _sourceContour = MakeContour(_sourceGray); }
         }
         finally
         {

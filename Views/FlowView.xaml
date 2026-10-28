@@ -23,6 +23,23 @@
 
         <!-- 引导卡样式（AppleGuideCard / AppleGuideTitle / AppleGuideText）已提到 Themes/AppleControls.xaml 全局复用 -->
 
+        <!-- 操作序号圆点：右侧参数面板按「先做什么、后做什么」给每一行编号 -->
+        <Style x:Key="OpBadge" TargetType="Border">
+            <Setter Property="Width" Value="18" />
+            <Setter Property="Height" Value="18" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Background" Value="{StaticResource AccentSoftBrush}" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="OpBadgeText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource AccentDarkBrush}" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
         <DataTemplate x:Key="FlowItemTemplate">
             <DockPanel LastChildFill="True" Margin="0,2,0,2">
                 <ctrl:AppleIconTile Glyph="{Binding Icon}" TileSize="28" Margin="0,0,10,0" VerticalAlignment="Center" />
@@ -56,8 +73,15 @@
                           ToolTip="这一步和上一步的关系：满足就做=条件成立才执行这一步；不满足时=条件不成立才执行；一直重复=回到上面重跑；结束重复=停止重跑往下走；一起做/等它完成=和上一步同时做或等它做完" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,4,0">
                     <ctrl:AppleIconTile Glyph="{Binding Icon}" TileSize="20" />
-                    <TextBlock Text="{Binding Function}" Style="{StaticResource AppleLabel}" Margin="6,0,0,0"
-                               MaxWidth="70" TextTrimming="CharacterEllipsis" ToolTip="{Binding Function}" />
+                    <TextBlock Style="{StaticResource AppleLabel}" Margin="6,0,0,0" MaxWidth="88"
+                               TextTrimming="CharacterEllipsis" ToolTip="{Binding Function}">
+                        <TextBlock.Text>
+                            <MultiBinding StringFormat="{}{0}. {1}">
+                                <Binding Path="Index" />
+                                <Binding Path="Function" />
+                            </MultiBinding>
+                        </TextBlock.Text>
+                    </TextBlock>
                 </StackPanel>
                 <ComboBox Grid.Column="2" Style="{StaticResource AppleComboBoxInline}" HorizontalAlignment="Stretch"
                           ItemsSource="{Binding DataContext.StatusOptions, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -344,7 +368,7 @@
                             <TextBlock Grid.Column="2" Text="工具" VerticalAlignment="Center" Margin="12,0,8,0" Foreground="{StaticResource TextSecondaryBrush}" />
                             <ComboBox Grid.Column="3" Style="{StaticResource AppleComboBox}" ItemsSource="{Binding ToolOptions}" SelectedItem="{Binding SelectedTool}" />
                         </Grid>
-                        <TextBlock Style="{StaticResource AppleGuideText}" Text="选好工具后点中间工具栏「➕ 添加」加入流程；切换工具会立即改写当前选中步骤，右侧属性面板同步切换。" Margin="14,0,14,4" TextWrapping="Wrap" />
+                        <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选分类  →  2 选工具  →  3 点中间工具栏「➕ 添加」入流程  →  4 在右侧按序号填参数；切换工具会立即改写当前选中步骤。" Margin="14,0,14,4" TextWrapping="Wrap" />
                     </StackPanel>
                 </Border>
 
@@ -363,81 +387,22 @@
                     <StackPanel>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="{Binding SelectedOperatorName}" />
                         <Border Style="{StaticResource AppleGuideCard}" Margin="12,4,12,10">
-                            <TextBlock Style="{StaticResource AppleGuideText}" Text="{Binding SelectedOperatorDesc}" />
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="{Binding SelectedOperatorDesc}" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="{Binding SelectedOperatorOrderText}"
+                                           Margin="0,5,0,0" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" />
+                            </StackPanel>
                         </Border>
-                        <ItemsControl ItemsSource="{Binding SelectedOperatorParams}" Margin="12,0,12,4">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Margin="0,0,0,9">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="112" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="{Binding Label}" VerticalAlignment="Center" FontSize="12"
-                                                   TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" ToolTip="{Binding Help}" />
-                                        <TextBox Grid.Column="1" Style="{StaticResource AppleTextField}"
-                                                 Visibility="{Binding Kind, Converter={StaticResource KindVis}, ConverterParameter='Number,Text'}"
-                                                 ctrl:DynBind.Target="Text" ctrl:DynBind.Path="{Binding Path=Path}"
-                                                 ToolTip="{Binding Help}" />
-                                        <CheckBox Grid.Column="1" Content="要" VerticalAlignment="Center" FontSize="12"
-                                                  Visibility="{Binding Kind, Converter={StaticResource KindVis}, ConverterParameter=Bool}"
-                                                  ctrl:DynBind.Target="Checked" ctrl:DynBind.Path="{Binding Path=Path}"
-                                                  ToolTip="{Binding Help}" />
-                                        <ComboBox Grid.Column="1" Style="{StaticResource AppleComboBox}" ItemsSource="{Binding Options}"
-                                                  Visibility="{Binding Kind, Converter={StaticResource KindVis}, ConverterParameter=Choice}"
-                                                  ctrl:DynBind.Target="Selected" ctrl:DynBind.Path="{Binding Path=Path}"
-                                                  ToolTip="{Binding Help}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        <!-- 通讯类步骤：不用跑流程就能测通不通 -->
-                        <StackPanel Visibility="{Binding SelectedStep.StepType, Converter={StaticResource KindVis}, ConverterParameter='ModbusWrite,ModbusRead,ModbusReadArr'}">
-                            <Rectangle Style="{StaticResource AppleDivider}" />
-                            <DockPanel Style="{StaticResource AppleRow}">
-                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="连接测试" />
-                                <Button Style="{StaticResource AppleBtn}" Content="🔌 测一下" Command="{Binding TestModbusCmd}" DockPanel.Dock="Right" Margin="8,0,0,0" />
-                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding ModbusStatus}" Margin="8,0,8,0"
-                                           TextWrapping="Wrap" VerticalAlignment="Center" />
-                            </DockPanel>
-                        </StackPanel>
-                        <!-- 零样本查瑕疵：选一张标准（OK）图 -->
-                        <StackPanel Visibility="{Binding SelectedStep.StepType, Converter={StaticResource KindVis}, ConverterParameter=ZeroShotAnomaly}">
-                            <Rectangle Style="{StaticResource AppleDivider}" />
-                            <DockPanel Style="{StaticResource AppleRow}">
-                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="标准图" Width="70" />
-                                <Button Style="{StaticResource AppleBtn}" Content="📂 选标准图" Command="{Binding PickGoldenImageCmd}" DockPanel.Dock="Right" Margin="8,0,0,0" />
-                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding SelectedStep.TemplateFile, Converter={StaticResource BinPath}, FallbackValue='还没有选'}"
-                                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="8,0,8,0"
-                                           ToolTip="{Binding SelectedStep.TemplateFile, Converter={StaticResource BinPath}}" />
-                            </DockPanel>
-                        </StackPanel>
-                        <!-- 显示结果：先看当前图，跑一次后这里就是画好的结果图 -->
-                        <StackPanel x:Name="ShowResultPreviewHost" Visibility="{Binding SelectedStep.StepType, Converter={StaticResource KindVis}, ConverterParameter='ShowResult,ZeroShotAnomaly'}">
-                            <Rectangle Style="{StaticResource AppleDivider}" />
-                            <TextBlock Style="{StaticResource AppleSubLabel}" Text="预览（跑一次后这里就变成画好的结果图）" Margin="14,6,14,4" />
-                            <Border Margin="12,0,12,10" CornerRadius="8" ClipToBounds="True" Background="{StaticResource CanvasBrush}">
-                                <StackPanel>
-                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="还没有图：先在「拍张照片」选一张，或直接跑一次流程"
-                                           Margin="12,10,12,0"
-                                           Visibility="{Binding ResultPreview, Converter={StaticResource NullToVisibilityConverter}}" />
-                                <Image Source="{Binding ResultPreview}" Stretch="Uniform">
-                                    <Image.Height>
-                                        <MultiBinding Converter="{StaticResource AspectHeight}">
-                                            <Binding Path="ActualWidth" ElementName="ShowResultPreviewHost" />
-                                            <Binding Path="ResultPreview.PixelWidth" />
-                                            <Binding Path="ResultPreview.PixelHeight" />
-                                        </MultiBinding>
-                                    </Image.Height>
-                                </Image>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
                         <!-- 视觉类算子：框出要看的那一块，并指定结果写进哪个变量 -->
                         <StackPanel Visibility="{Binding SelectedOperatorUsesRoi, Converter={StaticResource KindVis}, ConverterParameter=True}">
                             <Rectangle Style="{StaticResource AppleDivider}" />
-                            <TextBlock Style="{StaticResource AppleSubLabel}" Text="要看哪一块（在图上按住鼠标拖一个框）" Margin="14,6,14,4"
-                                       ToolTip="只有框里的内容参与计算；宽高填 0 表示整张图都算" />
+                            <StackPanel Orientation="Horizontal" Margin="14,6,14,4">
+                                <Border Style="{StaticResource OpBadge}">
+                                    <TextBlock Style="{StaticResource OpBadgeText}" Text="{Binding SelectedBlockRoiNo}" />
+                                </Border>
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="要看哪一块（在图上按住鼠标拖一个框）"
+                                           ToolTip="只有框里的内容参与计算；宽高填 0 表示整张图都算" />
+                            </StackPanel>
                             <ctrl:RoiImageView Margin="12,0,12,8"
                                                Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}, Converter={StaticResource WidthToHeight}, ConverterParameter=0.7}"
                                                SourceImage="{Binding CurrentImageSource}"
@@ -467,8 +432,99 @@
                                     <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiAngle, Mode=TwoWay, FallbackValue=0}" TextAlignment="Left" HorizontalAlignment="Stretch" MinWidth="0" />
                                 </StackPanel>
                             </UniformGrid>
+                        </StackPanel>
+                        <!-- 零样本查瑕疵：选一张标准（OK）图 -->
+                        <StackPanel Visibility="{Binding SelectedStep.StepType, Converter={StaticResource KindVis}, ConverterParameter=ZeroShotAnomaly}">
                             <Rectangle Style="{StaticResource AppleDivider}" />
                             <DockPanel Style="{StaticResource AppleRow}">
+                                <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                                    <TextBlock Style="{StaticResource OpBadgeText}" Text="{Binding SelectedBlockGoldenNo}" />
+                                </Border>
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="标准图" Width="70" />
+                                <Button Style="{StaticResource AppleBtn}" Content="📂 选标准图" Command="{Binding PickGoldenImageCmd}" DockPanel.Dock="Right" Margin="8,0,0,0" />
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding SelectedStep.TemplateFile, Converter={StaticResource BinPath}, FallbackValue='还没有选'}"
+                                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="8,0,8,0"
+                                           ToolTip="{Binding SelectedStep.TemplateFile, Converter={StaticResource BinPath}}" />
+                            </DockPanel>
+                        </StackPanel>
+                        <ItemsControl ItemsSource="{Binding SelectedOperatorParams}" Margin="12,0,12,4">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,0,0,9">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="24" />
+                                            <ColumnDefinition Width="106" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Grid.Column="0" Style="{StaticResource OpBadge}">
+                                            <TextBlock Style="{StaticResource OpBadgeText}" Text="{Binding No}" />
+                                        </Border>
+                                        <TextBlock Grid.Column="1" Text="{Binding Label}" VerticalAlignment="Center" FontSize="12"
+                                                   TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" ToolTip="{Binding Help}" />
+                                        <DockPanel Grid.Column="2" LastChildFill="True"
+                                                   Visibility="{Binding Kind, Converter={StaticResource KindVis}, ConverterParameter='Number,Text'}">
+                                            <Button DockPanel.Dock="Right" Style="{StaticResource AppleBtn}" Content="📂" Width="34" MinWidth="34"
+                                                    Padding="0" Margin="6,0,0,0" FontSize="12" VerticalAlignment="Center"
+                                                    Visibility="{Binding IsPath, Converter={StaticResource KindVis}, ConverterParameter=True}"
+                                                    Command="{Binding DataContext.PickPathCmd, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}" ToolTip="点这个选文件或文件夹" />
+                                            <TextBox Style="{StaticResource AppleTextField}"
+                                                     ctrl:DynBind.Target="Text" ctrl:DynBind.Path="{Binding Path=Path}"
+                                                     ToolTip="{Binding Help}" />
+                                        </DockPanel>
+                                        <CheckBox Grid.Column="2" Content="要" VerticalAlignment="Center" FontSize="12"
+                                                  Visibility="{Binding Kind, Converter={StaticResource KindVis}, ConverterParameter=Bool}"
+                                                  ctrl:DynBind.Target="Checked" ctrl:DynBind.Path="{Binding Path=Path}"
+                                                  ToolTip="{Binding Help}" />
+                                        <ComboBox Grid.Column="2" Style="{StaticResource AppleComboBox}" ItemsSource="{Binding Options}"
+                                                  Visibility="{Binding Kind, Converter={StaticResource KindVis}, ConverterParameter=Choice}"
+                                                  ctrl:DynBind.Target="Selected" ctrl:DynBind.Path="{Binding Path=Path}"
+                                                  ToolTip="{Binding Help}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <!-- 通讯类步骤：不用跑流程就能测通不通 -->
+                        <StackPanel Visibility="{Binding SelectedStep.StepType, Converter={StaticResource KindVis}, ConverterParameter='ModbusWrite,ModbusRead,ModbusReadArr,TcpSend'}">
+                            <Rectangle Style="{StaticResource AppleDivider}" />
+                            <DockPanel Style="{StaticResource AppleRow}">
+                                <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                                    <TextBlock Style="{StaticResource OpBadgeText}" Text="{Binding SelectedBlockTestNo}" />
+                                </Border>
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="连接测试" />
+                                <Button Style="{StaticResource AppleBtn}" Content="🔌 测一下" Command="{Binding TestModbusCmd}" DockPanel.Dock="Right" Margin="8,0,0,0" />
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding ModbusStatus}" Margin="8,0,8,0"
+                                           TextWrapping="Wrap" VerticalAlignment="Center" />
+                            </DockPanel>
+                        </StackPanel>
+                        <!-- 显示结果：先看当前图，跑一次后这里就是画好的结果图 -->
+                        <StackPanel x:Name="ShowResultPreviewHost" Visibility="{Binding SelectedStep.StepType, Converter={StaticResource KindVis}, ConverterParameter='ShowResult,ZeroShotAnomaly'}">
+                            <Rectangle Style="{StaticResource AppleDivider}" />
+                            <TextBlock Style="{StaticResource AppleSubLabel}" Text="预览（跑一次后这里就变成画好的结果图）" Margin="14,6,14,4" />
+                            <Border Margin="12,0,12,10" CornerRadius="8" ClipToBounds="True" Background="{StaticResource CanvasBrush}">
+                                <StackPanel>
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="还没有图：先在「拍张照片」选一张，或直接跑一次流程"
+                                           Margin="12,10,12,0"
+                                           Visibility="{Binding ResultPreview, Converter={StaticResource NullToVisibilityConverter}}" />
+                                <Image Source="{Binding ResultPreview}" Stretch="Uniform">
+                                    <Image.Height>
+                                        <MultiBinding Converter="{StaticResource AspectHeight}">
+                                            <Binding Path="ActualWidth" ElementName="ShowResultPreviewHost" />
+                                            <Binding Path="ResultPreview.PixelWidth" />
+                                            <Binding Path="ResultPreview.PixelHeight" />
+                                        </MultiBinding>
+                                    </Image.Height>
+                                </Image>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                        <!-- 最后一步：结果写进哪个变量 -->
+                        <StackPanel Visibility="{Binding SelectedOperatorUsesRoi, Converter={StaticResource KindVis}, ConverterParameter=True}">
+                            <Rectangle Style="{StaticResource AppleDivider}" />
+                            <DockPanel Style="{StaticResource AppleRow}">
+                                <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
+                                    <TextBlock Style="{StaticResource OpBadgeText}" Text="{Binding SelectedBlockOutputNo}" />
+                                </Border>
                                 <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="结果写入"
                                            ToolTip="把这一步的实测值存进这个变量，后面判定、发PLC、存表都取它" />
                                 <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.OutputVar, Mode=TwoWay, FallbackValue=dMeasure}" />
@@ -549,7 +605,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="📷 拍张照片" /> — 给后续步骤提供一张图</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="选好相机参数后点「选择图片」或连相机采集；ROI 在下方图上拖拽框选，只处理框内区域。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选采集方式  →  2 点旁边按钮（选图片 / 选文件夹 / 拍一张）拿到图  →  3 在下方图上拖一个框（不框=整张图）  →  4 跑流程。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="相机参数" />
@@ -558,6 +614,17 @@
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ImageSource, Converter={StaticResource BinPath}, FallbackValue=''}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
+                        <!-- 「打开文件夹」时把文件夹亮出来：不然只看到一个空图像源，不知道图从哪来 -->
+                        <StackPanel Visibility="{Binding SelectedStep.CaptureMode, Converter={StaticResource KindVis}, ConverterParameter=打开文件夹}">
+                            <DockPanel Style="{StaticResource AppleRow}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="图片文件夹"
+                                           ToolTip="流程每跑一次这一步换下一张，跑完一轮从头开始" />
+                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.FolderPath, Converter={StaticResource BinPath}, FallbackValue='还没选'}" />
+                            </DockPanel>
+                            <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding CaptureFolderInfo, FallbackValue=''}"
+                                       Margin="16,0,16,6" TextWrapping="Wrap" />
+                            <Rectangle Style="{StaticResource AppleDivider}" />
+                        </StackPanel>
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="曝光(us)" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Exposure, FallbackValue=8000}" Width="100" />
@@ -622,7 +689,24 @@
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="采集方式" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="140"
                                       ItemsSource="{Binding CaptureModes}" SelectedItem="{Binding SelectedStep.CaptureMode, FallbackValue='打开文件'}" />
-                            <Button Style="{StaticResource AppleBtn}" Content="📂 选择图片" Command="{Binding PickImageCmd}" Margin="12,0,0,0" />
+                            <Button Command="{Binding PickImageCmd}" Margin="12,0,0,0">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource AppleBtn}">
+                                        <Setter Property="Content" Value="📂 选图片" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SelectedStep.CaptureMode}" Value="打开文件夹">
+                                                <Setter Property="Content" Value="📂 选文件夹" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding SelectedStep.CaptureMode}" Value="采集相机">
+                                                <Setter Property="Content" Value="📷 拍一张" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding SelectedStep.CaptureMode}" Value="迈德威视相机">
+                                                <Setter Property="Content" Value="📷 抓一张" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                         </DockPanel>
                         <!-- 迈德威视：面阵/线扫共用一块，勾了线扫才要行频和拼帧行数 -->
                         <StackPanel>
@@ -721,7 +805,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🎯 图里找图案" /> — 在图里找到目标的位置</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="先在源图上框选模板区域并「确定模板」，再「开始匹配」；相似度越高越可信，低于阈值视为未找到。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 在源图上框住要找的图案  →  2 点「确定模板」  →  3 设相似度阈值  →  4 点「开始匹配」；低于阈值算没找到。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="图里找图案" />
@@ -993,6 +1077,12 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
 
+                        <Border Style="{StaticResource AppleGuideCard}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="📐 量尺寸" /> — 量一个几何量并判合格</TextBlock>
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 在右边图上框出要量的地方  →  2 选测量类型  →  3 填标称值与公差  →  4 填输出变量名  →  5 跑流程，看「实测值 / 判定」" />
+                            </StackPanel>
+                        </Border>
                         <!-- 1. 测量摘要：明确回答「测量了什么」 -->
                         <Border Grid.Row="0" Background="{StaticResource AccentSoftBrush}" CornerRadius="10" Padding="14" Margin="16,12,16,10">
                             <Grid>
@@ -1156,7 +1246,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="✅ 判一下对不对" /> — 用条件决定合格 / 不合格</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="写一条比较式（如 score >= 0.85），运行后按结果是真还是假走不同分支。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选要判的变量或上一步结果  →  2 写比较式（如 score >= 0.85）  →  3 定合格 / 不合格后怎么走。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="判一下对不对" />
@@ -1209,7 +1299,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="📤 报结果" /> — 把结果写到 PLC / 变量</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="填好输出地址与值，选择触发方式；勾选「写后读校验」可确认外部确实收到。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 填输出地址与值  →  2 选触发方式  →  3 要确认外部真收到就勾「写后读校验」。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="报结果" />
@@ -1277,7 +1367,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🔍 挑瑕疵" /> — 和标准图比，找出不一样的地方</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="先载入一张标准图，调好差异阈值等参数，点「开始检测缺陷」；红色区域即为可疑缺陷。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 先载入一张标准图  →  2 在图上框出要比的区域  →  3 调差异阈值  →  4 点「开始检测缺陷」；红色即可疑缺陷。" />
                             </StackPanel>
                         </Border>
                         <!-- 缺陷检测预览图见右侧列 -->
@@ -1412,7 +1502,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🦾 动轴" /> — 让指定轴走到目标位置</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="选目标轴与运动类型，填 XYZ 目标位置；速度/加减速越大走得越快，到位超时防止卡死。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选目标轴  →  2 选运动类型  →  3 填 XYZ 与速度（越大走得越快）  →  4 设到位超时，防止卡死。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="动轴" />
@@ -1513,7 +1603,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🔌 IO 控制" /> — 打开 / 关闭一个数字信号</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="选 IO 通道与类型，勾选「开」即输出高电平；「等待完成」会等信号稳定后再继续。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选 IO 通道与类型  →  2 勾「开」输出高电平  →  3 要等信号稳定再往下走就勾「等待完成」。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="IO 控制" />
@@ -1560,7 +1650,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🟢 伸缩气缸" /> — 让气缸伸出 / 缩回</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="选气缸与动作，填到位 / 缩回传感器；超时时间内收不到信号会报警，避免卡住。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选气缸  →  2 选动作（伸 / 缩）  →  3 填到位、缩回传感器  →  4 设超时时间，收不到信号会报警。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="伸缩气缸" />
@@ -1608,7 +1698,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="⏱ 等一会" /> — 等一段时间或等一个条件</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="选「时间」就填等待毫秒数；选「条件」就填表达式（如 signal == 1），条件满足才继续。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选等时间还是等条件  →  2 填毫秒数或表达式（如 signal == 1），满足才继续往下走。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="等一会" />
@@ -1646,7 +1736,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="📡 发数据" /> — 通过串口 / 网口发一条指令</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="选通讯通道与指令类型，填编码与指令内容；常用作给 PLC / 设备下发动作。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选通讯通道  →  2 选指令类型  →  3 填编码与指令内容  →  4 发送（常用来给 PLC / 设备下动作）。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="发数据" />
@@ -1691,7 +1781,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🎨 看颜色" /> — 统计 / 判定某区域的颜色</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="选检测通道与目标色，调好容差；运行后在输出变量里得到命中数量或是否命中。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 在图上框出要看的区域  →  2 选检测通道与目标色  →  3 调容差  →  4 运行后看输出变量里的命中数量。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="看颜色" />
@@ -1741,7 +1831,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🔢 数有几个" /> — 数出图里有多少个目标</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="选计数来源（用上一步结果或指定 ROI），设最小面积过滤噪声；结果写入输出变量。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 在图上框出要数的区域  →  2 设最小面积过滤噪声  →  3 结果写入输出变量。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="数有几个" />
@@ -1796,7 +1886,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🔖 扫条码" /> — 读出二维码 / 条码里的文字</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="选码类型，运行后自动识别图中码并读出内容；结果写入输出变量供后续使用。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 在图上框出码所在区域  →  2 选码类型  →  3 运行读出内容，写进输出变量供后续使用。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="扫条码" />
@@ -1829,7 +1919,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🔤 认文字" /> — 把图里的文字读成字符串</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="选识别语言，运行后识别 ROI 内文字；结果写入输出变量，可用于比对或记录。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 在图上框出文字所在区域  →  2 选识别语言  →  3 运行读出文字，写进输出变量用于比对或记录。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="认文字" />
@@ -1872,7 +1962,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🔀 走哪一条" /> — 按真假走不同后续步骤</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="写一条条件表达式，结果为真走「真分支」、为假走「假分支」；填对应步骤名即可分流。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 写条件表达式  →  2 填真分支的步骤名  →  3 填假分支的步骤名，运行后按真假分流。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="走哪一条" />
@@ -1909,7 +1999,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🔁 重复做" /> — 重复执行一段步骤</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="选「次数」就填循环几次；选「条件」就填继续条件（如 i &lt; 10），循环变量用于计数。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选按次数还是按条件  →  2 填次数或继续条件（如 i &lt; 10）  →  3 设循环变量，它用来计数。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="重复做" />
@@ -1952,7 +2042,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="📑 调子流程" /> — 调用另一个已建好的流程</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="填要调用的子流程名称（左侧流程方案里的名字），运行到此处会先执行完该流程再继续。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 填要调用的子流程名称（左侧流程方案里的名字）  →  2 跑到这一步会先把那个流程执行完再继续。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="调子流程" />
@@ -1979,7 +2069,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🧮 算个数" /> — 用公式算出一个新值</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="在表达式里写运算（如 a + b * 2），可用前面步骤的变量；结果写入输出变量。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 在表达式里写运算（如 a + b * 2，可用前面步骤的变量）  →  2 填结果写入哪个变量。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="算个数" />
@@ -2011,7 +2101,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="💾 存文件" /> — 把结果存成文件</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="选保存格式与路径，填要存的字段（逗号分隔，如 time,score,result）；用于报表与追溯。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 选保存格式与路径  →  2 填要存的字段（逗号分隔，如 time,score,result）  →  3 运行后落盘，用于报表与追溯。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="存文件" />
@@ -2049,7 +2139,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="💬 弹提示" /> — 给用户一个提醒</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="填提示内容，选提示方式与级别；常用于检测完成、报警或分步引导操作员。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 填提示内容  →  2 选提示方式与级别  →  3 运行到这一步就弹给操作员（完成 / 报警 / 分步引导）。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="弹提示" />
@@ -2088,7 +2178,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="📝 Lua 脚本" /> — 用脚本做灵活的逻辑</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="在下方编辑 Lua 脚本，可调用 vision / plc 等接口；适合标准步骤覆盖不到的复杂处理。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：1 在下方写 Lua 脚本  →  2 需要时调 vision / plc 等接口  →  3 点运行，看输出面板的打印。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="Lua 脚本" />

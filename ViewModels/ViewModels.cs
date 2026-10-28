@@ -522,6 +522,28 @@ public class VisionFlowStep : ViewModelBase
 
     private int _modbusTimeout = 800;
 
+    /// <summary>点阵(DPM)码增强：激光/针打在金属上的码是一个个圆点，要先补成实心模块才读得出来。</summary>
+    public bool UseDpm { get => _useDpm; set => SetField(ref _useDpm, value); }
+
+    private bool _useDpm = true;
+
+    /// <summary>TCP 发送：目标 IP / 端口 / 超时 / 结尾符（填了就自己连自己发，不用先去「通讯」页建通道）。</summary>
+    public string TcpHost { get => _tcpHost; set => SetField(ref _tcpHost, value); }
+
+    private string _tcpHost = "";
+
+    public double TcpPort { get => _tcpPort; set => SetField(ref _tcpPort, value); }
+
+    private double _tcpPort = 9000;
+
+    public int TcpTimeout { get => _tcpTimeout; set => SetField(ref _tcpTimeout, value); }
+
+    private int _tcpTimeout = 1500;
+
+    public string LineEnd { get => _lineEnd; set => SetField(ref _lineEnd, value); }
+
+    private string _lineEnd = "换行 LF";
+
 
 
     public double RoiX { get => _roiX; set => SetField(ref _roiX, value); }
@@ -3043,6 +3065,17 @@ public class CommunicationViewModel : ViewModelBase
 
     {
 
+        // 通讯日志是收包线程/串口线程回调进来的，ObservableCollection 只能在 UI 线程改
+
+        var disp = System.Windows.Application.Current?.Dispatcher;
+
+        if (disp != null && !disp.CheckAccess())
+
+        {
+            disp.BeginInvoke(new Action(() => PushLog(line)));
+            return;
+        }
+
         DebugLog.Insert(0, $"{DateTime.Now:HH:mm:ss} {line}");
 
         while (DebugLog.Count > 300) DebugLog.RemoveAt(DebugLog.Count - 1);
@@ -3463,6 +3496,51 @@ public class FlowViewModel : ViewModelBase
     /// <summary>按模板给流程填步骤；empty 就什么都不放（空白流程）。</summary>
     void ApplyFlowTemplate(VisionFlow flow, string key)
     {
+        if (key == "barcode")
+        {
+            // 条码定位发送：模板匹配先框住条码 → 只在那一条里读 Code128 → 字符串发 TCP → 画到图上
+            var bcDir = Helpers.AppPaths.ResolvePath(@"Projects\条码识别");
+            flow.Steps = new ObservableCollection<VisionFlowStep>
+            {
+                MkStep(1, "拍张照片", "读标签图", s => { s.CaptureMode = "打开文件夹"; s.FolderPath = System.IO.Path.Combine(bcDir, "图"); }),
+                MkStep(2, "图里找图案", "定位条码", s =>
+                {
+                    // 模板 = 第一张标签上框住的那条条码（620,560,1380,235）
+                    s.MatchMode = "轮廓匹配";
+                    s.RoiX = 620; s.RoiY = 560; s.RoiW = 1380; s.RoiH = 235;
+                    s.ScoreThreshold = 0.5;
+                    s.PyramidLevel = 0; s.AngleStart = -12; s.AngleStop = 12; s.AngleStep = 1.5;
+                    s.TopN = 5; s.Overlap = 0.35; s.ScaleRange = 0;
+                }),
+                MkStep(3, "读条码", "读串号", s => { s.CompareSource = "第2步"; s.MatchMode = "一维条码"; s.UseDpm = true; s.OutputVar = "bcText"; }),
+                MkStep(4, "TCP 发送", "发给MES", s => { s.TcpHost = "127.0.0.1"; s.TcpPort = 9000; s.CompareSource = "第3步"; s.LineEnd = "换行 LF"; s.TcpTimeout = 1500; }),
+                MkStep(5, "显示结果", "画到图上", s => { s.CompareSource = "第3步"; s.CompareVar = "第2步"; s.MeasureType = "圆和点"; s.NotifyMessage = "BC"; }),
+            };
+            return;
+        }
+        if (key == "qr")
+        {
+            // 二维码定位发送：模板匹配先找到码 → 只在那一块里读（点阵码增强）→ 字符串发 TCP → 画到图上
+            var qrDir = Helpers.AppPaths.ResolvePath(@"Projects\二维码识别");
+            flow.Steps = new ObservableCollection<VisionFlowStep>
+            {
+                MkStep(1, "拍张照片", "读工件图", s => { s.CaptureMode = "打开文件夹"; s.FolderPath = System.IO.Path.Combine(qrDir, "图"); }),
+                MkStep(2, "图里找图案", "定位二维码", s =>
+                {
+                    // 「图里找图案」的模板就是第一张图上框住的那一块：这里框住码区（1302,1571,280,280）
+                    s.MatchMode = "轮廓匹配";
+                    s.RoiX = 1302; s.RoiY = 1571; s.RoiW = 280; s.RoiH = 280;
+                    s.ScoreThreshold = 0.5;
+                    // 点阵码的细节经不起金字塔降采样（3 层时直接匹配不到），所以金字塔关掉、角度只 ±25°
+                    s.PyramidLevel = 0; s.AngleStart = -25; s.AngleStop = 25; s.AngleStep = 2.5;
+                    s.TopN = 5; s.Overlap = 0.35; s.ScaleRange = 0;   // 底层按搜索顺序返回，候选给足 5 个再取分最高的才稳
+                }),
+                MkStep(3, "读二维码", "读内容", s => { s.CompareSource = "第2步"; s.UseDpm = true; s.OutputVar = "qrText"; }),
+                MkStep(4, "TCP 发送", "发给MES", s => { s.TcpHost = "127.0.0.1"; s.TcpPort = 9000; s.CompareSource = "第3步"; s.LineEnd = "换行 LF"; s.TcpTimeout = 1500; }),
+                MkStep(5, "显示结果", "画到图上", s => { s.CompareSource = "第3步"; s.CompareVar = "第2步"; s.MeasureType = "圆和点"; s.NotifyMessage = "QR"; }),
+            };
+            return;
+        }
         if (key != "bottle" && key != "zeroshot") return;
         var dir = Helpers.AppPaths.ResolvePath(@"Projects\瓶底线圈角度");
         var zsDir = System.IO.Path.Combine(dir, "零样本测试");
@@ -3809,6 +3887,20 @@ public class FlowViewModel : ViewModelBase
 
     public bool SelectedOperatorUsesRoi => OperatorCatalog.Find(_selectedStep?.StepType)?.UsesRoi == true;
 
+    /// <summary>面板顶部那句「操作顺序：1 …  → 2 …」，让新手知道先动哪一项。</summary>
+    public string SelectedOperatorOrderText => OperatorCatalog.Find(_selectedStep?.StepType)?.OrderLine ?? "";
+
+    /// <summary>下面四个是各块在页面上的第几步；块本身按算子类型显隐，序号只在它显示时用到。</summary>
+    public int SelectedBlockRoiNo => BlockNo("roi");
+
+    public int SelectedBlockGoldenNo => BlockNo("golden");
+
+    public int SelectedBlockTestNo => BlockNo("test");
+
+    public int SelectedBlockOutputNo => BlockNo("output");
+
+    int BlockNo(string key) => OperatorCatalog.Find(_selectedStep?.StepType)?.BlockNo(key) ?? 0;
+
     /// <summary>有没有选中步骤（右上角「运行状态」卡片显隐用）。</summary>
     public bool HasSelectedStep => _selectedStep != null;
 
@@ -3820,7 +3912,13 @@ public class FlowViewModel : ViewModelBase
         OnPropertyChanged(nameof(SelectedOperatorName));
         OnPropertyChanged(nameof(SelectedOperatorDesc));
         OnPropertyChanged(nameof(SelectedOperatorUsesRoi));
+        OnPropertyChanged(nameof(SelectedOperatorOrderText));
+        OnPropertyChanged(nameof(SelectedBlockRoiNo));
+        OnPropertyChanged(nameof(SelectedBlockGoldenNo));
+        OnPropertyChanged(nameof(SelectedBlockTestNo));
+        OnPropertyChanged(nameof(SelectedBlockOutputNo));
         OnPropertyChanged(nameof(HasSelectedStep));
+        OnPropertyChanged(nameof(CaptureFolderInfo));
     }
 
 
@@ -4261,7 +4359,7 @@ public class FlowViewModel : ViewModelBase
 
             matcher.SetSource(srcMat);
 
-            var roi = new Rect((int)tmplStep.RoiX, (int)tmplStep.RoiY, Math.Max(4, (int)tmplStep.RoiW), Math.Max(4, (int)tmplStep.RoiH));
+            var roi = TplRoi(tmplStep, srcMat);
 
             matcher.SetTemplateFromRoi(roi);
 
@@ -4553,7 +4651,7 @@ public class FlowViewModel : ViewModelBase
 
             m.LoadSource(src);
 
-            var roi = new Rect((int)step.RoiX, (int)step.RoiY, Math.Max(4, (int)step.RoiW), Math.Max(4, (int)step.RoiH));
+            var roi = TplRoi(step, m.Source);
 
             m.SetTemplateFromRoi(roi);
 
@@ -4682,6 +4780,16 @@ public class FlowViewModel : ViewModelBase
     {
         if (_selectedStep == null) return;
         var step = _selectedStep;
+        if (step.StepType == "TcpSend")
+        {
+            if (string.IsNullOrWhiteSpace(step.TcpHost)) { ModbusStatus = "没填「发到哪儿(IP)」：填上 IP 和端口再测"; return; }
+            var swt = System.Diagnostics.Stopwatch.StartNew();
+            Comm.TcpSender.Test(step.TcpHost.Trim(), (int)Math.Round(step.TcpPort), Math.Max(200, step.TcpTimeout), out var terr);
+            ModbusStatus = terr.Length == 0
+                ? $"✔ 能连上 {step.TcpHost}:{(int)Math.Round(step.TcpPort)}（{swt.ElapsedMilliseconds} 毫秒）"
+                : $"✖ {terr}（等了 {swt.ElapsedMilliseconds} 毫秒）";
+            return;
+        }
         if (string.IsNullOrWhiteSpace(step.ModbusIp))
         {
             ModbusStatus = "没填 PLC 地址：填上 IP 直连，或者去「通讯」页连一条通道";
@@ -4740,7 +4848,9 @@ public class FlowViewModel : ViewModelBase
         var options = _selectedToolCategory switch
         {
             "运控" => new[] { "动轴", "开关电", "伸缩气缸", "等一会" },
-            "通讯" => new[] { "发数据" },
+            "通讯" => new[] { "TCP 发送" }
+                .Concat(OperatorCatalog.All.Where(o => o.Group == "Comm" && o.Name != "TCP 发送").Select(o => o.Name))
+                .Concat(new[] { "发数据" }).ToArray(),
             "OpenCVVision" => OperatorCatalog.All.Where(o => o.Group == "OpenCVVision").Select(o => o.Name).ToArray(),
 
             "更多" => OperatorCatalog.All.Where(o => o.Group != "OpenCVVision").Select(o => o.Name).ToArray(),
@@ -5014,6 +5124,9 @@ public class FlowViewModel : ViewModelBase
 
     public ICommand PickGoldenImageCmd { get; }
 
+    /// <summary>参数面板上路径类参数（图片 / 文件夹）旁边的「📂」按钮。</summary>
+    public ICommand PickPathCmd { get; }
+
     public string ModbusStatus { get => _modbusStatus; set => SetField(ref _modbusStatus, value); }
 
     private string _modbusStatus = "点「🔌 测一下」看能不能连上 PLC";
@@ -5141,6 +5254,32 @@ public class FlowViewModel : ViewModelBase
                 if (dlg.ShowDialog() != true) return;
                 _selectedStep.TemplateFile = Helpers.AppPaths.ToStoredPath(dlg.FileName);
             });
+
+            PickPathCmd = new RelayCommand(p =>
+            {
+                if (_selectedStep == null || p is not OpParam prm) return;
+                var prop = _selectedStep.GetType().GetProperty(prm.Path);
+                if (prop == null || !prop.CanWrite || prop.PropertyType != typeof(string)) return;
+                bool folder = prm.Path == "FolderPath";
+                var cur = Helpers.AppPaths.ResolvePath(prop.GetValue(_selectedStep) as string ?? "");
+                string? picked = null;
+                if (folder)
+                {
+                    var dlg = new OpenFolderDialog { Title = "选一个放图片的文件夹" };
+                    if (Directory.Exists(cur)) dlg.InitialDirectory = cur;
+                    if (dlg.ShowDialog() == true) picked = dlg.FolderName;
+                }
+                else
+                {
+                    var dlg = new OpenFileDialog { Filter = "图片|*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.tiff|所有文件|*.*" };
+                    if (File.Exists(cur)) dlg.FileName = cur;
+                    if (dlg.ShowDialog() == true) picked = dlg.FileName;
+                }
+                if (string.IsNullOrWhiteSpace(picked)) return;
+                prop.SetValue(_selectedStep, picked);
+            }, _ => _selectedStep != null);
+
+
 
             RebuildToolOptions(); // 初始化工具箱（视觉分类）
 
@@ -5436,15 +5575,17 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                // WPF-only folder picker：ValidateNames=false 让对话框可“选中文件夹”
+                var dlg = new OpenFolderDialog { Title = "选一个放图片的文件夹" };
 
-                var dlg = new OpenFileDialog { ValidateNames = false, CheckFileExists = false, CheckPathExists = true, FileName = "选择此文件夹" };
+                var cur = Helpers.AppPaths.ResolvePath(_selectedStep.FolderPath);
+
+                if (Directory.Exists(cur)) dlg.InitialDirectory = cur;
 
                 if (dlg.ShowDialog() == true)
 
                 {
 
-                    var dir = Path.GetDirectoryName(dlg.FileName);
+                    var dir = dlg.FolderName;
 
                     if (!string.IsNullOrWhiteSpace(dir) && Directory.Exists(dir))
 
@@ -5661,7 +5802,7 @@ public class FlowViewModel : ViewModelBase
 
                 }
 
-                var roi = new Rect((int)_selectedStep.RoiX, (int)_selectedStep.RoiY, Math.Max(4, (int)_selectedStep.RoiW), Math.Max(4, (int)_selectedStep.RoiH));
+                var roi = TplRoi(_selectedStep, src);
 
                 matcher.SetTemplateFromRoi(roi);
 
@@ -6943,6 +7084,8 @@ public class FlowViewModel : ViewModelBase
 
                     _folderCursor[step.FolderPath] = idx + 1;
 
+                    OnPropertyChanged(nameof(CaptureFolderInfo));
+
                     var file = files[idx];
 
                     step.ImageSource = file;
@@ -7718,9 +7861,70 @@ public class FlowViewModel : ViewModelBase
 
 
 
+    /// <summary>「模板就是这一块」的框先夹到图里再交给匹配器：换台相机、图变小了不会抛 OpenCV 越界异常，照能用的部分继续。</summary>
+    static OpenCvSharp.Rect TplRoi(VisionFlowStep s, Mat src)
+    {
+        int x = (int)Math.Clamp(Math.Round(s.RoiX), 0, Math.Max(0, src.Width - 5));
+        int y = (int)Math.Clamp(Math.Round(s.RoiY), 0, Math.Max(0, src.Height - 5));
+        int w = (int)Math.Clamp(Math.Round(s.RoiW), 4, Math.Max(4, src.Width - x));
+        int h = (int)Math.Clamp(Math.Round(s.RoiH), 4, Math.Max(4, src.Height - y));
+        return new OpenCvSharp.Rect(x, y, w, h);
+    }
+
+    /// <summary>按 Rect 裁一块（越界自动夹住）。</summary>
+    static Mat CropTo(Mat s, OpenCvSharp.Rect r)
+    {
+        int x = Math.Max(0, Math.Min(r.X, s.Cols - 1));
+        int y = Math.Max(0, Math.Min(r.Y, s.Rows - 1));
+        int w = Math.Max(1, Math.Min(r.Width, s.Cols - x));
+        int h = Math.Max(1, Math.Min(r.Height, s.Rows - y));
+        return new Mat(s, new OpenCvSharp.Rect(x, y, w, h));
+    }
+
+    /// <summary>读码前先定位：拿「在哪一步的位置上读」那一步的框 / 圆 / 点，再往外扩 25% 当余量，只在这一小块里找码。</summary>
+    OpenCvSharp.Rect? CodeRoi(VisionFlow? flow, VisionFlowStep step)
+    {
+        var g = GeoOf(flow, step.CompareSource, step);
+        if (g == null) return null;
+        double x, y, w, h;
+        if (g.HasBox && g.Bw > 8 && g.Bh > 8) { x = g.Bx; y = g.By; w = g.Bw; h = g.Bh; }
+        else if (g.HasCircle && g.R > 4) { x = g.Cx - g.R; y = g.Cy - g.R; w = h = g.R * 2; }
+        else if (g.HasPoint) { x = g.Px - 90; y = g.Py - 90; w = h = 180; }
+        else return null;
+        // 匹配框常常偏几十像素，余量按短边给一整个（二维码=边长，条码=条高），
+        // 否则码被切掉一半就再也读不出来；用短边是为了不把一维条码的框撑满整张图。
+        int pad = (int)Math.Clamp(Math.Round(Math.Min(w, h)), 24, 600);
+        int x0 = Math.Max(0, (int)Math.Round(x) - pad), y0 = Math.Max(0, (int)Math.Round(y) - pad);
+        int x1 = (int)Math.Round(x + w) + pad, y1 = (int)Math.Round(y + h) + pad;
+        var src = _sharedImage;
+        if (src != null && !src.Empty()) { x1 = Math.Min(x1, src.Width); y1 = Math.Min(y1, src.Height); }
+        if (x1 - x0 < 24 || y1 - y0 < 24) return null;
+        return new OpenCvSharp.Rect(x0, y0, x1 - x0, y1 - y0);
+    }
+
+
+
     /// <summary>「打开文件夹」取图游标：每个文件夹记住下一张是第几个。</summary>
 
     readonly Dictionary<string, int> _folderCursor = new();
+
+    /// <summary>采集卡那行小字：文件夹里到底有几张图、这次用的是第几张（路径本身在上面那格）。</summary>
+    public string CaptureFolderInfo
+    {
+        get
+        {
+            var st = _selectedStep;
+            if (st == null || st.CaptureMode != "打开文件夹") return "";
+            var dir = Helpers.AppPaths.ResolvePath(st.FolderPath ?? "");
+            if (string.IsNullOrWhiteSpace(st.FolderPath)) return "还没选文件夹：点旁边按钮挑一个（图片建议放在工程 bin 目录下的 Projects 工程文件夹里，整个工程拷走就能跑）";
+            if (!Directory.Exists(dir)) return $"文件夹不存在：{dir}";
+            var ext = new[] { ".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff" };
+            var files = Directory.EnumerateFiles(dir).Where(f => ext.Contains(Path.GetExtension(f).ToLowerInvariant())).OrderBy(f => f).ToList();
+            if (files.Count == 0) return $"这个文件夹里没有图片：{dir}";
+            int idx = _folderCursor.TryGetValue(st.FolderPath, out var c) ? c % files.Count : 0;
+            return $"共 {files.Count} 张，这次用第 {idx + 1} 张：{Path.GetFileName(files[idx])}";
+        }
+    }
 
     Mat? _cachedImage;
 
@@ -8951,19 +9155,53 @@ public class FlowViewModel : ViewModelBase
 
                 {
 
-                    var big = new Mat();
+                    var box = CodeRoi(flow, step);   // 上一步「图里找图案」定位到了码，就只在那一小块里读
 
-                    Cv2.Resize(g, big, new Size(g.Width * 2, g.Height * 2), 0, 0, InterpolationFlags.Cubic);
+                    var want = step.MatchMode switch { "一维条码" => "1d", "二维码" => "qr", "QR码" => "qr", "DataMatrix" => "qr", _ => step.StepType == "ReadBarcode" ? "1d" : "qr" };
 
-                    var (text, format) = DecodeCode(g, big);   // big 由 DecodeCode 负责释放
+                    string text = "", format = "", how = "";
 
-                    if (string.IsNullOrEmpty(text)) return Fail("没读到码");
+                    if (step.UseDpm && _sharedImage != null && !_sharedImage.Empty())
 
-                    Done(text, $"{format}：{text}");
+                    {
+
+                        var dpm = Vision.DpmQr.Read(_sharedImage, box, true, want);
+
+                        if (dpm.Ok) { text = dpm.Text; format = dpm.Format; how = $"（{dpm.How}，{dpm.Ms}毫秒）"; }
+
+                    }
+
+                    if (string.IsNullOrEmpty(text))
+
+                    {
+
+                        using var one = box is { } b ? CropTo(g, b) : g.Clone();
+
+                        using var big = new Mat();
+
+                        Cv2.Resize(one, big, new Size(one.Width * 2, one.Height * 2), 0, 0, InterpolationFlags.Cubic);
+
+                        var (t2, f2) = DecodeCode(one, big);
+
+                        text = t2; format = f2; how = "（原图直读）";
+
+                    }
+
+                    if (string.IsNullOrEmpty(text)) return Fail(step.UseDpm ? "没读到码（点阵增强和普通读法都没解出来）" : "没读到码");
+
+                    Done(text, $"{format}：{text}{how}");
 
                     SetVar(step.OutputVar, text);
 
-                    GeoPut(step, new GeoResult { Text = text, Value = text.Length });
+                    GeoPut(step, new GeoResult
+
+                    {
+
+                        Text = text, Value = text.Length,
+
+                        HasBox = box is { }, Bx = box?.X ?? 0, By = box?.Y ?? 0, Bw = box?.Width ?? 0, Bh = box?.Height ?? 0,
+
+                    });
 
                 }
 
@@ -9523,6 +9761,42 @@ public class FlowViewModel : ViewModelBase
                 }
 
                 catch (Exception ex) { return Fail("发送失败：" + ex.Message); }
+
+                break;
+
+            }
+
+
+
+            case "TcpSend":
+
+            {
+
+                var from = step.CompareSource == "固定值" || string.IsNullOrWhiteSpace(step.CompareSource)
+
+                    ? null : GeoOf(flow, step.CompareSource, step);
+
+                var payload = from == null
+
+                    ? Expand(flow, step.CommContent)
+
+                    : (from.Text.Length > 0 ? from.Text : from.Value.ToString("F3"));
+
+                payload += step.LineEnd switch { "换行 LF" => "\n", "回车换行 CRLF" => "\r\n", _ => "" };
+
+                if (string.IsNullOrEmpty(payload)) return Fail("要发的内容是空的");
+
+                if (string.IsNullOrWhiteSpace(step.TcpHost)) return Fail("没填「发到哪儿(IP)」");
+
+                if (!Comm.TcpSender.Send(step.TcpHost.Trim(), (int)Math.Round(step.TcpPort), payload,
+
+                        Math.Max(200, step.TcpTimeout), out var terr, out var sent))
+
+                    return Fail(terr);
+
+                Done($"已发 {sent} 字节", $"TCP {step.TcpHost}:{(int)Math.Round(step.TcpPort)} 已发 {sent} 字节「{payload.Trim()}」");
+
+                SetVar(step.OutputVar, payload.Trim());
 
                 break;
 
@@ -10382,7 +10656,7 @@ public class FlowViewModel : ViewModelBase
 
                         }
 
-                        var roi = new Rect((int)step.RoiX, (int)step.RoiY, Math.Max(4, (int)step.RoiW), Math.Max(4, (int)step.RoiH));
+                        var roi = TplRoi(step, srcMat);
 
                         matcher.SetTemplateFromRoi(roi);
 
@@ -10391,6 +10665,10 @@ public class FlowViewModel : ViewModelBase
                         var results = matcher.Match(step.PyramidLevel, step.AngleStart, step.AngleStop, step.AngleStep,
 
                             step.ScoreThreshold, step.Overlap, step.TopN, step.DenseMode);
+
+                        // 底层按搜索顺序返回，不保证第一个就是分最高的；不排序会拿次优结果当目标
+
+                        results = results.OrderByDescending(r => r.Score).ToList();
 
                         _lastMatchResults = results;
 
@@ -10407,6 +10685,11 @@ public class FlowViewModel : ViewModelBase
                             step.ActualValue = $"({r0.CenterX:F1},{r0.CenterY:F1}) θ{r0.Angle:F1} score{r0.Score:F2}";
 
                             step.StatusText = "匹配成功";
+                            GeoPut(step, new GeoResult
+                            {
+                                HasBox = true, Bx = r0.LeftTopX, By = r0.LeftTopY, Bw = r0.TemplateWidth, Bh = r0.TemplateHeight,
+                                HasPoint = true, Px = r0.CenterX, Py = r0.CenterY, Value = r0.Score, Text = $"θ{r0.Angle:F1}",
+                            });
                             _curProductScore = r0.Score;
                             if (r0.Score < step.ScoreThreshold) _curProductOk = false;
 

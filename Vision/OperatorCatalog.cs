@@ -16,6 +16,12 @@ public sealed class OpParam
     public OpKind Kind { get; set; } = OpKind.Number;
     public string Help { get; set; } = "";
     public string[]? Options { get; set; }
+
+    /// <summary>右面板上这是第几步操作（1 开始，由 OperatorCatalog 按先后排好，界面显示成序号圆点）。</summary>
+    public int No { get; set; }
+
+    /// <summary>这一格填的是图片路径或文件夹路径：界面上额外给一个「选」按钮，免得用户手打。</summary>
+    public bool IsPath => Kind == OpKind.Text && (Path == "FolderPath" || Path == "ImageSource" || Path == "TemplateFile");
 }
 
 /// <summary>一个算子的完整定义。</summary>
@@ -31,6 +37,68 @@ public sealed class OperatorDef
     /// <summary>要不要在图上框一块区域：视觉类要，逻辑/运动/通讯类不要。</summary>
     public bool UsesRoi => Group is "Locate" or "Measure" or "Calc" or "Calib" or "Code"
         || StepType is "MaskRegionOp";
+
+    /// <summary>参数之前还要不要先给一张标准（OK）图：只有零样本要。</summary>
+    public bool HasGoldenBlock => StepType == "ZeroShotAnomaly";
+
+    /// <summary>参数之后还要不要「连接测试」这一行：Modbus 类不跑流程也能测通不通。</summary>
+    public bool HasTestBlock => StepType.StartsWith("Modbus") || StepType == "TcpSend";
+
+    /// <summary>要不要「结果写入」这一行。</summary>
+    public bool HasOutputBlock => UsesRoi;
+
+    /// <summary>这个算子页面上会出现的块，已按「先做什么、后做什么」排好；编号和引导语都从这取。</summary>
+    public string[] Blocks { get; internal set; } = System.Array.Empty<string>();
+
+    /// <summary>各块占的步号：一行一格就占一号，所以参数那一整段会跨多个号。0 = 页面上没有这一块。</summary>
+    public int RoiStepNo { get; internal set; }
+
+    public int GoldenStepNo { get; internal set; }
+
+    public int ParamStartNo { get; internal set; }
+
+    public int ParamEndNo { get; internal set; }
+
+    public int TestStepNo { get; internal set; }
+
+    public int OutputStepNo { get; internal set; }
+
+    /// <summary>某个块是第几步；页面上没有这一块时返回 0。</summary>
+    public int BlockNo(string key) => key switch
+    {
+        "roi" => RoiStepNo,
+        "golden" => GoldenStepNo,
+        "params" => ParamStartNo,
+        "test" => TestStepNo,
+        _ => OutputStepNo,
+    };
+
+    /// <summary>面板顶部那句「操作顺序：1 …  → 2~6 填参数 …」，参数那种一行一格的写成区间。</summary>
+    public string OrderLine
+    {
+        get
+        {
+            if (Blocks.Length == 0) return "";
+            var parts = new List<string>();
+            foreach (var b in Blocks)
+            {
+                int a = BlockNo(b);
+                int z = b == "params" ? ParamEndNo : a;
+                parts.Add((z > a ? a + "~" + z : a.ToString()) + " " + Titles[b]);
+            }
+            parts.Add("点「▶ 运行」看结果");
+            return "操作顺序：" + string.Join("  →  ", parts);
+        }
+    }
+
+    static readonly Dictionary<string, string> Titles = new()
+    {
+        ["roi"] = "在图上框出要看的区域",
+        ["golden"] = "先给一张标准（OK）图",
+        ["params"] = "按序号从上往下填参数",
+        ["test"] = "点「测一下」确认连得上",
+        ["output"] = "结果写进变量",
+    };
 }
 
 public static class OperatorCatalog
@@ -51,6 +119,29 @@ public static class OperatorCatalog
     static readonly string[] WSRC = { "固定值", "上一步结果", "第1步", "第2步", "第3步", "第4步", "第5步", "第6步", "第7步", "第8步", "第9步", "第10步" };
 
     static string ByStep(string h) => h + "：可以选上一步的结果，也可以直接选第几步的结果";
+
+    /// <summary>面板上的块按「框区域 → 给标准图 → 填参数 → 测连接 → 写变量」排号，参数行的圆点用同一个号。</summary>
+    static OperatorCatalog()
+    {
+        foreach (var op in All)
+        {
+            var blocks = new List<string>();
+            int n = 1;
+            if (op.UsesRoi) { op.RoiStepNo = n++; blocks.Add("roi"); }
+            if (op.HasGoldenBlock) { op.GoldenStepNo = n++; blocks.Add("golden"); }
+            if (op.Params.Length > 0)
+            {
+                op.ParamStartNo = n;
+                for (int i = 0; i < op.Params.Length; i++) op.Params[i].No = n + i;
+                n += op.Params.Length;
+                op.ParamEndNo = n - 1;
+                blocks.Add("params");
+            }
+            if (op.HasTestBlock) { op.TestStepNo = n++; blocks.Add("test"); }
+            if (op.HasOutputBlock) { op.OutputStepNo = n++; blocks.Add("output"); }
+            op.Blocks = blocks.ToArray();
+        }
+    }
 
     public static readonly List<OperatorDef> All = new()
     {
@@ -150,7 +241,6 @@ public static class OperatorCatalog
             C("明暗方向", "EdgePolarity", "", POL)),
 
         O("ZeroShotAnomaly", "零样本查瑕疵", "🔎", "Measure", "给一张标准（OK）图，不用训练就能挑出这张图和标准不一样的地方（划伤、脏污、缺料）。",
-            T("标准图", "TemplateFile", "OK 图的路径，点下面「📂 选标准图」挑一张"),
             C("配准方式", "MatchMode", "产品每次位置会飘就先配准", new[] { "不配准", "只补平移", "平移+旋转" }),
             N("灵敏度", "Number1", "0~100，越大挑得越细，默认 60"),
             N("最小缺陷面积", "AreaMin", "比这小的当噪点扔掉，默认 30"),
@@ -187,8 +277,7 @@ public static class OperatorCatalog
             C("点从哪来", "CompareVar", "选前面「数块数」那一步，最大那块的中心就是线圈", SRC),
             C("0度朝哪边", "AngleZero", "选「向上」就是时钟12点算0度，现场最好读", ZERO),
             B("顺时针算正数", "InvertImage", "打开=顺时针为正（像钟表）；关掉=逆时针为正"),
-            N("基准偏移(度)", "HomeOffset", "读数 = 算出来的角度 + 这个值，用来对齐现场认定的零点"),
-            T("结果写入", "OutputVar", "存进变量，后面判定、发PLC都取这个值")),
+            N("基准偏移(度)", "HomeOffset", "读数 = 算出来的角度 + 这个值，用来对齐现场认定的零点")),
         O("MidPoint", "求中点", "◽", "Calc", "两个点的中点。",
             C("第一个点", "CompareSource", ByStep(""), SRC),
             C("第二个点", "CompareVar", ByStep(""), SRC)),
@@ -264,10 +353,14 @@ public static class OperatorCatalog
             N("抹平范围", "Number2", "用多大半径把抹掉的地方填平，默认 4")),
 
         // ================= 识别 =================
-        O("ReadBarcode", "读条码", "𝄃", "Code", "读一维条码（Code128、EAN、39 等），把里面的字取出来。",
-            C("码制", "MatchMode", "不确定就选自动", new[] { "自动识别", "一维条码", "二维码" })),
-        O("ReadQR", "读二维码", "▦", "Code", "读 QR / DataMatrix 二维码，常用于追溯码、工单码。",
-            C("码制", "MatchMode", "", new[] { "自动识别", "QR码", "DataMatrix" })),
+        O("ReadBarcode", "读条码", "𝄃", "Code", "读一维条码（Code128、EAN、39 等），把里面的字取出来；反光、模糊的难码会自动多试几档。",
+            C("码制", "MatchMode", "不确定就选自动", new[] { "自动识别", "一维条码", "二维码" }),
+            C("在哪一步的位置上读", "CompareSource", "前面「图里找图案」定位到标签就选那一步：只在那一小块里读，又快又准；选「上一步结果」= 整张图都找", SRC),
+            B("难读码增强", "UseDpm", "打开后按几档清晰度轮流试（缩小让模糊的条并清楚、提亮点补条），拍糊一点、有反光也能读出来")),
+        O("ReadQR", "读二维码", "▦", "Code", "读 QR / DataMatrix 二维码，常用于追溯码、工单码；激光打在金属上的点阵码也读得了。",
+            C("码制", "MatchMode", "", new[] { "自动识别", "QR码", "DataMatrix" }),
+            C("在哪一步的位置上读", "CompareSource", "前面「图里找图案」定位到码就选那一步：只在那一小块里读，又快又准；选「上一步结果」= 整张图都找", SRC),
+            B("难读码增强", "UseDpm", "激光/针打的码是一个个圆点拼的，模块之间有缝，普通解码器读不出来；打开后先把圆点补成实心模块再读")),
         O("CompareText", "比对文字", "🔤", "Code", "把读到的码/文字和规定值比一比，不一样就报警。",
             T("应该是什么", "InputValue", "要比对的目标内容"),
             C("怎么算对", "Operator", "", new[] { "完全相同", "包含即可", "开头是" })),
@@ -396,6 +489,15 @@ public static class OperatorCatalog
             T("通道", "CommChannel", "选一个通讯配置"),
             T("发什么", "CommContent", "支持 {3} 取第3步结果"),
             C("编码", "CommEncoding", "", new[] { "文本", "十六进制" })),
+        O("TcpSend", "TCP 发送", "🌐", "Comm", "把内容用 TCP 直发给上位机 / MES / 服务器：填 IP 和端口就能发，不用先去「通讯」页连通道。",
+            T("发到哪儿(IP)", "TcpHost", "接收方的 IP，如 192.168.1.20"),
+            N("端口", "TcpPort", "如 9000，问接收方要"),
+            C("发什么", "CompareSource", "选「第几步」就发那一步读到的内容（比如二维码里那串字）；选「固定值」发下面填的", WSRC),
+            T("固定内容", "CommContent", "上面选「固定值」时才用；支持花括号3 取第3步的结果"),
+            C("结尾加什么", "LineEnd", "很多接收端靠换行断句，不加对方可能一直等", new[] { "不加", "换行 LF", "回车换行 CRLF" }),
+            N("超时(毫秒)", "TcpTimeout", "连不上或对方不收，最多等这么久，默认 1500"),
+            T("存到变量", "OutputVar", "把实际发出去的内容也存一份")),
+
         O("CommRecv", "收数据", "📥", "Comm", "等对方发来一条内容并存进变量。",
             T("通道", "CommChannel", ""),
             N("最多等多久(ms)", "Timeout", ""),
