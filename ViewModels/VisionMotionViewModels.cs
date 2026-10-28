@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using NoCodeVision.Hardware;
 using OpenCvSharp;
 using System.Windows;
@@ -859,10 +859,6 @@ namespace NoCodeVision.ViewModels
 
         private bool _isRunning;
         public bool IsRunning { get => _isRunning; set => SetField(ref _isRunning, value); }
-
-        /// <summary>重点模式下是否为主画面（高亮用）。</summary>
-        private bool _isMain;
-        public bool IsMain { get => _isMain; set => SetField(ref _isMain, value); }
 
         private int _frameCount;
         public int FrameCount { get => _frameCount; set => SetField(ref _frameCount, value); }

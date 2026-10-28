@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,13 +10,6 @@ using NoCodeVision.Hardware;
 using OpenCvSharp;
 
 namespace NoCodeVision.ViewModels;
-
-/// <summary>视觉监控布局模式：网格（多画面平铺）/ 重点（1 大 + 多小，点击缩略图切换主画面）。</summary>
-public enum MonitorMode
-{
-    Grid,       // 网格平铺（自适应 / 1×2 / 2×3 / 3×4）
-    Spotlight   // 重点监控：1 个大画面 + 底部小画面缩略图，点击缩略图切换主画面
-}
 
 /// <summary>
 /// 操作员机台运行控制器。
@@ -268,28 +261,24 @@ public class OperatorRunViewModel : OperatorViewModel
     public int LayoutCols { get => _layoutCols; set => SetField(ref _layoutCols, value); }
     private int _layoutCols = 2;
 
-    /// <summary>图像预览区高度（随布局列数自适应，近似 16:9 填满卡片宽度，替代原固定 120px）。</summary>
-    public double PreviewHeight { get => _previewHeight; private set => SetField(ref _previewHeight, value); }
-    private double _previewHeight = 500;
+    /// <summary>每个画面里图像的宽高比：宽 = 高 × 1.2（画面区域跟着格子宽度走，不再被拉成横条）。</summary>
+    public const double CardAspect = 1.2;
 
-    /// <summary>按最终列数计算预览高度：列越少卡片越宽，预览越高；重点模式下统一为 480。</summary>
-    private void UpdatePreviewHeight()
+    /// <summary>卡片上除图像外的固定高度：标题行 + 三列指标 + 内外边距。</summary>
+    private const double CardChrome = 96;
+
+    /// <summary>监控区实际可用尺寸（视图 SizeChanged 时回填），用来算每行每列能放多大。</summary>
+    private double _viewWidth, _viewHeight;
+
+    /// <summary>监控区尺寸变了就重排（窗口放大 → 画面跟着变大）。</summary>
+    public void OnMonitorViewportChanged(double width, double height)
     {
-        if (Mode == MonitorMode.Spotlight) { PreviewHeight = 480; return; }
-        PreviewHeight = LayoutCols switch { <= 1 => 500, 2 => 260, 3 => 180, _ => 140 };
+        if (width <= 0 || height <= 0) return;
+        if (System.Math.Abs(width - _viewWidth) < 1 && System.Math.Abs(height - _viewHeight) < 1) return;
+        _viewWidth = width;
+        _viewHeight = height;
+        if (IsAutoFit) AutoFitLayout();
     }
-
-    /// <summary>当前监控布局模式（网格平铺 / 重点 1+多）。</summary>
-    public MonitorMode Mode { get => _mode; private set => SetField(ref _mode, value); }
-    private MonitorMode _mode = MonitorMode.Grid;
-
-    /// <summary>重点模式下显示的大画面通道；点击缩略图切换。</summary>
-    public VisionChannel? MainChannel { get => _mainChannel; private set => SetField(ref _mainChannel, value); }
-    private VisionChannel? _mainChannel;
-
-    public ICommand GridModeCmd { get; private set; }
-    public ICommand SpotlightModeCmd { get; private set; }
-    public ICommand SwitchMainCmd { get; private set; }
 
     /// <summary>是否自适应布局（true=按相机数量自动最大化卡片；false=使用手动基准密度）。</summary>
     public bool IsAutoFit { get => _isAutoFit; set => SetField(ref _isAutoFit, value); }
@@ -316,9 +305,6 @@ public class OperatorRunViewModel : OperatorViewModel
         Layout23Cmd = new RelayCommand(_ => { IsAutoFit = false; _manualRows = 2; _manualCols = 3; ApplyManualLayout(); });
         Layout34Cmd = new RelayCommand(_ => { IsAutoFit = false; _manualRows = 3; _manualCols = 4; ApplyManualLayout(); });
 
-        GridModeCmd = new RelayCommand(_ => EnterGridMode());
-        SpotlightModeCmd = new RelayCommand(_ => EnterSpotlightMode());
-        SwitchMainCmd = new RelayCommand(p => SwitchMain(p as VisionChannel));
 
         // 监控通道来自流程：图像数量与图像内容由所选流程的视觉步骤（采集/匹配/测量/缺陷）决定；
         // 切换流程或增删步骤时操作员页自动同步（需求：流程有变化，图像就要变化）
@@ -362,10 +348,6 @@ public class OperatorRunViewModel : OperatorViewModel
         if (IsAutoFit) AutoFitLayout();
         else ApplyManualLayout();
 
-        // 维护重点模式主画面有效性
-        if (MainChannel == null || !Channels.Contains(MainChannel))
-            MainChannel = Channels.FirstOrDefault();
-        UpdateMainFlags();
     }
 
     /// <summary>根据所选流程的视觉步骤重建监控通道：每个视觉步骤（采集/匹配/测量/缺陷）对应一路图像。</summary>
@@ -392,9 +374,6 @@ public class OperatorRunViewModel : OperatorViewModel
         }
 
         if (IsAutoFit) AutoFitLayout(); else ApplyManualLayout();
-        if (MainChannel == null || !Channels.Contains(MainChannel))
-            MainChannel = Channels.FirstOrDefault();
-        UpdateMainFlags();
 
         // 若正在运行，新通道直接进入运行态（图像由流程引擎 ProductInspected 推送，不单独启硬件相机）
         if (_state == MachineState.Running) EnsureChannelsRunning();
@@ -416,73 +395,56 @@ public class OperatorRunViewModel : OperatorViewModel
         }
     }
 
-    /// <summary>切换到网格平铺模式并重新应用当前布局。</summary>
-    private void EnterGridMode()
-    {
-        Mode = MonitorMode.Grid;
-        if (IsAutoFit) AutoFitLayout();
-        else ApplyManualLayout();
-    }
-
-    /// <summary>切换到重点模式：1 个大画面 + 缩略图，主画面默认取当前主通道。</summary>
-    private void EnterSpotlightMode()
-    {
-        Mode = MonitorMode.Spotlight;
-        if (MainChannel == null || !Channels.Contains(MainChannel))
-            MainChannel = Channels.FirstOrDefault();
-        UpdateMainFlags();
-        PreviewHeight = 480;
-    }
-
-    /// <summary>点击缩略图切换重点模式的主画面。</summary>
-    private void SwitchMain(VisionChannel? ch)
-    {
-        if (ch == null) return;
-        MainChannel = ch;
-        UpdateMainFlags();
-    }
-
-    /// <summary>刷新各通道的 IsMain 标志（仅 MainChannel 为 true），驱动缩略图高亮。</summary>
-    private void UpdateMainFlags()
-    {
-        foreach (var c in Channels) c.IsMain = (c == MainChannel);
-    }
-
-    /// <summary>自适应布局：根据相机数量 N 计算最优行列，保证全部显示且卡片尽量大（接近正方形、填满区域）。</summary>
+    /// <summary>自适应布局：在可用区域内挑「画面能画得最大、又装得下」的行列数。</summary>
     private void AutoFitLayout()
     {
         int n = Channels.Count;
-        if (n <= 0) { LayoutRows = 1; LayoutCols = 1; UpdatePreviewHeight(); return; }
+        if (n <= 0) { LayoutRows = 1; LayoutCols = 1; return; }
 
-        const double aspect = 1.6; // 监控区域宽高比偏好（宽>高）
+        // 还不知道面板多大时，先按接近正方形排
+        if (_viewWidth <= 0 || _viewHeight <= 0)
+        {
+            int c0 = (int)System.Math.Ceiling(System.Math.Sqrt(n));
+            LayoutCols = c0;
+            LayoutRows = (n + c0 - 1) / c0;
+            return;
+        }
+
         int bestRows = 1, bestCols = n;
-        double bestScore = double.MaxValue;
-
+        double bestCardW = 0;          // 装得下的方案里，挑画面最宽的
+        double leastOverflow = double.MaxValue; // 一个都装不下时，挑超出最少的
         for (int r = 1; r <= n; r++)
         {
-            int c = (n + r - 1) / r; // 整数向上取整 cols
-            int waste = r * c - n;
-            double ratio = (double)c / r;
-            // 评分：优先少浪费，其次接近目标宽高比（卡片更均衡美观）
-            double score = waste * 2 + System.Math.Abs(ratio - aspect);
-            if (score < bestScore) { bestScore = score; bestRows = r; bestCols = c; }
+            int c = (n + r - 1) / r;
+            double cardW = _viewWidth / c - 16;            // 扣掉卡片左右外边距
+            if (cardW <= 0) continue;
+            double cardH = cardW / CardAspect + CardChrome; // 图像按 1.2:1 + 标题/指标
+            double needH = cardH * r;
+            if (needH <= _viewHeight)
+            {
+                if (cardW > bestCardW) { bestCardW = cardW; bestRows = r; bestCols = c; }
+            }
+            else if (bestCardW <= 0 && needH < leastOverflow)
+            {
+                leastOverflow = needH;
+                bestRows = r;
+                bestCols = c;
+            }
         }
 
         LayoutRows = bestRows;
         LayoutCols = bestCols;
-        UpdatePreviewHeight();
     }
 
     /// <summary>手动布局：以用户选定的基准行列为准，但保证能容纳所有相机（不足则自动加行）。</summary>
     private void ApplyManualLayout()
     {
         int n = Channels.Count;
-        if (n <= 0) { LayoutRows = _manualRows; LayoutCols = _manualCols; UpdatePreviewHeight(); return; }
+        if (n <= 0) { LayoutRows = _manualRows; LayoutCols = _manualCols; return; }
         int rows = _manualRows;
         while (rows * _manualCols < n) rows++;
         LayoutRows = rows;
         LayoutCols = _manualCols;
-        UpdatePreviewHeight();
     }
 
     /// <summary>实时数据改由流程引擎 ProductInspected 事件驱动（真实匹配分数/缺陷/图像），此处不再轮询模拟。</summary>

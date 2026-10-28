@@ -4,11 +4,15 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:ctrl="clr-namespace:NoCodeVision.Views.Controls"
+             xmlns:local="clr-namespace:NoCodeVision"
              mc:Ignorable="d">
 <!-- 温启志：18719361399  混淆: 温h启b志n：y1a8g7b1m9e3y6i1g3b9o9 -->
 
 
     <UserControl.Resources>
+        <!-- 图像高度 = 宽度 × 0.8333，即宽:高 = 1.2:1 -->
+        <local:WidthToHeightConverter x:Key="WidthToHeight" />
+
         <DataTemplate x:Key="TaskItemTemplate">
             <DockPanel LastChildFill="True">
                 <ctrl:AppleIconTile Glyph="📦" TileSize="24" Margin="0,0,10,0" VerticalAlignment="Center" />
@@ -77,11 +81,11 @@
         </Style>
         <!-- ===== 监控卡片模板（网格与重点模式共用） ===== -->
         <DataTemplate x:Key="MonitorCardTemplate">
-            <Border Style="{StaticResource MonitorCard}">
+            <Border Style="{StaticResource MonitorCard}" VerticalAlignment="Top">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
@@ -96,7 +100,8 @@
 
                     <!-- 行 1：图像预览 -->
                     <Border Grid.Row="1" Margin="6,2,6,4" Background="{StaticResource PreviewBgBrush}" CornerRadius="8"
-                            HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            HorizontalAlignment="Stretch" VerticalAlignment="Top"
+                            Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}, Converter={StaticResource WidthToHeight}, ConverterParameter=0.8333}">
                         <Grid>
                             <Image Source="{Binding LastImage, Mode=OneWay}" Stretch="Uniform" IsHitTestVisible="False">
                                 <Image.Style>
@@ -180,52 +185,6 @@
             </Border>
         </DataTemplate>
 
-        <!-- ===== 重点模式缩略图（点击切换主画面） ===== -->
-        <DataTemplate x:Key="MonitorThumbTemplate">
-            <Button Command="{Binding DataContext.SwitchMainCmd, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                    CommandParameter="{Binding}" Background="Transparent" Padding="4" Cursor="Hand">
-                <Border Style="{StaticResource MonitorCard}" Margin="4">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="120" />
-                        </Grid.RowDefinitions>
-                        <DockPanel Grid.Row="0" Margin="6,6,6,2" LastChildFill="True">
-                            <TextBlock DockPanel.Dock="Left" Text="{Binding Name}" Style="{StaticResource AppleLabel}"
-                                       FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                            <Border DockPanel.Dock="Right" Style="{StaticResource MonStatusPill}">
-                                <TextBlock Text="{Binding Status}" Style="{StaticResource MonStatusText}" />
-                            </Border>
-                        </DockPanel>
-                        <Border Grid.Row="1" Margin="6,2,6,4" Background="{StaticResource PreviewBgBrush}" CornerRadius="8">
-                            <Image Source="{Binding LastImage, Mode=OneWay}" Stretch="Uniform" IsHitTestVisible="False">
-                                <Image.Style>
-                                    <Style TargetType="Image">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding LastImage}" Value="{x:Null}">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Image.Style>
-                            </Image>
-                        </Border>
-                    </Grid>
-                </Border>
-                <Button.Style>
-                    <Style TargetType="Button">
-                        <Setter Property="BorderThickness" Value="0" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsMain}" Value="True">
-                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
-                                <Setter Property="BorderThickness" Value="3" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Button.Style>
-            </Button>
-        </DataTemplate>
     </UserControl.Resources>
 
     <Grid>
@@ -417,51 +376,8 @@
                                    Text="{Binding ImageCount, Mode=OneWay, StringFormat='图像数量：{0}'}" />
                     </Border>
 
-                    <!-- 模式切换：网格平铺 / 重点(1大+多小) -->
-                    <Border Background="{StaticResource SegTrackBrush}" CornerRadius="8" Padding="3" Margin="14,0,0,0">
-                        <StackPanel Orientation="Horizontal">
-                            <Button Content="网格" Command="{Binding GridModeCmd}" MinWidth="48" Padding="8,4" FontSize="11">
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource SegButton}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Mode}" Value="Grid">
-                                                <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-                                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-                                                <Setter Property="FontWeight" Value="Medium" />
-                                                <Setter Property="Effect" Value="{StaticResource PillShadow}" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-                            <Button Content="重点" Command="{Binding SpotlightModeCmd}" MinWidth="48" Padding="8,4" FontSize="11">
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource SegButton}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Mode}" Value="Spotlight">
-                                                <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-                                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-                                                <Setter Property="FontWeight" Value="Medium" />
-                                                <Setter Property="Effect" Value="{StaticResource PillShadow}" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- 网格密度选择（仅网格模式显示） -->
+                    <!-- 网格密度：自适应 / 1×2 / 2×3 / 3×4 -->
                     <Border x:Name="LayoutSegTrack" Background="{StaticResource SegTrackBrush}" CornerRadius="8" Padding="3" Margin="8,0,0,0">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Mode}" Value="Spotlight">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
                         <StackPanel Orientation="Horizontal">
                             <Button Content="自适应" Command="{Binding AutoFitCmd}" MinWidth="56" Padding="8,4" FontSize="11">
                                 <Button.Style>
@@ -536,18 +452,10 @@
                 </StackPanel>
             </Border>
 
-            <!-- 相机网格（网格模式）：自适应填满、全部显示、无滚动条 -->
+            <!-- 相机网格：每个画面按 宽:高=1.2:1 自适应大小，行列按可用区域自动算 -->
             <ItemsControl x:Name="GridModePanel" Grid.Row="1" ItemsSource="{Binding Channels}"
-                          ItemTemplate="{StaticResource MonitorCardTemplate}">
-                <ItemsControl.Style>
-                    <Style TargetType="ItemsControl">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding Mode}" Value="Spotlight">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </ItemsControl.Style>
+                          ItemTemplate="{StaticResource MonitorCardTemplate}"
+                          SizeChanged="MonitorPanel_SizeChanged">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <UniformGrid Rows="{Binding LayoutRows}" Columns="{Binding LayoutCols}"
@@ -556,38 +464,6 @@
                 </ItemsControl.ItemsPanel>
             </ItemsControl>
 
-            <!-- 重点模式：1 大画面 + 缩略图，点击缩略图切换主画面 -->
-            <Grid x:Name="SpotlightPanel" Grid.Row="1" Visibility="Collapsed">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <Grid.Style>
-                    <Style TargetType="Grid">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding Mode}" Value="Spotlight">
-                                <Setter Property="Visibility" Value="Visible" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Grid.Style>
-
-                <!-- 大画面 -->
-                <Border Grid.Row="0" Margin="0,0,0,8">
-                    <ContentControl Content="{Binding MainChannel}" ContentTemplate="{StaticResource MonitorCardTemplate}" />
-                </Border>
-
-                <!-- 缩略图条 -->
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Auto" MaxHeight="210">
-                    <ItemsControl ItemsSource="{Binding Channels}" ItemTemplate="{StaticResource MonitorThumbTemplate}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                    </ItemsControl>
-                </ScrollViewer>
-            </Grid>
         </Grid>
     </Grid>
   <!-- 作者：温·启·志 编写 ▢ 联系 wx:187-1936-1399 -->
