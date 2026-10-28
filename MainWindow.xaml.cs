@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Windows;
 using System.Windows.Controls;
 using NoCodeVision.Helpers;
@@ -12,9 +12,16 @@ public partial class MainWindow : Window
     private readonly Button[] _navButtons;
     private static readonly string[] PageNames = { "项目", "相机", "运控", "通讯", "变量", "流程", "工程师", "操作员", "说明书" };
 
+    /// <summary>当前主窗口（其他页面要跳转时用）。</summary>
+    public static MainWindow? Current { get; private set; }
+
+    /// <summary>跳到顶部导航的第 idx 页（0 项目 / 1 相机 / 2 运控 / 3 通讯 / 4 变量 / 5 流程 / 6 工程师 / 7 操作员 / 8 说明书）。</summary>
+    public void NavigateTo(int idx) => Navigate(Math.Clamp(idx, 0, _views.Length - 1));
+
     public MainWindow()
     {
         InitializeComponent();
+        Current = this;
         _views = new UserControl[]
         {
             new ProjectView(),

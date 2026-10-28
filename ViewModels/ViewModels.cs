@@ -11875,19 +11875,18 @@ public class FlowViewModel : ViewModelBase
 
 // 本工程作者 温启志 ▪ 联系微信 18719361399
 
-public class ModuleItem
-
-{
-
-    public string Name { get; set; } = "";
-
-    public string Status { get; set; } = "正常";
-
-}
 
 
 
 // 温启志 著 ● 微信：187①936①399（保留）
+
+/// <summary>工程师台左侧的功能页。</summary>
+public class EngineerTab
+{
+    public string Key { get; init; } = "";
+    public string Name { get; init; } = "";
+    public string Hint { get; init; } = "";
+}
 
 public class EngineerViewModel : ViewModelBase
 
@@ -11919,29 +11918,84 @@ public class EngineerViewModel : ViewModelBase
 
 
 
-    public ObservableCollection<ModuleItem> Modules { get; } = new()
+    // ===== 工程师台：左侧功能页签（流程 / 相机 / 通讯 / 运控 / 日志） =====
 
+    public ObservableCollection<EngineerTab> Tabs { get; } = new()
     {
-
-        new ModuleItem { Name = "视觉引擎", Status = "运行中" },
-
-        new ModuleItem { Name = "相机模块", Status = "正常" },
-
-        new ModuleItem { Name = "通讯模块", Status = "正常" },
-
-        new ModuleItem { Name = "数据库", Status = "离线" },
-
+        new EngineerTab { Key = "Home", Name = "总览", Hint = "版本、运行模式、系统状态" },
+        new EngineerTab { Key = "Flow", Name = "流程控制", Hint = "选流程、运行、单步、看每步状态" },
+        new EngineerTab { Key = "Camera", Name = "相机", Hint = "连接、采集、曝光增益" },
+        new EngineerTab { Key = "Comm", Name = "通讯", Hint = "连通道、发数据、看回包" },
+        new EngineerTab { Key = "Motion", Name = "运控调试", Hint = "轴 / IO / 气缸手动点动" },
+        new EngineerTab { Key = "Log", Name = "日志", Hint = "运行模式、日志级别、调试日志" },
+        new EngineerTab { Key = "Smart", Name = "智能中心", Hint = "记忆 / 联想 / 仿真" },
     };
 
-    private ModuleItem? _selectedModule;
+    private EngineerTab _selectedTab;
 
-    public ModuleItem? SelectedModule { get => _selectedModule; set => SetField(ref _selectedModule, value); }
+    /// <summary>当前选中的功能页。</summary>
+    public EngineerTab SelectedTab
+    {
+        get => _selectedTab;
+        set
+        {
+            if (SetField(ref _selectedTab, value)) OnPropertyChanged(nameof(TabTitle));
+        }
+    }
 
+    public string TabTitle => _selectedTab?.Name ?? "总览";
 
+    /// <summary>工程师台直接操作的三套现成能力（和各自页面是同一份数据）。</summary>
+    public FlowViewModel? FlowVm => FlowViewModel.Instance;
+
+    public CameraViewModel? CameraVm => CameraViewModel.Instance;
+
+    public CommunicationViewModel? CommVm => CommunicationViewModel.Instance;
+
+    public string FlowCountText => $"流程 {FlowVm?.Flows.Count ?? 0} 个";
+
+    public string CameraCountText
+    {
+        get
+        {
+            var cams = CameraVm?.Cameras;
+            if (cams == null) return "相机 0 台";
+            int online = cams.Count(c => c.Status == "已连接");
+            return $"相机 {cams.Count} 台（在线 {online}）";
+        }
+    }
+
+    public string CommCountText
+    {
+        get
+        {
+            int n = CommVm?.Configs.Count ?? 0;
+            bool on = CommVm?.IsConnected == true;
+            return $"通讯 {n} 个通道（{(on ? "已连" : "未连")}）";
+        }
+    }
+
+    /// <summary>跳到对应功能页（工程师台只做运行与粗调，细参数回各页改）。</summary>
+    public ICommand GoFlowPageCmd { get; }
+
+    public ICommand GoCameraPageCmd { get; }
+
+    public ICommand GoCommPageCmd { get; }
+
+    public ICommand GoMotionPageCmd { get; }
+
+    private void RaiseCounts()
+    {
+        OnPropertyChanged(nameof(FlowCountText));
+        OnPropertyChanged(nameof(CameraCountText));
+        OnPropertyChanged(nameof(CommCountText));
+        OnPropertyChanged(nameof(FlowVm));
+        OnPropertyChanged(nameof(CameraVm));
+        OnPropertyChanged(nameof(CommVm));
+    }
 
     public ICommand AddCmd { get; }
 
-    public ICommand DeleteCmd { get; }
 
 
 
@@ -11971,35 +12025,6 @@ public class EngineerViewModel : ViewModelBase
 
     {
 
-        SelectedModule = Modules[0];
-
-
-
-        AddCmd = new RelayCommand(_ =>
-
-        {
-
-            var next = Modules.Count + 1;
-
-            Modules.Add(new ModuleItem { Name = $"扩展模块-{next}", Status = "正常" });
-
-        });
-
-        DeleteCmd = new RelayCommand(_ =>
-
-        {
-
-            if (_selectedModule != null)
-
-            {
-
-                Modules.Remove(_selectedModule);
-
-                SelectedModule = Modules.Count > 0 ? Modules[0] : null;
-
-            }
-
-        }, _ => _selectedModule != null);
 
 
 
@@ -12035,10 +12060,28 @@ public class EngineerViewModel : ViewModelBase
 
             ToggleCylinderCmd = new RelayCommand(p => ToggleCylinder((MotionRow)p!));
 
-            // 自动保存/恢复工程师页模块列表等（bin\Data\ui_state.json）
-            UiState.AttachVm("Engineer", this);
+            SelectedTab = Tabs[0];
 
-            SelectedModule = Modules.Count > 0 ? Modules[0] : SelectedModule;
+            GoFlowPageCmd = new RelayCommand(_ => NoCodeVision.MainWindow.Current?.NavigateTo(5));
+
+            GoCameraPageCmd = new RelayCommand(_ => NoCodeVision.MainWindow.Current?.NavigateTo(1));
+
+            GoCommPageCmd = new RelayCommand(_ => NoCodeVision.MainWindow.Current?.NavigateTo(3));
+
+            GoMotionPageCmd = new RelayCommand(_ => NoCodeVision.MainWindow.Current?.NavigateTo(2));
+
+            // 流程 / 相机 / 通讯 数量变化时刷新首页统计
+            FlowViewModel.Instance?.Flows.CollectionChanged += (_, _) => RaiseCounts();
+
+            if (CameraViewModel.Instance != null)
+                CameraViewModel.Instance.Cameras.CollectionChanged += (_, _) => RaiseCounts();
+
+            if (CommunicationViewModel.Instance != null)
+                CommunicationViewModel.Instance.Configs.CollectionChanged += (_, _) => RaiseCounts();
+
+
+            // 自动保存/恢复工程师页模块列表等（bin\Data\ui_state.json）
+
 
         }
 
