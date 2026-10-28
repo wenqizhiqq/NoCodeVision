@@ -279,6 +279,23 @@
             <Setter Property="Margin" Value="2,6,0,6" />
         </Style>
 
+        <!-- 缩略图：节点画成同尺寸的小色块，当前视野是一个可拖动的蓝框 -->
+        <Style x:Key="MinimapNodeStyle" TargetType="{x:Type nodify:MinimapItem}">
+            <Setter Property="Location" Value="{Binding Location}" />
+            <Setter Property="Width" Value="200" />
+            <Setter Property="Height" Value="80" />
+        </Style>
+
+        <DataTemplate x:Key="MinimapNodeTemplate">
+            <Border Background="{StaticResource NodeOtherLine}" CornerRadius="3" />
+        </DataTemplate>
+
+        <Style x:Key="MinimapViewportStyle" TargetType="Rectangle">
+            <Setter Property="Fill" Value="#330A84FF" />
+            <Setter Property="Stroke" Value="{StaticResource AccentBrush}" />
+            <Setter Property="StrokeThickness" Value="2" />
+        </Style>
+
     </UserControl.Resources>
 
     <!-- 左右两条边界线：把中间工作区和「流程方案」列表、右侧属性页分开 -->
@@ -380,9 +397,42 @@
             <StackPanel>
                 <TextBlock Text="从左侧把算子拖进来" FontSize="14" FontWeight="SemiBold"
                            Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
-                <TextBlock Text="再用鼠标从节点右侧端口拉线到下一个节点的左侧端口：连线顺序就是运行顺序，判断/分支/循环算子有「真 / 假」两个出口。"
+                <TextBlock Text="再用鼠标从节点下方的出口端口拉线到下一个节点上方的入口端口：连线顺序就是运行顺序，判断/分支/循环算子有「真 / 假」两个出口。"
                            FontSize="11" TextWrapping="Wrap" MaxWidth="300" TextAlignment="Center"
                            Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,0" />
+            </StackPanel>
+        </Border>
+
+        <!-- 右下角缩略图：整张图的全貌。左键点一下或按住拖动，画布立刻跳到那块区域 -->
+        <Border Grid.Column="2" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                Margin="0,0,16,16" Padding="6" CornerRadius="10"
+                Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1">
+            <StackPanel>
+                <nodify:Minimap Width="216" Height="140"
+                                Background="Transparent"
+                                ItemsSource="{Binding NodeGraph.Nodes}"
+                                ItemContainerStyle="{StaticResource MinimapNodeStyle}"
+                                ItemTemplate="{StaticResource MinimapNodeTemplate}"
+                                ViewportStyle="{StaticResource MinimapViewportStyle}"
+                                ViewportLocation="{Binding ViewportLocation, ElementName=Editor, Mode=TwoWay}"
+                                ViewportSize="{Binding ViewportSize, ElementName=Editor}"
+                                IsReadOnly="False"
+                                ResizeToViewport="True" />
+                <TextBlock Text="缩略图：点一下或拖动蓝框 = 跳转画面" FontSize="10"
+                           HorizontalAlignment="Center" Margin="0,4,0,0"
+                           Foreground="{StaticResource TextMutedBrush}" />
+            </StackPanel>
+        </Border>
+
+        <!-- 左下角操作提示：把鼠标怎么用直接写在画布上 -->
+        <Border Grid.Column="2" Grid.Row="0" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                Margin="16,0,0,16" Padding="10,6" CornerRadius="9" IsHitTestVisible="False"
+                Background="#F2FFFFFF" BorderBrush="{StaticResource LineBrush}" BorderThickness="1">
+            <StackPanel>
+                <TextBlock FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                           Text="中键（或右键）按住拖动 = 平移画布 ｜ 滚轮 = 缩放 ｜ 左键按住拖动 = 框选多个节点" />
+                <TextBlock FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"
+                           Text="左键点节点 = 选中 ｜ Shift + 左键 = 加选 ｜ 空白处左键拖动 = 拉框多选 ｜ 从端口拉线 = 定执行顺序" />
             </StackPanel>
         </Border>
 

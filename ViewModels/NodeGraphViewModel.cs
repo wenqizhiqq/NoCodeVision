@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
 
@@ -280,7 +280,45 @@ public class NodeGraphViewModel : ViewModelBase
 
         foreach (var l in flow.Links) AddLinkFromModel(l);
 
+        StackUnplacedNodes();
+
     }
+
+
+
+    /// <summary>从「逻辑」列表带过来的步骤没有画布坐标，全挤在原点上会叠成一坨：
+    /// 这里按步骤顺序从上到下竖着排一遍；用户手动拖过的节点（有坐标）保持不动。</summary>
+
+    private void StackUnplacedNodes()
+
+    {
+
+        const double pitch = 140;
+
+        double y = 0;
+
+        foreach (var n in Nodes)
+
+        {
+
+            if (n.Step.NodeX != 0 || n.Step.NodeY != 0) y = Math.Max(y, n.Step.NodeY + pitch);
+
+        }
+
+        foreach (var n in Nodes)
+
+        {
+
+            if (n.Step.NodeX != 0 || n.Step.NodeY != 0) continue;
+
+            n.Step.NodeY = y;
+
+            y += pitch;
+
+        }
+
+    }
+
 
 
 
