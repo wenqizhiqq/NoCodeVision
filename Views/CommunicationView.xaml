@@ -1,4 +1,4 @@
-<UserControl x:Class="NoCodeVision.Views.CommunicationView"
+﻿<UserControl x:Class="NoCodeVision.Views.CommunicationView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -81,7 +81,7 @@
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="停止位" ToolTip="一帧数据的结束标志，一般选 1" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="停止位" ToolTip="一条数据的结束标志，一般选 1" />
                             <ComboBox Style="{StaticResource AppleComboBox}" DockPanel.Dock="Right"
                                       ItemsSource="{Binding StopBitsOptions}" SelectedItem="{Binding SelectedConfig.StopBits}" />
                         </DockPanel>
@@ -338,7 +338,7 @@
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="DB 号" ToolTip="西门子 PLC 的数据块编号" />
                             <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Db, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
-                        <TextBlock Style="{StaticResource AppleSubLabel}" Margin="14,6,14,8" Text="发送命令：r 地址 [数量] 读 DBn.DBW 地址；w 地址 值… 写（n=DB 号）。注：握手帧为通用实现，需实机校对。" />
+                        <TextBlock Style="{StaticResource AppleSubLabel}" Margin="14,6,14,8" Text="发送命令：r 地址 [数量] 读 DBn.DBW 地址；w 地址 值… 写（n=DB 号）。注：握手过程是通用做法，需接真机核对。" />
                     </StackPanel>
                 </Border>
 

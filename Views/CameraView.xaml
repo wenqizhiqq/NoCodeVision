@@ -1,4 +1,4 @@
-<UserControl x:Class="NoCodeVision.Views.CameraView"
+﻿<UserControl x:Class="NoCodeVision.Views.CameraView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -130,10 +130,10 @@
                     <!-- 曝光与增益 -->
                     <Border Style="{StaticResource BlockCard}">
                         <StackPanel>
-                            <TextBlock Style="{StaticResource AppleSectionHeader}" Text="曝光与增益" />
+                            <TextBlock Style="{StaticResource AppleSectionHeader}" Text="曝光与增益（画面亮度）" />
                             <Border Style="{StaticResource SubCard}">
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="曝光" Margin="12,4,12,0" FontWeight="SemiBold" ToolTip="进光量。画面太暗就调大，太亮就调小" />
+                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="曝光（亮度）" Margin="12,4,12,0" FontWeight="SemiBold" ToolTip="进光量。画面太暗就调大，太亮就调小" />
                                     <Grid Style="{StaticResource CompactRow}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
@@ -159,14 +159,14 @@
                             </Border>
                             <Border Style="{StaticResource SubCard}">
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="增益" Margin="12,4,12,0" FontWeight="SemiBold" ToolTip="画面信号放大倍数。调高会变亮，但噪点也变多" />
+                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="增益（亮度放大）" Margin="12,4,12,0" FontWeight="SemiBold" ToolTip="画面信号放大倍数。调高会变亮，但噪点也变多" />
                                     <Grid Style="{StaticResource CompactRow}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="64" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="增益" ToolTip="画面信号放大倍数。调高会变亮，但噪点也变多" />
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="增益（放大）" ToolTip="画面信号放大倍数。调高会变亮，但噪点也变多" />
                                         <Slider Grid.Column="1" Minimum="0" Maximum="24" TickFrequency="0.1"
                                                 Value="{Binding Gain}" VerticalAlignment="Center" Margin="8,0" />
                                         <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding Gain, StringFormat={}{0:F1}}" />
@@ -198,7 +198,7 @@
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="64" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="伽马" ToolTip="调整中间调的明暗，画面发灰时调它" />
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="明暗曲线" ToolTip="调整中间调的明暗，画面发灰时调它" />
                                         <Slider Grid.Column="1" Minimum="0.5" Maximum="3" TickFrequency="0.05" Value="{Binding Gamma}" VerticalAlignment="Center" Margin="8,0" />
                                         <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding Gamma, StringFormat={}{0:F2}}" />
                                     </Grid>
@@ -276,10 +276,10 @@
                     <!-- 触发与采集 -->
                     <Border Style="{StaticResource BlockCard}">
                         <StackPanel>
-                            <TextBlock Style="{StaticResource AppleSectionHeader}" Text="触发与采集" />
+                            <TextBlock Style="{StaticResource AppleSectionHeader}" Text="什么时候拍（触发与采集）" />
                             <Border Style="{StaticResource SubCard}">
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="触发模式" Margin="12,4,12,0" FontWeight="SemiBold" />
+                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="拍照时机" Margin="12,4,12,0" FontWeight="SemiBold" />
                                     <ListBox ItemsSource="{Binding TriggerModes}" SelectedItem="{Binding TriggerMode}"
                                              Style="{StaticResource ApplePillList}" Margin="8,0,8,8" />
                                 </StackPanel>
@@ -291,7 +291,7 @@
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="触发源" />
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="信号从哪来" />
                                         <ComboBox Grid.Column="1" Style="{StaticResource CompactCombo}" ItemsSource="{Binding TriggerSources}" SelectedItem="{Binding TriggerSource}" />
                                     </Grid>
                                     <Grid Style="{StaticResource CompactField}">
@@ -299,7 +299,7 @@
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="触发边沿" ToolTip="电信号跳变的那一刻拍照：上升沿=由低变高，下降沿=由高变低" />
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="信号怎么算" ToolTip="电信号跳变的那一刻拍照：上升沿=由低变高，下降沿=由高变低" />
                                         <ComboBox Grid.Column="1" Style="{StaticResource CompactCombo}" ItemsSource="{Binding TriggerEdges}" SelectedItem="{Binding TriggerEdge}" />
                                     </Grid>
                                     <Grid Style="{StaticResource CompactField}">
@@ -316,7 +316,7 @@
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="64" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="帧率" ToolTip="一秒钟能拍多少张图" />
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="每秒拍几张" ToolTip="一秒钟能拍多少张图" />
                                         <Slider Grid.Column="1" Minimum="1" Maximum="120" TickFrequency="1" Value="{Binding FrameRate}" VerticalAlignment="Center" Margin="8,0" />
                                         <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding FrameRate, StringFormat={}{0:F1}}" />
                                     </Grid>
@@ -325,10 +325,10 @@
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="缓存数" />
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="存几张" />
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding BufferCount}" Width="64" />
-                                            <TextBlock Style="{StaticResource AppleUnit}" Text="帧" />
+                                            <TextBlock Style="{StaticResource AppleUnit}" Text="张" />
                                         </StackPanel>
                                     </Grid>
                                     <Grid Style="{StaticResource CompactField}">
@@ -336,7 +336,7 @@
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="超时" ToolTip="最多等多少毫秒，等不到就判失败" />
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="等多久" ToolTip="最多等多少毫秒，等不到就判失败" />
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding TimeoutMs}" Width="64" />
                                             <TextBlock Style="{StaticResource AppleUnit}" Text="ms" />
@@ -382,7 +382,7 @@
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="Binning" />
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="像素合并" />
                                         <ComboBox Grid.Column="1" Style="{StaticResource CompactCombo}" ItemsSource="{Binding Binnings}" SelectedItem="{Binding Binning}" />
                                     </Grid>
                                     <Grid Style="{StaticResource CompactField}">
@@ -405,10 +405,10 @@
                     <!-- ROI / 高级 / 保存 -->
                     <Border Style="{StaticResource BlockCard}">
                         <StackPanel>
-                            <TextBlock Style="{StaticResource AppleSectionHeader}" Text="ROI / 高级 / 保存" ToolTip="ROI=只看这块区域；高级=相机细节参数；保存=把拍到的图存成文件" />
+                            <TextBlock Style="{StaticResource AppleSectionHeader}" Text="检测范围 / 高级 / 保存" ToolTip="检测范围=只看这块区域；高级=相机细节参数；保存=把拍到的图存成文件" />
                             <Border Style="{StaticResource SubCard}">
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI" Margin="12,4,12,0" FontWeight="SemiBold" ToolTip="只让软件看这个方框里的内容，框外一律忽略" />
+                                    <TextBlock Style="{StaticResource AppleSubLabel}" Text="检测范围" Margin="12,4,12,0" FontWeight="SemiBold" ToolTip="只让软件看这个方框里的内容，框外一律忽略" />
                                     <Grid Style="{StaticResource CompactRow}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
@@ -443,7 +443,7 @@
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="数据包大小" />
+                                        <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="包大小" />
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding PacketSize}" Width="64" />
                                             <TextBlock Style="{StaticResource AppleUnit}" Text="字节" />

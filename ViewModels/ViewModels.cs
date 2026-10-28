@@ -5978,7 +5978,7 @@ public class FlowViewModel : ViewModelBase
 
             {
 
-                _selectedStep.StatusText = "ROI无效";
+                _selectedStep.StatusText = "检测范围不对（宽高要大于 0）";
 
                 if (own) src.Dispose();
 
@@ -6112,7 +6112,7 @@ public class FlowViewModel : ViewModelBase
 
                             Color = "#34C759",
 
-                            Label = $"相似度 {r.Score:F2} · θ{r.Angle:F1}°"
+                            Label = $"像不像 {r.Score:F2} · 转了 {r.Angle:F1}°"
 
                         });
 
@@ -6120,7 +6120,7 @@ public class FlowViewModel : ViewModelBase
 
                     var r0 = results[0];
 
-                    _selectedStep.ActualValue = $"结果 {results.Count} 个 · 首结果({r0.CenterX:F1},{r0.CenterY:F1}) θ{r0.Angle:F1} 相似度{r0.Score:F2} 耗时{_selectedStep.CostMs:F1}ms";
+                    _selectedStep.ActualValue = $"找到 {results.Count} 个 · 第一个在({r0.CenterX:F1},{r0.CenterY:F1}) · 转了 {r0.Angle:F1}° · 像不像 {r0.Score:F2} · 耗时{_selectedStep.CostMs:F1}ms";
 
                     _selectedStep.StatusText = $"匹配成功 · 结果数 {results.Count} · 耗时{_selectedStep.CostMs:F1}ms";
 
@@ -6130,7 +6130,7 @@ public class FlowViewModel : ViewModelBase
 
                 {
 
-                    _selectedStep.ActualValue = $"源图 {src.Width}×{src.Height}，模板 {roi.Width}×{roi.Height}，未匹配（阈值 {_selectedStep.ScoreThreshold:F2}）";
+                    _selectedStep.ActualValue = $"图 {src.Width}×{src.Height}，模板 {roi.Width}×{roi.Height}，没找到（要求像到 {_selectedStep.ScoreThreshold:F2} 以上）";
 
                     _selectedStep.StatusText = "匹配失败";
 
@@ -7156,7 +7156,7 @@ public class FlowViewModel : ViewModelBase
 
             roi.Height = Math.Min(roi.Height, gray.Height - roi.Y);
 
-            if (roi.Width <= 0 || roi.Height <= 0) return "ROI无效";
+            if (roi.Width <= 0 || roi.Height <= 0) return "检测范围不对（宽高要大于 0）";
 
             using var roiMat = new Mat(gray, roi);
 
@@ -10975,7 +10975,7 @@ public class FlowViewModel : ViewModelBase
 
                                     Color = "#34C759",
 
-                                    Label = $"相似度 {r.Score:F2} · θ{r.Angle:F1}°"
+                                    Label = $"像不像 {r.Score:F2} · 转了 {r.Angle:F1}°"
 
                                 });
 

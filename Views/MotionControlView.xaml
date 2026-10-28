@@ -1,4 +1,4 @@
-<UserControl x:Class="NoCodeVision.Views.MotionControlView"
+﻿<UserControl x:Class="NoCodeVision.Views.MotionControlView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -281,7 +281,7 @@
                     </Grid>
                     <Grid Style="{StaticResource AxisField}">
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="极性" ToolTip="输出高电平算动作还是算不动作。接线反了在这里翻一下" />
+                        <TextBlock Grid.Row="0" Style="{StaticResource AxisLabel}" Text="怎么算动作" ToolTip="输出高电平算动作还是算不动作。接线反了在这里翻一下" />
                         <CheckBox Grid.Row="1" IsChecked="{Binding SelectedIo.Polarity}" Content="高电平有效" VerticalAlignment="Center" />
                     </Grid>
                 </WrapPanel>

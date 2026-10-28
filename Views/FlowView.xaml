@@ -732,7 +732,7 @@
                         <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="4" />
                         </Border>
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="曝光(us)" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="曝光(us)（越大越亮）" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Exposure, FallbackValue=8000}" Width="100" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
@@ -740,7 +740,7 @@
                         <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="5" />
                         </Border>
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="增益" ToolTip="画面信号放大倍数。调高会变亮，但噪点也变多" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="增益（亮度放大）" ToolTip="画面信号放大倍数。调高会变亮，但噪点也变多" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.Gain, FallbackValue=10}" Width="100" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
@@ -748,7 +748,7 @@
                         <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="6" />
                         </Border>
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="触发模式" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="拍照时机" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="140"
                                       ItemsSource="{Binding CaptureTriggerModes}" SelectedItem="{Binding SelectedStep.TriggerMode, FallbackValue='连续采集'}" />
                         </DockPanel>
@@ -801,7 +801,7 @@
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <CheckBox Content="自动曝光"
+                                    <CheckBox Content="自动曝光（自动调亮）"
                                               IsChecked="{Binding SelectedStep.AutoExposure, Converter={StaticResource IntToBoolConverter}}"
                                               Style="{StaticResource AppleCheckBox}" />
                                 </StackPanel>
@@ -842,10 +842,10 @@
                             </Border>
                                 <CheckBox Content="线扫" DockPanel.Dock="Left" Style="{StaticResource AppleCheckBox}"
                                           IsChecked="{Binding SelectedStep.CameraLineScan, Mode=TwoWay}" ToolTip="线扫相机：靠行频一行一行拍，攒够「每帧行数」拼成一张图" />
-                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="行频(Hz)" Margin="16,0,6,0" />
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="行频(Hz)（线扫速度）" Margin="16,0,6,0" />
                                 <TextBox Style="{StaticResource AppleTextField}" Width="80" DockPanel.Dock="Left"
                                          Text="{Binding SelectedStep.CameraLineRate, Mode=TwoWay, FallbackValue=10000}" />
-                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="每帧行数" Margin="12,0,6,0" />
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="每张图拍多少行" Margin="12,0,6,0" />
                                 <TextBox Style="{StaticResource AppleTextField}" Width="80"
                                          Text="{Binding SelectedStep.CameraSpliceLines, Mode=TwoWay, FallbackValue=1024}" />
                             </DockPanel>
@@ -855,7 +855,7 @@
                         </StackPanel>
                         <!-- 下：ROI 图像（整卡宽度） -->
                         <StackPanel Grid.Row="1" Margin="0,6,0,0">
-                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI（在下面的图上拖拽绘制）" Margin="0,8,0,4" ToolTip="在右边的图上按住鼠标拖出一个框，软件只看框里的内容" />
+                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="检测范围（在下面的图上拖一个框）" Margin="0,8,0,4" ToolTip="在右边的图上按住鼠标拖出一个框，软件只看框里的内容" />
                         <ctrl:RoiImageView Margin="0,0,0,10"
                                            SourceImage="{Binding CurrentImageSource}"
                                            RoiX="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=10}"
@@ -915,13 +915,13 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🎯 图里找图案" /> — 在图里找到目标的位置</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：先在右边源图上按住拖一个框，把要找的图案框住，点「确定模板」→ 1 选匹配模式 → 2~5 找不准时再微调：结果排序 / 边缘填充 / 最小匹配间距 / 启用掩膜 → 6 模板文件：想换图复用就从这里改。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：先在右边源图上按住拖一个框，把要找的图案框住，点「确定模板」→ 1 选匹配模式 → 2~5 找不准时再微调：结果排序 / 边缘填充 / 最小匹配间距 / 忽略背景 → 6 模板文件：想换图复用就从这里改。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="图里找图案" />
                         <!-- 模板预览（参数列） -->
                         <StackPanel Margin="0,0,8,0">
-                            <TextBlock Style="{StaticResource AppleSubLabel}" Text="模板预览" Margin="0,8,0,4" />
+                            <TextBlock Style="{StaticResource AppleSubLabel}" Text="模板预览（框住的那一小块）" Margin="0,8,0,4" />
                             <Border Width="140" Height="150" Background="{StaticResource PreviewBgBrush}" CornerRadius="10">
                                 <Grid>
                                     <Image Source="{Binding TemplatePreviewSource}" Width="140" Height="150" Stretch="Uniform">
@@ -988,7 +988,7 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="60" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="轮廓阈值(1-254)" VerticalAlignment="Center" ToolTip="按外形找图的严格程度，范围 1~254，越大越只看轮廓" />
+                                    <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="轮廓清晰度(1-254)" VerticalAlignment="Center" ToolTip="按外形找图的严格程度，范围 1~254，越大越只看轮廓" />
                                     <Slider Grid.Column="1" Minimum="1" Maximum="254" TickFrequency="1" IsSnapToTickEnabled="True"
                                             Value="{Binding SelectedStep.ContourThreshold}" VerticalAlignment="Center" Margin="8,0" />
                                     <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ContourThreshold, FallbackValue=30}" />
@@ -1014,7 +1014,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="60" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="金字塔层数" VerticalAlignment="Center" ToolTip="找图的快慢折中：层数多找得快但可能漏找，一般 3~5 层" />
+                            <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="缩小几层去找" VerticalAlignment="Center" ToolTip="找图的快慢折中：层数多找得快但可能漏找，一般 3~5 层" />
                             <Slider Grid.Column="1" Minimum="0" Maximum="6" TickFrequency="1" IsSnapToTickEnabled="True"
                                     Value="{Binding SelectedStep.PyramidLevel}" VerticalAlignment="Center" Margin="8,0" />
                             <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.PyramidLevel, FallbackValue=3}" />
@@ -1114,7 +1114,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="60" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="相似度阈值" VerticalAlignment="Center" ToolTip="分数达到多少才算找到了。0~1之间，越大越严格；一般填 0.7~0.85" />
+                            <TextBlock Grid.Column="0" Style="{StaticResource AppleSubLabel}" Text="相似度（像不像）" VerticalAlignment="Center" ToolTip="分数达到多少才算找到了。0~1之间，越大越严格；一般填 0.7~0.85" />
                             <Slider Grid.Column="1" Minimum="0.3" Maximum="1" TickFrequency="0.01" IsSnapToTickEnabled="True"
                                     Value="{Binding SelectedStep.ScoreThreshold}" VerticalAlignment="Center" Margin="8,0" />
                             <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ScoreThreshold, FallbackValue=0.85, StringFormat={}{0:0.##}}" />
@@ -1150,7 +1150,7 @@
                         <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="5" />
                         </Border>
-                            <CheckBox Content="启用掩膜(忽略背景)"
+                            <CheckBox Content="忽略背景（掩膜）"
                                       IsChecked="{Binding SelectedStep.UseMask, Converter={StaticResource IntToBoolConverter}}"
                                       Style="{StaticResource AppleCheckBox}" />
                         </DockPanel>
@@ -1159,7 +1159,7 @@
                         <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="6" />
                         </Border>
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="模板文件" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="模板文件（存下来的那一小块图）" />
                             <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.TemplateFile, FallbackValue=''}" />
                         </DockPanel>
                         </StackPanel>
@@ -1208,7 +1208,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="📐 量尺寸" /> — 量一个几何量并判合格</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：先在下面图上框出要量的地方 → 1 选测量类型 → 2~3 填标称值和公差（合格不合格就看这两个）→ 4~5 单位和保留小数位 → 6 实测值写进哪个变量 → 7~9 量不准再微调卡尺数 / 边缘极性 / 边缘阈值 → 10 ROI 坐标就是上面拖的框，不用手填。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：先在下面图上框出要量的地方 → 1 选测量类型 → 2~3 填标称值和公差（合格不合格就看这两个）→ 4~5 单位和保留小数位 → 6 实测值写进哪个变量 → 7~9 量不准再微调取点数量 / 明暗方向 / 边缘明显程度 → 10 框的位置就是上面拖的框，不用手填。" />
                             </StackPanel>
                         </Border>
                         <!-- 1. 测量摘要：明确回答「测量了什么」 -->
@@ -1308,7 +1308,7 @@
                             <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
                                 <TextBlock Style="{StaticResource OpBadgeText}" Text="7" />
                             </Border>
-                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="卡尺数" ToolTip="边缘搜索时沿轮廓采集的测量点数，越多越稳定但越慢"/>
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="取点数量" ToolTip="边缘搜索时沿轮廓采集的测量点数，越多越稳定但越慢"/>
                                 <TextBox DockPanel.Dock="Left" Style="{StaticResource AppleTextField}" Width="80"
                                          Text="{Binding SelectedStep.CaliperCount, FallbackValue=20}" />
                             </DockPanel>
@@ -1317,7 +1317,7 @@
                             <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
                                 <TextBlock Style="{StaticResource OpBadgeText}" Text="8" />
                             </Border>
-                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="边缘极性" ToolTip="边缘灰度变化方向：由亮到暗 / 由暗到亮 / 任意"/>
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="明暗方向" ToolTip="边缘灰度变化方向：由亮到暗 / 由暗到亮 / 任意"/>
                                 <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
                                           ItemsSource="{Binding EdgePolarities}" SelectedItem="{Binding SelectedStep.EdgePolarity, FallbackValue='由亮到暗'}" />
                             </DockPanel>
@@ -1326,7 +1326,7 @@
                             <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
                                 <TextBlock Style="{StaticResource OpBadgeText}" Text="9" />
                             </Border>
-                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="边缘阈值" ToolTip="判定边缘的最小灰度差，越小越灵敏"/>
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="边缘明显程度" ToolTip="判定边缘的最小灰度差，越小越灵敏"/>
                                 <TextBox DockPanel.Dock="Left" Style="{StaticResource AppleTextField}" Width="80"
                                          Text="{Binding SelectedStep.EdgeThreshold, FallbackValue=20}" />
                             </DockPanel>
@@ -1335,7 +1335,7 @@
                             <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
                                 <TextBlock Style="{StaticResource OpBadgeText}" Text="10" />
                             </Border>
-                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="ROI 坐标" ToolTip="感兴趣区域：X/Y 为左上角坐标，W/H 为宽高，可直接在下方图中拖拽绘制"/>
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="框的位置" ToolTip="感兴趣区域：X/Y 为左上角坐标，W/H 为宽高，可直接在下方图中拖拽绘制"/>
                                 <UniformGrid Columns="4" Width="130">
                                     <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=0}" FontSize="11" Padding="4,2" />
                                     <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=0}" FontSize="11" Padding="4,2" />
@@ -1345,8 +1345,8 @@
                             </DockPanel>
 
                         <!-- 5. ROI 预览说明（图像在右侧） -->
-                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="ROI 预览：在右侧图中拖拽绘制区域，测量算法只在该区域内搜索边缘。" Margin="16,8,16,4" />
-                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="提示：切换左上角工具可框选 ROI / 拉线段测距 / 标圆测半径；运行后「实测值/判定」在上方摘要显示。" Margin="16,0,16,8" />
+                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="检测范围：在右侧图上拖一个框，只在框里找边缘。" Margin="16,8,16,4" />
+                        <TextBlock Style="{StaticResource AppleSubLabel}" Text="提示：切换左上角工具可框选检测范围 / 拉线段测距 / 标圆测半径；运行后「实测值/判定」在上方摘要显示。" Margin="16,0,16,8" />
                         </StackPanel>
                         <!-- 右：ROI 图像 -->
                         <StackPanel Grid.Column="1" Margin="14,0,14,0">
@@ -1499,7 +1499,7 @@
                         <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="5" />
                         </Border>
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="触发方式" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="什么时候报" />
                             <ComboBox DockPanel.Dock="Left" Style="{StaticResource AppleComboBox}" Width="120"
                                       ItemsSource="{Binding OutputTriggers}" SelectedItem="{Binding SelectedStep.Trigger, FallbackValue='立即'}" />
                         </DockPanel>
@@ -1546,7 +1546,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🔍 挑瑕疵" /> — 和标准图比，找出不一样的地方</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：先在下面图上框出要比的区域、再载入一张标准图 → 1 差异阈值：差多少算异常，越小越敏感也越容易误报 → 2 最小面积占比：太小的不算，滤掉噪点 → 3 全局亮度阈值：整张图亮度超了先报警（打光不对）→ 4~7 边缘容差 / 边缘梯度 / 腐蚀核 / 膨胀核都是微调，不确定就用默认 → 然后点「开始检测缺陷」，红色即可疑缺陷。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：先在下面图上框出要比的区域、再载入一张标准图 → 1 差多少算不一样：越小越敏感也越容易误报 → 2 最小面积占比：太小的不算，滤掉噪点 → 3 整体亮度报警值：整张图亮度超了先报警（打光不对）→ 4~7 边缘容差 / 明暗变化强度 / 收小（去小点）/ 放大（补小洞）都是微调，不确定就用默认 → 然后点「开始检测缺陷」，红色即可疑缺陷。" />
                             </StackPanel>
                         </Border>
                         <!-- 缺陷检测预览图见右侧列 -->
@@ -1555,7 +1555,7 @@
                         <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
                         </Border>
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="差异阈值" ToolTip="和标准图比，差多少算异常。数值越小越敏感，也越容易误报" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="差多少算不一样" ToolTip="和标准图比，差多少算异常。数值越小越敏感，也越容易误报" />
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
                                 <Slider Minimum="1" Maximum="254" Value="{Binding SelectedStep.DiffThreshold, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
                                 <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding SelectedStep.DiffThreshold, StringFormat={}{0:F0}}" Width="50" />
@@ -1577,7 +1577,7 @@
                         <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="3" />
                         </Border>
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="全局亮度阈值" ToolTip="整张图亮度超过这个值就报警，用来发现打光异常" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="整体亮度报警值" ToolTip="整张图亮度超过这个值就报警，用来发现打光异常" />
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
                                 <Slider Minimum="1" Maximum="254" Value="{Binding SelectedStep.GlobalBrightnessThresh, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
                                 <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding SelectedStep.GlobalBrightnessThresh, StringFormat={}{0:F0}}" Width="50" />
@@ -1599,7 +1599,7 @@
                         <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="5" />
                         </Border>
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="边缘梯度" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="明暗变化强度" />
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
                                 <Slider Minimum="1" Maximum="254" Value="{Binding SelectedStep.EdgeGradThresh, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
                                 <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding SelectedStep.EdgeGradThresh, StringFormat={}{0:F0}}" Width="50" />
@@ -1610,7 +1610,7 @@
                         <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="6" />
                         </Border>
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="腐蚀核" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="收小（去掉小点）" />
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
                                 <Slider Minimum="0" Maximum="15" Value="{Binding SelectedStep.ErodeSize, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
                                 <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding SelectedStep.ErodeSize, StringFormat={}{0:F0}}" Width="50" />
@@ -1621,7 +1621,7 @@
                         <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="7" />
                         </Border>
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="膨胀核" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="放大（补上小洞）" />
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Width="200">
                                 <Slider Minimum="0" Maximum="15" Value="{Binding SelectedStep.DilateSize, UpdateSourceTrigger=PropertyChanged}" Width="130" VerticalAlignment="Center" />
                                 <TextBox Style="{StaticResource AppleTextFieldInline}" Text="{Binding SelectedStep.DilateSize, StringFormat={}{0:F0}}" Width="50" />
@@ -2103,7 +2103,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🔢 数有几个" /> — 数出图里有多少个目标</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：先在下面图上框出要数的区域 → 1 选计数来源 → 2 ROI 坐标就是上面拖的框，不用手填 → 3 数量写进哪个变量。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：先在下面图上框出要数的区域 → 1 选计数来源 → 2 框的位置就是上面拖的框，不用手填 → 3 数量写进哪个变量。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="数有几个" />
@@ -2120,7 +2120,7 @@
                         <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
                         </Border>
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="ROI 坐标" ToolTip="检测区域：X/Y 左上角，W/H 宽高" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="框的位置" ToolTip="检测区域：X/Y 左上角，W/H 宽高" />
                             <UniformGrid Columns="4" Width="200">
                                 <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=0}" FontSize="11" Padding="4,2" />
                                 <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=0}" FontSize="11" Padding="4,2" />
@@ -2206,7 +2206,7 @@
                         <Border Style="{StaticResource AppleGuideCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource AppleGuideTitle}"><Run Text="🔤 认文字" /> — 把图里的文字读成字符串</TextBlock>
-                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：先在下面图上框出文字所在的区域 → 1 选识别语言 → 2 ROI 坐标就是上面拖的框 → 3 读出来的文字写进哪个变量。" />
+                                <TextBlock Style="{StaticResource AppleGuideText}" Text="操作顺序：先在下面图上框出文字所在的区域 → 1 选识别语言 → 2 框的位置就是上面拖的框 → 3 读出来的文字写进哪个变量。" />
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="认文字" />
@@ -2223,7 +2223,7 @@
                         <Border DockPanel.Dock="Left" Style="{StaticResource OpBadge}">
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
                         </Border>
-                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="ROI 坐标" ToolTip="识别区域：X/Y 左上角，W/H 宽高" />
+                            <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="框的位置" ToolTip="识别区域：X/Y 左上角，W/H 宽高" />
                             <UniformGrid Columns="4" Width="200">
                                 <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiX, Mode=TwoWay, FallbackValue=0}" FontSize="11" Padding="4,2" />
                                 <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.RoiY, Mode=TwoWay, FallbackValue=0}" FontSize="11" Padding="4,2" />

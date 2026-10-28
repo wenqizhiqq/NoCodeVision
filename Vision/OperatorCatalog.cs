@@ -1,4 +1,4 @@
-// 算子元数据目录：新增算子只在这里加一行，算子库、节点配色、右侧参数面板都从这里取。
+﻿// 算子元数据目录：新增算子只在这里加一行，算子库、节点配色、右侧参数面板都从这里取。
 // 实现：温启志
 
 using System.Collections.Generic;
@@ -147,54 +147,54 @@ public static class OperatorCatalog
     {
 
         // ================= 找位置 =================
-        O("FindCircle", "找圆", "⭕", "Locate", "在框定的区域里找一个圆，输出圆心和半径，精度可到亚像素。",
+        O("FindCircle", "找圆", "⭕", "Locate", "在框里的区域找一个圆，给出圆心和半径，能精确到不到一个像素。",
             N("半径大概多少", "ExpectRadius", "填 0 表示自动估一个"),
-            N("卡尺长度", "CaliperLength", "每个测量点沿半径方向看多远"),
+            N("每个点看多远", "CaliperLength", "每个测量点沿半径方向看多远"),
             N("采样步长", "SamplingStep", "沿圆周每隔多少像素测一个点，越小越准也越慢"),
             N("边缘灵敏度", "EdgeConfidence", "0~1，越大只认最清楚的边；光线乱时调小"),
             C("明暗方向", "EdgePolarity", "边是从暗到亮还是从亮到暗；选错就找不到边", POL),
-            C("拟合方式", "FitMethod", "有毛刺时选带权那一档", FIT)),
+            C("怎么贴合", "FitMethod", "有毛刺时选带权那一档", FIT)),
 
         O("FindArc", "找圆弧", "🌜", "Locate", "只找一段圆弧（零件只露出半个圆时用），其余同找圆。",
             N("半径大概多少", "ExpectRadius", ""),
             N("起始角度(度)", "AngleStart", "圆弧从哪个角度开始"),
             N("跨越角度(度)", "AngleStop", "圆弧一共跨过多大角度"),
-            N("卡尺长度", "CaliperLength", ""),
+            N("每个点看多远", "CaliperLength", ""),
             N("采样步长", "SamplingStep", ""),
             C("明暗方向", "EdgePolarity", "", POL)),
 
         O("FindLine", "找直线", "📏", "Locate", "在框定的区域里找一条边线，输出位置与角度。",
-            N("卡尺长度", "CaliperLength", "每个测量点垂直于直线方向看多远"),
-            N("卡尺条数", "CaliperCount", "沿直线摆多少个测量点，越多越稳"),
+            N("每个点看多远", "CaliperLength", "每个测量点垂直于直线方向看多远"),
+            N("取点数量", "CaliperCount", "沿直线摆多少个测量点，越多越稳"),
             N("采样步长", "SamplingStep", ""),
             C("明暗方向", "EdgePolarity", "", POL),
-            C("拟合方式", "FitMethod", "", FIT)),
+            C("怎么贴合", "FitMethod", "", FIT)),
 
         O("FindEdgePoint", "找边缘点", "📍", "Locate", "在一个带方向的矩形框里找第几条边，用来定基准点。",
             N("第几条边", "EdgeIndex", "1=遇到的第一条边"),
-            N("卡尺长度", "CaliperLength", ""),
+            N("每个点看多远", "CaliperLength", ""),
             C("明暗方向", "EdgePolarity", "", POL)),
 
-        O("CaliperTool", "卡尺测量", "📐", "Locate", "一条完整卡尺：沿一条线逐点找边并拟合，输出每点坐标。",
-            N("卡尺长度", "CaliperLength", ""),
-            N("卡尺条数", "CaliperCount", ""),
+        O("CaliperTool", "卡尺测量", "📐", "Locate", "沿着一条线一格一格找边，把每个点的位置都记下来。",
+            N("每个点看多远", "CaliperLength", ""),
+            N("取点数量", "CaliperCount", ""),
             N("采样步长", "SamplingStep", ""),
             N("最小间距", "MinDistance", "两个边之间至少隔多少像素"),
             C("明暗方向", "EdgePolarity", "", POL)),
 
         O("MultiLine", "找多条线", "≡", "Locate", "同一区域一次找出多条平行边线（栅格、针脚）。",
             N("要找几条", "TopN", ""),
-            N("卡尺长度", "CaliperLength", ""),
+            N("每个点看多远", "CaliperLength", ""),
             N("最小间距", "MinDistance", ""),
             C("明暗方向", "EdgePolarity", "", POL)),
 
         O("VertexFind", "找尖角", "🔶", "Locate", "找两条边的交点/尖角，常用于缺料、缺口判断。",
-            N("卡尺长度", "CaliperLength", ""),
+            N("每个点看多远", "CaliperLength", ""),
             N("夹角小于多少度算尖角", "AngleStop", "默认 120"),
             C("明暗方向", "EdgePolarity", "", POL)),
 
-        O("QuadFind", "找四边形", "▱", "Locate", "找一个矩形/梯形轮廓（开口、盖板、贴装位置对不对）。",
-            N("卡尺长度", "CaliperLength", ""),
+        O("QuadFind", "找四边形", "▱", "Locate", "找一个方形 / 梯形的东西（开孔、盖板、贴装位置对不对）。",
+            N("每个点看多远", "CaliperLength", ""),
             N("每条边取几点", "CaliperCount", ""),
             C("明暗方向", "EdgePolarity", "", POL)),
 
@@ -211,31 +211,31 @@ public static class OperatorCatalog
         // ================= 数与量 =================
         O("CountBlobs", "数块数", "🧩", "Measure", "把图分成一块一块，数有几个、多大、在哪。适合数产品、查有无。",
             C("数亮的还是暗的", "BlobPolarity", "", new[] { "亮区域", "暗区域" }),
-            C("二值化方式", "ThreshMode", "", THMODE),
-            N("阈值", "ThreshLo", "0~255，比它亮的算白"),
-            N("上限阈值", "ThreshHi", "只有双阈值方式用到"),
+            C("黑白怎么分", "ThreshMode", "", THMODE),
+            N("亮暗分界", "ThreshLo", "0~255，比它亮的算白"),
+            N("第二个分界", "ThreshHi", "只有「双阈值」那种分法才用到"),
             N("最小面积", "AreaMin", "比这更小的碎点不算，用来滤噪点"),
             N("最大面积", "AreaMax", "比这更大的不算"),
             C("怎么排顺序", "SortBy", "", new[] { "面积从大到小", "面积从小到大", "从左到右", "从上到下" }),
             B("反选", "InvertImage", "把过滤条件反过来")),
 
-        O("BlobMask", "按形状筛块", "🧮", "Measure", "先二值化找块，再按圆形度/矩形度筛，只留形状对得上的。",
+        O("BlobMask", "按形状筛块", "🧮", "Measure", "先把图变成黑白找出一块一块，再按圆不圆、方不方来筛，只留形状对的。",
             C("看哪个形状指标", "MeasureType", "", new[] { "圆形度", "矩形度", "面积" }),
             N("最小值", "AreaMin", ""),
             N("最大值", "AreaMax", ""),
-            C("二值化方式", "ThreshMode", "", THMODE),
-            N("阈值", "ThreshLo", "")),
+            C("黑白怎么分", "ThreshMode", "", THMODE),
+            N("亮暗分界", "ThreshLo", "")),
 
         O("PixelStat", "看明暗", "🌗", "Measure", "算一块区域的平均亮度、最亮最暗和明暗分布，适合判断有没有料、脏不脏。",
             C("统计方式", "MeasureType", "", new[] { "平均亮度", "最亮点", "最暗点", "亮像素占比" }),
-            N("阈值", "ThreshLo", "算占比时，比这个亮度更亮的才算数")),
+            N("亮暗分界", "ThreshLo", "算占比时，比这个亮度更亮的才算数")),
 
-        O("HistTool", "直方图", "📊", "Measure", "看这块区域里各档亮度各有多少像素，用来定阈值或比色。",
-            B("累计直方图", "InvertImage", "从暗往亮累加"),
+        O("HistTool", "直方图", "📊", "Measure", "统计这块区域从暗到亮各有多少点，用来定亮暗分界或比颜色。",
+            B("从暗往亮统计", "InvertImage", "从暗往亮累加"),
             N("要看的档位", "IndexProbe", "取第几档的像素数，0=只看最大最小")),
 
         O("Pitch", "量间距", "↔", "Measure", "沿一个方向连续找边，输出相邻边的间距（针脚间距、孔距）。",
-            N("卡尺长度", "CaliperLength", ""),
+            N("每个点看多远", "CaliperLength", ""),
             N("要找几条边", "TopN", ""),
             N("最小间距", "MinDistance", ""),
             C("明暗方向", "EdgePolarity", "", POL)),
@@ -247,11 +247,11 @@ public static class OperatorCatalog
             N("允许几个", "IndexProbe", "缺陷个数超过它就判不合格；填 0 就是零容忍")),
         O("CircleFit", "圆拟合", "⭕", "Measure", "把已有的若干个点拟成一个圆，看圆心和半径合不合格。",
             T("点从哪来", "CompareSource", "选前面哪一步给的点集"),
-            C("拟合方式", "FitMethod", "", FIT)),
+            C("怎么贴合", "FitMethod", "", FIT)),
 
         O("LineFit", "直线拟合", "📏", "Measure", "把已有的若干个点拟成一条直线，输出位置和角度。",
             T("点从哪来", "CompareSource", ""),
-            C("拟合方式", "FitMethod", "", FIT)),
+            C("怎么贴合", "FitMethod", "", FIT)),
 
         // ================= 几何计算 =================
         O("CalcPointPoint", "点点距离", "🔹", "Calc", "两个点之间的直线距离。",
@@ -325,20 +325,20 @@ public static class OperatorCatalog
 
         // ================= 先修图 =================
         O("Binarize", "变黑白", "◐", "Color", "把图变成只有黑和白，后面的数块数、量尺寸都靠它。",
-            C("二值化方式", "ThreshMode", "", THMODE),
-            N("阈值", "ThreshLo", "0~255"),
-            N("上限阈值", "ThreshHi", "只有双阈值方式用到"),
+            C("黑白怎么分", "ThreshMode", "", THMODE),
+            N("亮暗分界", "ThreshLo", "0~255"),
+            N("第二个分界", "ThreshHi", "只有「双阈值」那种分法才用到"),
             B("反相", "InvertImage", "黑白对调一下")),
         O("PreProcess", "先修图", "🧹", "Color", "找图之前先把图洗干净：去噪点、加强边缘、补光线不均。",
             C("处理方式", "PreprocessType", "", new[] { "去噪点(高斯)", "去噪点(中值)", "锐化", "均衡亮度", "阴影校正" }),
             N("核大小", "SmoothSize", "奇数，越大处理得越狠也越糊")),
-        O("ToGray", "转成黑白图", "🌑", "Color", "彩色图转成灰度图。大部分算法只看明暗，不看颜色。",
+        O("ToGray", "转成黑白图", "🌑", "Color", "彩色图转成黑白图。大部分算法只看明暗，不看颜色。",
             C("取哪个通道", "PreprocessType", "只保留某一种颜色时选", new[] { "整图转灰", "只要红", "只要绿", "只要蓝" })),
-        O("ColorSpace", "换颜色格式", "🎨", "Color", "在 RGB / HSV / 灰度之间转换，按颜色找东西时先做这步。",
+        O("ColorSpace", "换颜色格式", "🎨", "Color", "在彩色 / HSV / 黑白之间转换，要按颜色找东西时先做这一步。",
             C("转成", "MatchMode", "", new[] { "HSV", "HLS", "灰度", "RGB", "BGR" })),
         O("SplitChannel", "拆通道", "🧵", "Color", "把彩色图拆成单通道图，挑最清楚的那一路去处理。",
             C("取哪一路", "ColorChannel", "", new[] { "R", "G", "B", "H", "S", "V" })),
-        O("ImageMath", "两图运算", "➕", "Color", "两张图做加减或逻辑运算，常用于背景差分。",
+        O("ImageMath", "两图运算", "➕", "Color", "两张图相减或相加，常用来去掉固定不变的背景。",
             C("怎么算", "Operator", "", new[] { "相加", "相减", "取绝对差", "求与", "求或", "求异或", "取较亮", "取较暗" }),
             T("另一张图", "ImageSource", "留空则用上一次缓存的图")),
         O("RotateImage", "把图转正", "🔄", "Color", "按角度旋转或左右上下翻转图像。",
@@ -395,7 +395,7 @@ public static class OperatorCatalog
             T("数组名", "LoopVar", ""),
             N("取第几个", "IndexProbe", "-1 表示统计整体"),
             C("怎么统计", "MeasureType", "", new[] { "取第几个", "求和", "求平均", "最大", "最小", "个数" })),
-        O("PointSet", "点集", "🎇", "Logic", "把若干个点收集起来，供拟合或补偿使用。",
+        O("PointSet", "点集", "🎇", "Logic", "把若干个点收集起来，给后面贴合形状、算偏移用。",
             T("点集名", "LoopVar", ""),
             C("收集哪一步的点", "CompareSource", ByStep(""), SRC)),
         O("JudgeValue", "判个数对不对", "⚖", "Logic", "拿一个数值和上下限比，判合格不合格。",
@@ -537,14 +537,14 @@ public static class OperatorCatalog
             T("软元件地址", "IoChannel", "例如 DM100"),
             N("值", "TargetX", "")),
         // ===== 以下来自开源项目 OpenCVVision（Apache-2.0）的工具移植 =====
-        O("MorphOp", "形态学处理", "⬛", "OpenCVVision", "把黑白图上的块放大缩小、补洞、去毛刺（腐蚀/膨胀/开/闭/顶帽等）。",
+        O("MorphOp", "形态学处理", "⬛", "OpenCVVision", "把黑白图上的块放大、缩小、补洞、去毛刺（收一点 / 胖一点 / 开运算 / 闭运算）。",
             C("做什么", "Mode", "", new[] { "腐蚀(缩小)", "膨胀(放大)", "开(去小毛刺)", "闭(补小洞)", "梯度(留边缘)", "顶帽(亮小点)", "黑帽(暗小点)", "击不中" }),
             C("核形状", "MatchMode", "", new[] { "矩形", "十字", "椭圆" }),
             N("核宽", "SizeX", ""), N("核高", "SizeY", "")),
 
         O("BilateralOp", "保边去噪", "🌫", "OpenCVVision", "只抹平小噪点、不糊掉边缘，金属和塑料件特别好用。",
             N("邻域大小", "SizeX", ""), N("颜色差阈值", "Number1", "差值小于这个才互相平均"),
-            N("距离差阈值", "Number2", "")),
+            N("差多少就报", "Number2", "")),
 
         O("EmphasizeOp", "加强边缘", "✨", "OpenCVVision", "把和周围平均亮度差别大的地方拉得更明显，让浅淡的边看得清。",
             N("核宽", "SizeX", ""), N("核高", "SizeY", ""),
@@ -566,10 +566,10 @@ public static class OperatorCatalog
         O("HoughCirclesOp", "找一堆圆", "⭕", "OpenCVVision", "一次找出画面里所有大小相近的圆（孔、珠子、瓶盖）。",
             N("最小半径", "Number1", ""), N("最大半径", "Number2", ""),
             N("圆心最小间隔", "Number3", "防止同一个圆重复报"),
-            N("灵敏度", "Number4", "累加阈值，越小找到的圆越多也越容易误报")),
+            N("灵敏度", "Number4", "这个值调小会找到更多圆，也更容易误报")),
 
-        O("ContourShapeOp", "配外形框", "🔷", "OpenCVVision", "给找到的轮廓套一个外接框/最小矩形/凸包/最小圆/椭圆，输出尺寸角度。",
-            C("找轮廓方式", "MatchMode", "", new[] { "只找最外圈", "找全部", "找内孔", "同层平铺" }),
+        O("ContourShapeOp", "配外形框", "🔷", "OpenCVVision", "给找到的东西套一个外框（正框 / 最小外框 / 最小圆 / 椭圆），输出尺寸和角度。",
+            C("怎么找轮廓", "MatchMode", "", new[] { "只找最外圈", "找全部", "找内孔", "同层平铺" }),
             C("套什么外形", "Mode", "", new[] { "外接矩形", "最小矩形", "凸包", "最小圆", "最小三角", "椭圆" }),
             N("最小面积", "AreaMin", "")),
 

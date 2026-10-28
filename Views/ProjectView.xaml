@@ -583,7 +583,7 @@
 
                         <StackPanel>
 
-                            <TextBlock Style="{StaticResource AppleSectionHeader}" Text="采集与触发 / 外发" />
+                            <TextBlock Style="{StaticResource AppleSectionHeader}" Text="拍照与触发 / 往外发" />
 
                             <Grid Style="{StaticResource CompactRow}">
 
@@ -623,7 +623,7 @@
 
                                 </Grid.ColumnDefinitions>
 
-                                <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="触发方式" />
+                                <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="什么时候拍" />
 
                                 <ComboBox Grid.Column="1" Style="{StaticResource CompactCombo}"
 
@@ -1027,7 +1027,7 @@
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
                             <DataGridTextColumn Header="相机" Binding="{Binding CameraName}" Width="100" />
-                            <DataGridTextColumn Header="触发" Binding="{Binding TriggerType}" Width="80" />
+                            <DataGridTextColumn Header="拍照" Binding="{Binding TriggerType}" Width="80" />
                             <DataGridTextColumn Header="采集源" Binding="{Binding ImageSourceType}" Width="100" />
                             <DataGridTextColumn Header="外发" Binding="{Binding ExternalChannel}" Width="90" />
                         </DataGrid.Columns>
