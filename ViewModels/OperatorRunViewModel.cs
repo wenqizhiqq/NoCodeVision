@@ -200,10 +200,9 @@ public class OperatorRunViewModel : OperatorViewModel
     private int _chRot;
 
     /// <summary>当前已订阅步骤变化事件的流程（切换流程时退订旧流程）。</summary>
-    private VisionFlow? _subscribedFlow;
+    private readonly System.Collections.Generic.List<VisionFlow> _watchedFlows = new();
 
     /// <summary>会产生图像的视觉步骤类型：图像采集 / 模板匹配 / 几何测量 / 缺陷检测。</summary>
-    private static readonly HashSet<string> _visualStepTypes = new() { "ImageCapture", "TemplateMatch", "Measure", "Defect" };
 
     #endregion
 
@@ -267,6 +266,27 @@ public class OperatorRunViewModel : OperatorViewModel
     /// <summary>卡片上除图像外的固定高度：标题行 + 三列指标 + 内外边距。</summary>
     private const double CardChrome = 96;
 
+    /// <summary>卡片左右占掉的总宽度：卡片外边距 + 图像区左右边距。</summary>
+    private const double CardHMargin = 26;
+
+    /// <summary>卡片宽度（图像 = 宽度 × 0.8333 高）；由监控区尺寸算出来，NaN = 跟随格子拉伸。</summary>
+    public double CardWidth { get => _cardWidth; private set => SetField(ref _cardWidth, value); }
+    private double _cardWidth = double.NaN;
+
+    /// <summary>按行列算出每格能放多大的画面，并定下卡片宽度。</summary>
+    private void ComputeLayout(int rows, int cols)
+    {
+        LayoutRows = rows;
+        LayoutCols = cols;
+        if (_viewWidth <= 0 || _viewHeight <= 0) { CardWidth = double.NaN; return; }
+        double cellW = _viewWidth / cols;
+        double cellH = _viewHeight / rows;
+        double byWidth = cellW - CardHMargin;
+        double byHeight = (cellH - CardChrome) * CardAspect;
+        // 卡片宽度 = 图像宽度 + 图像区左右边距（卡片自身的 7+7 外边距靠居中来留）
+        CardWidth = System.Math.Max(90, System.Math.Min(byWidth, byHeight) + 12);
+    }
+
     /// <summary>监控区实际可用尺寸（视图 SizeChanged 时回填），用来算每行每列能放多大。</summary>
     private double _viewWidth, _viewHeight;
 
@@ -310,11 +330,8 @@ public class OperatorRunViewModel : OperatorViewModel
         // 切换流程或增删步骤时操作员页自动同步（需求：流程有变化，图像就要变化）
         if (FlowViewModel.Instance != null)
         {
-            FlowViewModel.Instance.PropertyChanged += (_, e) =>
-            {
-                if (e.PropertyName is null or nameof(FlowViewModel.SelectedFlow))
-                    RebuildChannelsFromFlow();
-            };
+            // 流程数量变了就重新出画面：有几个流程就有几路图
+            FlowViewModel.Instance.Flows.CollectionChanged += (_, _) => RebuildChannelsFromFlow();
             RebuildChannelsFromFlow();
         }
         else if (CameraViewModel.Instance != null)
@@ -350,26 +367,21 @@ public class OperatorRunViewModel : OperatorViewModel
 
     }
 
-    /// <summary>根据所选流程的视觉步骤重建监控通道：每个视觉步骤（采集/匹配/测量/缺陷）对应一路图像。</summary>
+    /// <summary>有几个流程就出几路画面：每一路显示那个流程最近一次的结果图。</summary>
     private void RebuildChannelsFromFlow()
     {
-        // 退订上一个流程的步骤变化事件，避免重复触发
-        if (_subscribedFlow != null)
-            _subscribedFlow.Steps.CollectionChanged -= OnFlowStepsChanged;
-        var flow = FlowViewModel.Instance?.SelectedFlow;
-        _subscribedFlow = flow;
-        if (flow != null)
-            flow.Steps.CollectionChanged += OnFlowStepsChanged;
+        foreach (var f in _watchedFlows) f.PropertyChanged -= OnFlowRenamed;
+        _watchedFlows.Clear();
 
         Channels.Clear();
-        if (flow != null)
+        var fvm = FlowViewModel.Instance;
+        if (fvm != null)
         {
-            foreach (var step in flow.Steps)
+            foreach (var f in fvm.Flows)
             {
-                if (!_visualStepTypes.Contains(step.StepType)) continue;
-                // CameraId 用步骤的图像来源（模板文件/源图）或步骤名，便于后续绑定真实相机
-                var src = string.IsNullOrWhiteSpace(step.ImageSource) ? step.Name : step.ImageSource;
-                Channels.Add(new VisionChannel(step.Name, src));
+                f.PropertyChanged += OnFlowRenamed;
+                _watchedFlows.Add(f);
+                Channels.Add(new VisionChannel(f.Name, FlowKindText(f)));
             }
         }
 
@@ -380,8 +392,24 @@ public class OperatorRunViewModel : OperatorViewModel
         OnPropertyChanged(nameof(ImageCount));
     }
 
-    private void OnFlowStepsChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        => RebuildChannelsFromFlow();
+    /// <summary>流程改名时只改画面标题，不重建整张表（重建会丢掉已显示的图）。</summary>
+    private void OnFlowRenamed(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(VisionFlow.Name)) return;
+        var fvm = FlowViewModel.Instance;
+        if (fvm == null) return;
+        for (int i = 0; i < fvm.Flows.Count && i < Channels.Count; i++)
+        {
+            if (Channels[i].Name != fvm.Flows[i].Name) Channels[i].Name = fvm.Flows[i].Name;
+        }
+    }
+
+    private static string FlowKindText(VisionFlow f) => f.FlowKind switch
+    {
+        "Script" => "脚本流程",
+        "NodeGraph" => "节点图",
+        _ => "逻辑视觉"
+    };
 
     /// <summary>让所有通道进入运行态（仅更新状态，图像由流程引擎推送，不单独创建硬件相机）。</summary>
     private void EnsureChannelsRunning()
@@ -395,56 +423,43 @@ public class OperatorRunViewModel : OperatorViewModel
         }
     }
 
-    /// <summary>自适应布局：在可用区域内挑「画面能画得最大、又装得下」的行列数。</summary>
+    /// <summary>自适应布局：每一种行列都算一遍，挑「画面画得最大」的那种。</summary>
     private void AutoFitLayout()
     {
         int n = Channels.Count;
-        if (n <= 0) { LayoutRows = 1; LayoutCols = 1; return; }
+        if (n <= 0) { ComputeLayout(1, 1); return; }
 
         // 还不知道面板多大时，先按接近正方形排
         if (_viewWidth <= 0 || _viewHeight <= 0)
         {
             int c0 = (int)System.Math.Ceiling(System.Math.Sqrt(n));
-            LayoutCols = c0;
-            LayoutRows = (n + c0 - 1) / c0;
+            ComputeLayout((n + c0 - 1) / c0, c0);
             return;
         }
 
         int bestRows = 1, bestCols = n;
-        double bestCardW = 0;          // 装得下的方案里，挑画面最宽的
-        double leastOverflow = double.MaxValue; // 一个都装不下时，挑超出最少的
+        double bestImage = 0;
         for (int r = 1; r <= n; r++)
         {
             int c = (n + r - 1) / r;
-            double cardW = _viewWidth / c - 16;            // 扣掉卡片左右外边距
-            if (cardW <= 0) continue;
-            double cardH = cardW / CardAspect + CardChrome; // 图像按 1.2:1 + 标题/指标
-            double needH = cardH * r;
-            if (needH <= _viewHeight)
-            {
-                if (cardW > bestCardW) { bestCardW = cardW; bestRows = r; bestCols = c; }
-            }
-            else if (bestCardW <= 0 && needH < leastOverflow)
-            {
-                leastOverflow = needH;
-                bestRows = r;
-                bestCols = c;
-            }
+            double cellW = _viewWidth / c;
+            double cellH = _viewHeight / r;
+            double imageW = System.Math.Min(cellW - CardHMargin, (cellH - CardChrome) * CardAspect);
+            if (imageW <= 0) continue;
+            if (imageW > bestImage) { bestImage = imageW; bestRows = r; bestCols = c; }
         }
 
-        LayoutRows = bestRows;
-        LayoutCols = bestCols;
+        ComputeLayout(bestRows, bestCols);
     }
 
     /// <summary>手动布局：以用户选定的基准行列为准，但保证能容纳所有相机（不足则自动加行）。</summary>
     private void ApplyManualLayout()
     {
         int n = Channels.Count;
-        if (n <= 0) { LayoutRows = _manualRows; LayoutCols = _manualCols; return; }
+        if (n <= 0) { ComputeLayout(_manualRows, _manualCols); return; }
         int rows = _manualRows;
         while (rows * _manualCols < n) rows++;
-        LayoutRows = rows;
-        LayoutCols = _manualCols;
+        ComputeLayout(rows, _manualCols);
     }
 
     /// <summary>实时数据改由流程引擎 ProductInspected 事件驱动（真实匹配分数/缺陷/图像），此处不再轮询模拟。</summary>
@@ -632,13 +647,17 @@ public class OperatorRunViewModel : OperatorViewModel
         LastResult = e.IsOk ? "OK" : "NG";
         if (Channels.Count > 0)
         {
-            var ch = Channels[_chRot % Channels.Count];
+            // 按流程名投到对应画面；取不到名字时轮流转发
+            var ch = string.IsNullOrEmpty(e.FlowName)
+                ? null
+                : System.Linq.Enumerable.FirstOrDefault(Channels, c => c.Name == e.FlowName);
+            ch ??= Channels[_chRot % Channels.Count];
+            _chRot++;
             ch.LastImage = e.Image;
             ch.MatchScore = e.Score;
             ch.DefectCount = e.DefectCount;
             ch.Status = e.IsOk ? "通过" : "失败";
             ch.FrameCount++;
-            _chRot++;
         }
     }
 

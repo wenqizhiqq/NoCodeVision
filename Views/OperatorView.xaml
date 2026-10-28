@@ -81,7 +81,8 @@
         </Style>
         <!-- ===== 监控卡片模板（网格与重点模式共用） ===== -->
         <DataTemplate x:Key="MonitorCardTemplate">
-            <Border Style="{StaticResource MonitorCard}" VerticalAlignment="Top">
+            <Border Style="{StaticResource MonitorCard}" VerticalAlignment="Top" HorizontalAlignment="Center"
+                    Width="{Binding DataContext.CardWidth, RelativeSource={RelativeSource AncestorType=ItemsControl}}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
