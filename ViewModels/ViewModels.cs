@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using System.Collections.Generic;
 
@@ -1199,7 +1199,17 @@ public sealed class ToolGroup
 {
     public string Name { get; init; } = "";
 
-    public System.Collections.Generic.List<string> Tools { get; init; } = new();
+    public System.Collections.Generic.List<ToolItem> Tools { get; init; } = new();
+}
+
+/// <summary>「➕ 添加」菜单的二级项：算子名 + 一句人话说明（菜单里直接显示，不用点进去猜）。</summary>
+public sealed class ToolItem
+{
+    public string Name { get; init; } = "";
+
+    public string Desc { get; init; } = "";
+
+    public string Icon { get; init; } = "";
 }
 
 public class VisionFlow : ViewModelBase
@@ -4084,7 +4094,7 @@ public class FlowViewModel : ViewModelBase
         _selectedFlow.Steps.Add(step);
         Reindex(_selectedFlow);
         SelectedStep = step;
-        IsAddMenuOpen = false;
+        // 菜单不自己收起：连着加好几个算子不用重开，点菜单外面才关
     }
 
 
@@ -4841,7 +4851,7 @@ public class FlowViewModel : ViewModelBase
     /// <summary>「➕ 添加」按钮上的两级菜单：一级 = 分类，二级 = 算子，点算子直接加进步骤。</summary>
     public System.Collections.Generic.List<ToolGroup> ToolGroups { get; } = new();
 
-    /// <summary>添加菜单开没开（加完一步自己收起来）。</summary>
+    /// <summary>添加菜单开没开（加完一步不收起，点菜单外面才关）。</summary>
     public bool IsAddMenuOpen { get => _isAddMenuOpen; set => SetField(ref _isAddMenuOpen, value); }
 
     private bool _isAddMenuOpen;
@@ -4886,6 +4896,70 @@ public class FlowViewModel : ViewModelBase
     }
 
     /// <summary>工具名 → (图标, StepType) 统一映射。</summary>
+    /// <summary>菜单里每个算子下面那句说明：目录里的用目录说明，老算子在这张表里补。</summary>
+
+    internal static string ToolDesc(string tool)
+
+    {
+
+        var meta = OperatorCatalog.All.FirstOrDefault(o => o.Name == tool);
+
+        if (meta != null) return meta.Desc;
+
+        return ToolToIconType(tool).Type switch
+
+        {
+
+            "ImageCapture" => "从文件 / 文件夹 / 相机拿一张图，给后面步骤用",
+
+            "TemplateMatch" => "在图上找模板图案在哪、转了多少度",
+
+            "Measure" => "量圆径 / 边距 / 角度并判合格",
+
+            "Logic" => "用条件决定合格还是不合格",
+
+            "Output" => "把结果写到 PLC 或变量",
+
+            "Defect" => "和标准图比，找出划伤、脏污、缺料",
+
+            "Lua" => "用脚本做灵活的逻辑",
+
+            "AxisMove" => "让指定的轴走到目标位置",
+
+            "IOControl" => "打开 / 关闭一个开关量输出",
+
+            "Cylinder" => "让气缸伸出或缩回",
+
+            "Wait" => "等一段时间或等条件满足再往下走",
+
+            "Comm" => "通过串口 / 网口发一条指令",
+
+            "Color" => "统计 / 判定某区域的颜色",
+
+            "Count" => "数出图里有多少个目标",
+
+            "Code" => "读出二维码 / 条码里的文字",
+
+            "Ocr" => "把图里的文字读成字符串",
+
+            "Branch" => "按真假走不同的后续步骤",
+
+            "Loop" => "重复执行一段步骤",
+
+            "SubFlow" => "调用另一个已建好的流程",
+
+            "Calc" => "用公式算出一个新值",
+
+            "Save" => "把结果存成文件",
+
+            "Notify" => "给操作员弹一个提醒",
+
+            _ => ""
+
+        };
+
+    }
+
     internal static (string Icon, string Type) ToolToIconType(string tool)
 
     {
@@ -5052,7 +5126,13 @@ public class FlowViewModel : ViewModelBase
                 _ => new[] { "拍张照片", "图里找图案", "挑瑕疵", "量尺寸" },
             };
             if (tools.Length == 0) continue;
-            ToolGroups.Add(new ToolGroup { Name = cat, Tools = tools.OrderBy(t => t).ToList() });
+            ToolGroups.Add(new ToolGroup
+            {
+                Name = cat,
+                Tools = tools.OrderBy(t => t)
+                             .Select(t => new ToolItem { Name = t, Icon = ToolToIconType(t).Icon, Desc = ToolDesc(t) })
+                             .ToList()
+            });
         }
         if (!ToolOptions.Contains(SelectedTool))
             SelectedTool = ToolOptions.FirstOrDefault() ?? "";
@@ -5587,7 +5667,7 @@ public class FlowViewModel : ViewModelBase
 
 
 
-        AddStepWithCmd = new RelayCommand(p => AddStepOf(p as string), _ => _selectedFlow != null);
+        AddStepWithCmd = new RelayCommand(p => AddStepOf(p is ToolItem ti ? ti.Name : p as string), _ => _selectedFlow != null);
 
 
 
