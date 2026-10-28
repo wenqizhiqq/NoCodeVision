@@ -3499,6 +3499,54 @@ public class FlowViewModel : ViewModelBase
         catch { return true; }   // 弹窗本身出问题时按默认值继续，别让「添加」点了没反应
     }
 
+    // ---------- 脚本每行耗时（编辑器右侧那列毫秒数） ----------
+
+    /// <summary>行号 → 这一行累计跑了多少毫秒。</summary>
+    public System.Collections.Generic.Dictionary<int, double> LineMs { get; } = new();
+
+    /// <summary>行号 → 这一行被跑到过几次（循环里会 >1）。</summary>
+    public System.Collections.Generic.Dictionary<int, int> LineHits { get; } = new();
+
+    int _acctLine = -1;
+
+    double _acctMs;
+
+    /// <summary>开跑：把上一轮的每行耗时清掉。</summary>
+    void ResetLineMs()
+    {
+        LineMs.Clear(); LineHits.Clear(); _acctLine = -1; _acctMs = 0;
+        OnPropertyChanged(nameof(LineCosts));
+    }
+
+    /// <summary>宿主每执行一行都回报总耗时，两次之差就是上一行的开销。</summary>
+    void AccountLineMs(double nowMs)
+    {
+        if (_acctLine > 0 && nowMs >= _acctMs)
+        {
+            LineMs[_acctLine] = (LineMs.TryGetValue(_acctLine, out var old) ? old : 0) + (nowMs - _acctMs);
+            LineHits[_acctLine] = (LineHits.TryGetValue(_acctLine, out var n) ? n : 0) + 1;
+        }
+        _acctLine = CurrentLine; _acctMs = nowMs;
+        OnPropertyChanged(nameof(LineCosts));
+    }
+
+    /// <summary>跑完收尾：最后一行不会再触发换行事件，用宿主的真实累计时间补记一次。</summary>
+    void FlushLineMs(double endMs)
+    {
+        if (_acctLine <= 0) return;
+        double end = endMs > 0 ? endMs : ScriptElapsedMs;
+        if (end >= _acctMs)
+        {
+            LineMs[_acctLine] = (LineMs.TryGetValue(_acctLine, out var old) ? old : 0) + (end - _acctMs);
+            LineHits[_acctLine] = (LineHits.TryGetValue(_acctLine, out var n) ? n : 0) + 1;
+        }
+        _acctLine = -1;
+        OnPropertyChanged(nameof(LineCosts));
+    }
+
+    /// <summary>只是个通知用的假属性：耗时表变了就 raise 它，视图收到后重画。</summary>
+    public string LineCosts => "";
+
     /// <summary>只改名：同一个对话框，不给例子清单。</summary>
     bool PromptRename(string defaultName, out string name)
     {
@@ -5460,9 +5508,15 @@ public class FlowViewModel : ViewModelBase
 
                 onCurrentLine: ln => CurrentLine = ln,
 
-                onElapsed: ms => ScriptElapsedMs = ms,
+                onElapsed: ms => { ScriptElapsedMs = ms; AccountLineMs(ms); },
 
-                onRunState: (running, paused) => { ScriptIsRunning = running; ScriptIsPaused = paused; CommandManager.InvalidateRequerySuggested(); });
+                onRunState: (running, paused) =>
+                {
+                    ScriptIsRunning = running; ScriptIsPaused = paused;
+                    if (running && !paused) ResetLineMs();
+                    if (!running && !paused) FlushLineMs(_luaHost.ElapsedMs);
+                    CommandManager.InvalidateRequerySuggested();
+                });
 
             SelectedFlow = Flows.FirstOrDefault();
 

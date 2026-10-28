@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -36,6 +37,7 @@ public partial class ScriptFlowView : UserControl
         _bpMargin = new BreakpointMargin(this);
         Editor.TextArea.LeftMargins.Insert(0, _bpMargin);
         Editor.TextArea.TextView.BackgroundRenderers.Add(new CurrentLineBackgroundRenderer(this));
+        Editor.TextArea.TextView.BackgroundRenderers.Add(new LineCostBackgroundRenderer(this));
         Editor.SyntaxHighlighting = LoadLuaHighlighting();
 
         Editor.TextChanged += (_, _) =>
@@ -71,7 +73,7 @@ public partial class ScriptFlowView : UserControl
         {
             Editor.Text = _vm?.SelectedFlow?.ScriptContent ?? "";
         }
-        else if (e.PropertyName == "Breakpoints" || e.PropertyName == "CurrentLine")
+        else if (e.PropertyName == "Breakpoints" || e.PropertyName == "CurrentLine" || e.PropertyName == "LineCosts")
         {
             Editor.TextArea.TextView.InvalidateLayer(KnownLayer.Background);
             _bpMargin.InvalidateVisual();
@@ -276,6 +278,46 @@ public partial class ScriptFlowView : UserControl
             double y = textView.GetVisualTopByDocumentLine(vm.CurrentLine);
             var brush = new SolidColorBrush(Color.FromArgb(46, 37, 99, 235));
             drawingContext.DrawRectangle(brush, null, new Rect(0, y, textView.ActualWidth, textView.DefaultLineHeight));
+        }
+    }
+
+    // ---------- 每行最右侧的耗时毫秒 ----------
+    private sealed class LineCostBackgroundRenderer : IBackgroundRenderer
+    {
+        private readonly ScriptFlowView _owner;
+        public LineCostBackgroundRenderer(ScriptFlowView owner) { _owner = owner; }
+        public KnownLayer Layer => KnownLayer.Background;
+
+        public void Draw(TextView textView, DrawingContext drawingContext)
+        {
+            var vm = _owner._vm;
+            if (vm == null || textView.Document == null || vm.LineMs.Count == 0) return;
+
+            // 字号取编辑器本身的（TextView 不直接暴露字体）
+            double fs = _owner.Editor != null ? _owner.Editor.FontSize : 13;
+            var ff = _owner.Editor != null ? _owner.Editor.FontFamily : new FontFamily("Consolas");
+            var typeface = new Typeface(ff, FontStyles.Italic, FontWeights.Normal, FontStretches.Normal);
+            var fg = new SolidColorBrush(Color.FromRgb(122, 122, 128));
+            var bg = new SolidColorBrush(Color.FromArgb(226, 245, 245, 247));
+            double lineH = textView.DefaultLineHeight;
+            double dpi = VisualTreeHelper.GetDpi(textView).PixelsPerDip;
+            double right = textView.ActualWidth - 8;
+
+            foreach (var kv in vm.LineMs)
+            {
+                int lineNo = kv.Key;
+                if (lineNo < 1 || lineNo > textView.Document.LineCount) continue;
+                double y = textView.GetVisualTopByDocumentLine(lineNo);
+                if (y < -lineH || y > textView.ActualHeight) continue;   // 只画看得见的行
+
+                int hits = vm.LineHits.TryGetValue(lineNo, out var n) ? n : 1;
+                var txt = kv.Value.ToString("F1") + "ms" + (hits > 1 ? " ×" + hits : "");
+                var ft = new FormattedText(txt, CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
+                    typeface, Math.Max(10, fs - 1), fg, dpi);
+                double x = right - ft.Width;
+                drawingContext.DrawRoundedRectangle(bg, null, new Rect(x - 5, y + 1, ft.Width + 10, lineH - 2), 4, 4);
+                drawingContext.DrawText(ft, new Point(x, y + (lineH - ft.Height) / 2));
+            }
         }
     }
 

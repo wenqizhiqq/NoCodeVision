@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -34,6 +34,9 @@ public sealed class LuaDebugHost : IDisposable
     private readonly Action<IList<string>> _onCallStack;
     private readonly Action<int> _onCurrentLine;
     private readonly Action<double> _onElapsed;
+
+    /// <summary>本次运行到现在的累计毫秒（没在跑就是上轮停表时的值）；界面收尾记账要用。</summary>
+    public double ElapsedMs => _sw?.Elapsed.TotalMilliseconds ?? 0;
     private readonly Action<bool, bool> _onRunState; // running, paused
     private readonly Stopwatch _sw = new();
 

@@ -143,6 +143,10 @@
     </UserControl.Resources>
 
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="300" />
             <ColumnDefinition Width="*" />
@@ -2239,9 +2243,19 @@
 
             </StackPanel>
         </ScrollViewer>
-        <!-- 底部一行运行状态：始终可见，不跟着上面滚动 -->
+        <!-- 底部一行运行状态：始终可见，不跟着上面滚动；脚本页有自己的输出/诊断，这里就不占地方了 -->
         <Border Grid.Row="1" Margin="0,6,0,4" Padding="12,6" CornerRadius="8"
                 Background="{StaticResource CanvasBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding SelectedFlow.FlowKind}" Value="Script">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
             <TextBlock FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis">
                 <TextBlock.Text>
                     <MultiBinding StringFormat="{}{0} ｜ {1}：{2} ｜ 当前值 {3} ｜ {4:F1} ms">
