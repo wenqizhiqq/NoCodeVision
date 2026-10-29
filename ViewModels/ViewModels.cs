@@ -3690,6 +3690,20 @@ public class FlowViewModel : ViewModelBase
             };
             return;
         }
+        if (key == "scratch")
+        {
+            // 找划痕：拍张照片 → 找划痕（免训练）→ 判个数 → 显示结果
+            var sdir = Helpers.AppPaths.ToStoredPath(Helpers.AppPaths.ResolvePath(@"Projects\上相机划痕\图"));
+            flow.Steps = new ObservableCollection<VisionFlowStep>
+            {
+                MkStep(1, "拍张照片", "读上相机图", s => { s.CaptureMode = "打开文件夹"; s.FolderPath = sdir; }),
+                MkStep(2, "找划痕", "找划痕", s => { s.Number1 = 80; s.Number2 = 300; s.AreaMax = 44; s.IndexProbe = 0; }),
+                MkStep(3, "判个数对不对", "划痕判定", s => { s.CompareSource = "第2步"; s.AreaMin = 0; s.AreaMax = 0; }),
+                MkStep(4, "显示结果", "画到图上", s => { s.CompareSource = "第2步"; s.MeasureType = "框"; }),
+            };
+            return;
+        }
+
         if (key != "bottle" && key != "zeroshot") return;
         var dir = Helpers.AppPaths.ResolvePath(@"Projects\瓶底线圈角度");
         var zsDir = System.IO.Path.Combine(dir, "零样本测试");
@@ -5635,7 +5649,8 @@ public class FlowViewModel : ViewModelBase
                 ("bottle", "示例：瓶底线圈角度", "拍张照片 → 找圆定中心 → 去掉红圈 → 数块找线圈 → 求角度 → 写 Modbus → 判定 → 显示结果（8 步，图在「瓶底线圈角度」工程里）"),
                 ("zeroshot", "示例：零样本查瑕疵", "拍张照片 → 零样本查瑕疵（和标准图比差异，不用训练）→ 判个数 → 显示结果（4 步）"),
                 ("qr", "示例：二维码定位发送", "拍张照片 → 图里找图案定位码 → 读二维码（点阵码增强）→ TCP 发送 → 显示结果（5 步）"),
-                ("barcode", "示例：条码定位发送", "拍张照片 → 图里找图案定位条码 → 读条码 → TCP 发送 → 显示结果（5 步）")), out var key, out var name)) return;
+                ("barcode", "示例：条码定位发送", "拍张照片 → 图里找图案定位条码 → 读条码 → TCP 发送 → 显示结果（5 步）"),
+                ("scratch", "示例：找划痕（免训练）", "拍张照片 → 找划痕（不用标准图、不用训练）→ 判个数 → 显示结果（4 步，图在「上相机划痕」工程里）")), out var key, out var name)) return;
             var flow = new VisionFlow { Name = name, Icon = "🔀" };
             ApplyFlowTemplate(flow, key);
             Flows.Add(flow);
@@ -8525,6 +8540,84 @@ public class FlowViewModel : ViewModelBase
 
 
             // ---------- 拟合 / 形状筛选 ----------
+
+            case "FindScratch":
+
+            {
+
+                var scCur = _sharedImage;
+
+                if (scCur == null || scCur.Empty()) return Fail("没有当前图");
+
+                var scParam = new Vision.ScratchParam
+
+                {
+
+                    Sensitivity = step.Number1 <= 0 ? 80 : step.Number1,
+
+                    MinLength = step.Number2 <= 0 ? 300 : step.Number2,
+
+                    MaxWidth = step.AreaMax <= 0 ? 44 : step.AreaMax,
+
+                    Roi = step.RoiW > 2 && step.RoiH > 2
+
+                        ? new OpenCvSharp.Rect((int)step.RoiX, (int)step.RoiY, (int)step.RoiW, (int)step.RoiH)
+
+                        : (OpenCvSharp.Rect?)null
+
+                };
+
+                var (scLines, scResp, scNote) = Vision.ScratchFinder.Find(scCur, scParam);
+
+                scResp.Dispose();
+
+                int scAllow = (int)Math.Max(0, step.IndexProbe);
+
+                bool scOk = scLines.Count <= scAllow;
+
+                if (scLines.Count > 0)
+
+                {
+
+                    var l0 = scLines[0];
+
+                    Done($"划痕 {scLines.Count} 处，最长 {l0.Length:F0} 像素 @({l0.X + l0.W / 2:F0},{l0.Y + l0.H / 2:F0})", scNote);
+
+                    GeoPut(step, new GeoResult
+
+                    {
+
+                        Value = scLines.Count, HasPoint = true, Px = l0.X + l0.W / 2, Py = l0.Y + l0.H / 2,
+
+                        HasBox = true, Bx = l0.X, By = l0.Y, Bw = l0.W, Bh = l0.H
+
+                    });
+
+                }
+
+                else
+
+                {
+
+                    Done("没找到划痕", scNote);
+
+                    GeoPut(step, new GeoResult { Value = 0 });
+
+                }
+
+                if (!scOk) _curProductOk = false;
+
+                step.StatusText = scOk ? "合格" : $"不合格（{scLines.Count} 处划痕）";
+
+                using (var scDraw = Vision.ScratchFinder.Draw(scCur, scLines))
+
+                    ResultImage = MatToBitmapSource(scDraw);
+
+                break;
+
+            }
+
+
 
             case "ZeroShotAnomaly":
 
