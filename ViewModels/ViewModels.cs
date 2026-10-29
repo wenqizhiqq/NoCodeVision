@@ -3695,6 +3695,67 @@ public class FlowViewModel : ViewModelBase
             };
             return;
         }
+        if (key == "pcba")
+        {
+            // PCBA 元件有无：拍张照片 → 零样本查瑕疵（和好板比）→ 判个数 → 显示结果
+            var pdir = Helpers.AppPaths.ToStoredPath(Helpers.AppPaths.ResolvePath(@"Projects\PCBA元件有无\图"));
+            var pgold = Helpers.AppPaths.ToStoredPath(Helpers.AppPaths.ResolvePath(@"Projects\PCBA元件有无\图\标准图.png"));
+            flow.Steps = new ObservableCollection<VisionFlowStep>
+            {
+                MkStep(1, "拍张照片", "读 PCBA", s => { s.CaptureMode = "打开文件夹"; s.FolderPath = pdir; }),
+                MkStep(2, "零样本查瑕疵", "和好板比", s =>
+                {
+                    s.TemplateFile = pgold; s.MatchMode = "平移+旋转";
+                    s.Number1 = 55; s.AreaMin = 25; s.IndexProbe = 0;
+                    s.RoiX = 0; s.RoiY = 0; s.RoiW = 0; s.RoiH = 0;
+                }),
+                MkStep(3, "判个数对不对", "漏件/多件判定", s => { s.CompareSource = "第2步"; s.AreaMin = 0; s.AreaMax = 0; }),
+                MkStep(4, "显示结果", "画到图上", s => { s.CompareSource = "第2步"; s.MeasureType = "圆和点"; }),
+            };
+            return;
+        }
+
+        if (key == "metrology")
+        {
+            var mdir = Helpers.AppPaths.ToStoredPath(Helpers.AppPaths.ResolvePath(@"Projects\精找圆找直线\图"));
+            flow.Steps = new ObservableCollection<VisionFlowStep>
+            {
+                MkStep(1, "拍张照片", "读工件图", s => { s.CaptureMode = "打开文件夹"; s.FolderPath = mdir; }),
+                MkStep(2, "精找圆", "找圆", s =>
+                {
+                    s.RoiX = 180; s.RoiY = 130; s.RoiW = 520; s.RoiH = 520;
+                    s.ExpectRadius = 180; s.SamplingStep = 72; s.CaliperLength = 80;
+                    s.EdgePolarity = "两种都要"; s.EdgeConfidence = 30;
+                }),
+                MkStep(3, "精找直线", "找直边", s =>
+                {
+                    s.RoiX = 497; s.RoiY = 240; s.RoiW = 46; s.RoiH = 280;
+                    s.SamplingStep = 40; s.CaliperLength = 30;
+                    s.EdgePolarity = "两种都要"; s.EdgeConfidence = 30;
+                }),
+                MkStep(4, "显示结果", "画到图上", s => { s.CompareSource = "第2步"; s.CompareVar = "第3步"; s.MeasureType = "圆和点"; }),
+            };
+            return;
+        }
+
+        if (key == "edge")
+        {
+            // 真图找边：暗场里一条很淡的亮带（截图抠图去掉标注后得到），灰尘多、边很软
+            var edir = Helpers.AppPaths.ToStoredPath(Helpers.AppPaths.ResolvePath(@"Projects\真图找边\测试组"));
+            flow.Steps = new ObservableCollection<VisionFlowStep>
+            {
+                MkStep(1, "拍张照片", "读难例图", s => { s.CaptureMode = "打开文件夹"; s.FolderPath = edir; }),
+                MkStep(2, "精找直线", "找淡边", s =>
+                {
+                    s.RoiX = 100; s.RoiY = 415; s.RoiW = 1080; s.RoiH = 40;
+                    s.SamplingStep = 80; s.CaliperLength = 40;
+                    s.EdgePolarity = "从暗到亮"; s.EdgeConfidence = 30;
+                }),
+                MkStep(3, "显示结果", "画到图上", s => { s.CompareSource = "第2步"; s.MeasureType = "圆和点"; }),
+            };
+            return;
+        }
+
         if (key == "scratch")
         {
             // 找划痕：拍张照片 → 找划痕（免训练）→ 判个数 → 显示结果
@@ -4090,6 +4151,12 @@ public class FlowViewModel : ViewModelBase
     }
 
 
+
+    /// <summary>步骤真正框过的 ROI；没拖过（默认 10,10,120,80 或宽高≤2）就返回 null = 整图。</summary>
+    static OpenCvSharp.Rect? ScratchRoi(VisionFlowStep step)
+        => step.RoiW > 2 && step.RoiH > 2 && !(step.RoiX == 10 && step.RoiY == 10 && step.RoiW == 120 && step.RoiH == 80)
+            ? new OpenCvSharp.Rect((int)step.RoiX, (int)step.RoiY, (int)step.RoiW, (int)step.RoiH)
+            : (OpenCvSharp.Rect?)null;
 
     /// <summary>把某个工具变成当前流程末尾的一个步骤（「➕ 添加」按钮和两级菜单共用）。</summary>
     void AddStepOf(string? tool)
@@ -5655,6 +5722,9 @@ public class FlowViewModel : ViewModelBase
                 ("zeroshot", "示例：零样本查瑕疵", "拍张照片 → 零样本查瑕疵（和标准图比差异，不用训练）→ 判个数 → 显示结果（4 步）"),
                 ("qr", "示例：二维码定位发送", "拍张照片 → 图里找图案定位码 → 读二维码（点阵码增强）→ TCP 发送 → 显示结果（5 步）"),
                 ("barcode", "示例：条码定位发送", "拍张照片 → 图里找图案定位条码 → 读条码 → TCP 发送 → 显示结果（5 步）"),
+                ("pcba", "示例：PCBA 元件有无（AOI）", "拍张照片 → 零样本查瑕疵（和一张好板比）→ 判个数（零容忍）→ 显示结果（4 步，图在「PCBA元件有无」工程里）"),
+                ("metrology", "示例：精找圆 + 精找直线", "拍张照片 → 精找圆（亚像素卡尺 + 稳健拟合，切掉一段弧也能拟合）→ 精找直线 → 显示结果（4 步，图在「精找圆找直线」工程里）"),
+                ("edge", "示例：真图找边（难例）", "拍张照片 → 精找直线（暗场里一条很淡的亮带，满屏灰尘）→ 显示结果（3 步，图在「真图找边」工程里）"),
                 ("scratch", "示例：找划痕（免训练）", "拍张照片 → 找划痕（不用标准图、不用训练）→ 判个数 → 显示结果（4 步，图在「上相机划痕」工程里）")), out var key, out var name)) return;
             var flow = new VisionFlow { Name = name, Icon = "🔀" };
             ApplyFlowTemplate(flow, key);
@@ -8548,6 +8618,106 @@ public class FlowViewModel : ViewModelBase
 
             // ---------- 拟合 / 形状筛选 ----------
 
+            case "FindCirclePro":
+
+            {
+
+                var cpCur = _sharedImage;
+
+                if (cpCur == null || cpCur.Empty()) return Fail("没有当前图");
+
+                var cpp = new Vision.CircleProParam
+
+                {
+
+                    ExpectR = step.ExpectRadius,
+
+                    Calipers = (int)Math.Clamp(step.SamplingStep <= 0 ? 72 : step.SamplingStep, 8, 720),
+
+                    CaliperLength = step.CaliperLength <= 0 ? 40 : step.CaliperLength,
+
+                    Polarity = step.EdgePolarity == "从暗到亮" ? 0 : step.EdgePolarity == "从亮到暗" ? 1 : 2,
+
+                    Sensitivity = step.EdgeConfidence <= 0 ? 30 : step.EdgeConfidence
+
+                };
+
+                var (cpRes, cpDraw, cpNote) = Vision.Metrology.FindCircle(cpCur, ScratchRoi(step), cpp);
+
+                if (cpRes == null) { cpDraw.Dispose(); return Fail(cpNote); }
+
+                Done($"圆心({cpRes.Cx:F2},{cpRes.Cy:F2}) 半径{cpRes.R:F2}", cpNote);
+
+                GeoPut(step, new GeoResult
+
+                {
+
+                    Value = cpRes.R, HasCircle = true, Cx = cpRes.Cx, Cy = cpRes.Cy, R = cpRes.R,
+
+                    HasPoint = true, Px = cpRes.Cx, Py = cpRes.Cy
+
+                });
+
+                step.StatusText = cpRes.Score >= 0.5 ? "合格" : "要复核";
+
+                using (cpDraw) ResultImage = MatToBitmapSource(cpDraw);
+
+                break;
+
+            }
+
+
+
+            case "FindLinePro":
+
+            {
+
+                var lpCur = _sharedImage;
+
+                if (lpCur == null || lpCur.Empty()) return Fail("没有当前图");
+
+                var lpp = new Vision.LineProParam
+
+                {
+
+                    Calipers = (int)Math.Clamp(step.SamplingStep <= 0 ? 24 : step.SamplingStep, 4, 400),
+
+                    CaliperLength = step.CaliperLength <= 0 ? 30 : step.CaliperLength,
+
+                    Polarity = step.EdgePolarity == "从暗到亮" ? 0 : step.EdgePolarity == "从亮到暗" ? 1 : 2,
+
+                    Sensitivity = step.EdgeConfidence <= 0 ? 30 : step.EdgeConfidence
+
+                };
+
+                var (lpRes, lpDraw, lpNote) = Vision.Metrology.FindLine(lpCur, ScratchRoi(step), lpp);
+
+                if (lpRes == null) { lpDraw.Dispose(); return Fail(lpNote); }
+
+                Done($"角度 {lpRes.AngleDeg:F2}°，过({lpRes.Px:F1},{lpRes.Py:F1})", lpNote);
+
+                GeoPut(step, new GeoResult
+
+                {
+
+                    Value = lpRes.Score * 100, HasLine = true,
+
+                    Lx = lpRes.Px, Ly = lpRes.Py, Ldx = lpRes.Dx, Ldy = lpRes.Dy,
+
+                    HasPoint = true, Px = lpRes.Px, Py = lpRes.Py
+
+                });
+
+                step.StatusText = lpRes.Score >= 0.5 ? "合格" : "要复核";
+
+                using (lpDraw) ResultImage = MatToBitmapSource(lpDraw);
+
+                break;
+
+            }
+
+
+
             case "FindScratch":
 
             {
@@ -10031,6 +10201,22 @@ public class FlowViewModel : ViewModelBase
 
                                 Cv2.Rectangle(canvas, new Rect((int)Math.Round(bx.X), (int)Math.Round(bx.Y),
                                     Math.Max(2, (int)Math.Round(bx.W)), Math.Max(2, (int)Math.Round(bx.H))), red, 2);
+
+                        if (shape && gg.HasLine)
+
+                        {
+
+                            double L = Math.Max(canvas.Width, canvas.Height);
+
+                            Cv2.Line(canvas,
+
+                                new Point((int)Math.Round(gg.Lx - gg.Ldx * L), (int)Math.Round(gg.Ly - gg.Ldy * L)),
+
+                                new Point((int)Math.Round(gg.Lx + gg.Ldx * L), (int)Math.Round(gg.Ly + gg.Ldy * L)), red, 2);
+
+                        }
+
+
 
                         if (shape && gg.HasPoint)
 
