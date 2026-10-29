@@ -29,13 +29,14 @@ public sealed class ZeroShotParam
 /// </summary>
 public static class ZeroShot
 {
-    public static (List<ZsDefect> defects, Mat diff, double shiftX, double shiftY, double angleDeg, string note)
+    public static (List<ZsDefect> defects, Mat diff, double shiftX, double shiftY, double angleDeg, double threshold, string note)
         Run(Mat current, Mat golden, ZeroShotParam p)
     {
         var defects = new List<ZsDefect>();
         var diffOut = new Mat();
+        double thOut = 0;
         if (current == null || current.Empty() || golden == null || golden.Empty())
-            return (defects, diffOut, 0, 0, 0, "没有图");
+            return (defects, diffOut, 0, 0, 0, 0, "没有图");
 
         using var curGray = ToGray(current);
         using var goldGray0 = ToGray(golden);
@@ -130,6 +131,7 @@ public static class ZeroShot
             double s = Math.Clamp(p.Sensitivity, 0, 100);
             double sigma = 6.0 - 4.0 * (s / 100.0);
             double th = Math.Max(6.0, mean.Val0 + sigma * std.Val0);
+            thOut = th;
             using var bin = new Mat();
             Cv2.Threshold(smooth, bin, th, 255, ThresholdTypes.Binary);
 
@@ -161,7 +163,74 @@ public static class ZeroShot
             if (ownGold) gold.Dispose();
         }
 
-        return (defects, diffOut, dx, dy, ang, note);
+        return (defects, diffOut, dx, dy, ang, thOut, note);
+    }
+
+    /// <summary>
+    /// 差异热力图：把「差多少」铺成颜色（蓝→绿→黄→红），几乎没差的地方保持原图。
+    /// 门槛按这张图自己的噪声自适应（均值 + 2σ），右上角带一条色标。
+    /// </summary>
+    public static Mat Heatmap(Mat bgr, Mat diff, double hot = 0, double alpha = 0.8)
+    {
+        var outMat = bgr == null ? new Mat() : bgr.Clone();
+        if (bgr == null || bgr.Empty() || diff == null || diff.Empty()) return outMat;
+
+        using var d8 = new Mat();
+        if (diff.Depth() == MatType.CV_8U) diff.CopyTo(d8); else diff.ConvertTo(d8, MatType.CV_8U);
+        if (d8.Size() != bgr.Size()) Cv2.Resize(d8, d8, bgr.Size());
+
+        // 按「检测阈值」定标：半个阈值开始上色（蓝绿），两倍多就是全红
+        Cv2.MeanStdDev(d8, out var mean, out var std);
+        double th = hot > 1 ? hot : Math.Max(3, mean.Val0 + 2.0 * std.Val0);
+        double floorPx = 0.5 * th;
+        double top = 2.2 * th;
+
+        // 先把差异按阈值拉伸成 0~255（半个阈值=不上色，两倍多阈值=全红），再套 JET 配色
+        using var norm = new Mat();
+        d8.ConvertTo(norm, MatType.CV_8UC1, 255.0 / Math.Max(1e-6, top - floorPx), -floorPx * 255.0 / Math.Max(1e-6, top - floorPx));
+
+        using var jet = new Mat();
+        Cv2.ApplyColorMap(norm, jet, ColormapTypes.Jet);
+        using var a = new Mat();
+        norm.ConvertTo(a, MatType.CV_32FC1, alpha / 255.0);
+        using var jetF = new Mat();
+        jet.ConvertTo(jetF, MatType.CV_32FC3);
+        using var srcF = new Mat();
+        outMat.ConvertTo(srcF, MatType.CV_32FC3);
+        using var a3 = new Mat();
+        Cv2.Merge(new[] { a, a, a }, a3);
+        using var one = new Mat(a3.Size(), MatType.CV_32FC3, new Scalar(1, 1, 1));
+        using var inv = new Mat();
+        Cv2.Subtract(one, a3, inv);
+        using var t1 = new Mat();
+        Cv2.Multiply(srcF, inv, t1);
+        using var t2 = new Mat();
+        Cv2.Multiply(jetF, a3, t2);
+        using var sum = new Mat();
+        Cv2.Add(t1, t2, sum);
+        sum.ConvertTo(outMat, MatType.CV_8UC3);
+
+        // 右上角色标：上面的数 = 差得最多的灰阶，下面的数 = 刚开始算差异的门槛
+        int barH = Math.Clamp(outMat.Height / 6, 54, 140);
+        int barW = 14;
+        using (var strip = new Mat(barH, 1, MatType.CV_8UC1))
+        {
+            for (int i = 0; i < barH; i++)
+                strip.Set(i, 0, (byte)(255 - (int)Math.Round(255.0 * i / Math.Max(1, barH - 1))));
+            using var wide = new Mat();
+            Cv2.Resize(strip, wide, new Size(barW, barH));
+            using var bar = new Mat();
+            Cv2.ApplyColorMap(wide, bar, ColormapTypes.Jet);
+            int x = Math.Max(2, outMat.Width - barW - 12), y = 16;
+            using var roi = new Mat(outMat, new Rect(x, y, barW, barH));
+            bar.CopyTo(roi);
+            Cv2.Rectangle(outMat, new Rect(x - 1, y - 1, barW + 2, barH + 2), new Scalar(255, 255, 255), 1);
+            Cv2.PutText(outMat, top.ToString("F0"), new Point(x - 2, y - 5),
+                HersheyFonts.HersheyPlain, 0.9, new Scalar(255, 255, 255), 1, LineTypes.AntiAlias);
+            Cv2.PutText(outMat, floorPx.ToString("F0"), new Point(x - 4, y + barH + 12),
+                HersheyFonts.HersheyPlain, 0.9, new Scalar(255, 255, 255), 1, LineTypes.AntiAlias);
+        }
+        return outMat;
     }
 
     private static Mat Trans(double dx, double dy)
