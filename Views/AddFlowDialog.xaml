@@ -1,9 +1,10 @@
 <Window x:Class="NoCodeVision.Views.AddFlowDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="新建流程" Height="470" Width="560"
+        xmlns:ctrl="clr-namespace:NoCodeVision.Views.Controls"
+        Title="新建流程" Height="940" Width="620" MinHeight="420" MinWidth="480"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
+        ResizeMode="CanResize"
         Background="{StaticResource CanvasBrush}">
     <Border Padding="20">
         <Grid>
@@ -32,7 +33,8 @@
                 <Border Grid.Column="1" Background="{StaticResource CanvasBrush}" CornerRadius="8" BorderBrush="{StaticResource LineBrush}"
                         BorderThickness="1" Padding="10,0" Height="34">
                     <TextBox x:Name="NameBox" Style="{StaticResource AppleTextField}" TextAlignment="Left" MinWidth="0"
-                             HorizontalAlignment="Stretch" VerticalAlignment="Center" FontSize="13" BorderThickness="0"
+                             HorizontalAlignment="Stretch" ctrl:Hint.Text="比如：上料对位 / 尺寸检测"
+                             VerticalAlignment="Center" FontSize="13" BorderThickness="0"
                              Background="Transparent" ToolTip="已经按「类型-序号」起好名，不满意直接改" />
                 </Border>
             </Grid>

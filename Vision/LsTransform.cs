@@ -104,6 +104,20 @@ public sealed class LsTransform
         return new Point2d(px, py);
     }
 
+    /// <summary>
+    /// 图像里的方向角（度）换算成机台方向角：把方向向量套进矩阵的线性部分。
+    /// 标定没做过或算出来是零向量就原样返回。
+    /// </summary>
+    public double GetWorldAngle(double angleDeg)
+    {
+        double a = angleDeg * Math.PI / 180.0;
+        double dx = Math.Cos(a), dy = Math.Sin(a);
+        double wx = _h[0, 0] * dx + _h[0, 1] * dy;
+        double wy = _h[1, 0] * dx + _h[1, 1] * dy;
+        if (Math.Abs(wx) < 1e-9 && Math.Abs(wy) < 1e-9) return angleDeg;
+        return Math.Atan2(wy, wx) * 180.0 / Math.PI;
+    }
+
     /// <summary>取 3×3 矩阵数据，行优先 9 个 double（原 getTransformData）。</summary>
     public double[] GetTransformData()
     {

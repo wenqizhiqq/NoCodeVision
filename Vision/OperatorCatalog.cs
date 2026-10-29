@@ -337,7 +337,7 @@ public static class OperatorCatalog
             N("X方向毫米/像素", "TargetX", ""),
             N("Y方向毫米/像素", "TargetY", ""),
             N("旋转角度(度)", "RoiAngle", "")),
-        O("CoordTrans", "坐标转换", "", "Calib", "把图像坐标换算成机台坐标（或反过来）。",
+        O("CoordTrans", "坐标转换", "🔀", "Calib", "把图像坐标换算成机台坐标（或反过来）；前面带角度的，角度也一起换算。",
             C("换算哪个结果", "CompareSource", ByStep(""), SRC),
             B("反过来算(机台→图像)", "InvertImage", "")),
         O("ScalarTrans", "标量换算", "🔤", "Calib", "把像素值按比例换成毫米、角度、脉冲等工程单位。",
@@ -345,6 +345,14 @@ public static class OperatorCatalog
             N("保留几位小数", "Decimals", "")),
         O("CalibAssist", "标定检查", "✅", "Calib", "用标定数据重算一遍，看误差有多大，够不够用。",
             N("允许误差(mm)", "Tolerance", "超过就报警")),
+
+        O("CalibXY9", "九点平移标定", "🔲", "Calib", "让机台走 3×3 九点，每个点记下「图像像素位置 + 机台位置」，算出 X/Y 像素当量（毫米/像素）和轴夹角；算完「坐标转换」直接用。",
+            T("标定点数据", "CalcExpression", "每行一个点：像素X,像素Y,机台X,机台Y（建议 3×3 九点）")),
+        O("CalibRot5", "五点旋转标定", "🔄", "Calib", "在同一位姿转 5 个角度，mark 在图上会画出一个圆，圆心就是旋转中心（给像素坐标、半径和机台坐标）。",
+            T("旋转点数据", "CalcExpression", "每行一个点：像素X,像素Y,转角（转 5 个角度各采一次）")),
+        O("AlignXyr", "对位换算(XYR)", "🧭", "Calib", "拿当前 mark 和标准件的 mark 比，算出要补的 ΔX、ΔY（毫米）和 ΔR（度），后面直接发 Modbus。要先用九点和五点标定。",
+            C("当前 mark 哪一步", "CompareSource", ByStep(""), SRC),
+            C("标准件 mark 哪一步", "CompareVar", ByStep(""), SRC)),
 
         // ================= 先修图 =================
         O("Binarize", "变黑白", "◐", "Color", "把图变成只有黑和白，后面的数块数、量尺寸都靠它。",
@@ -542,6 +550,7 @@ public static class OperatorCatalog
             N("地址", "RoiX", "PLC 寄存器偏移地址（从 0 算）；手册写 40001 的通常对应这里的 0"),
             C("写哪个值", "CompareSource", "选前面算出来那一步；选「固定值」就写下面的固定数", WSRC),
             N("放大倍数", "Number1", "角度一般放大 100 写成整数（171.52→17152）；填 1 就是原值"),
+            N("取第几个数", "IndexProbe", "那一步结果里有好几个数时（如机台坐标 X,Y 加角度）：1=第1个 2=第2个 3=第3个；填 0 就取它的主结果"),
             N("固定值", "TargetX", "上面选「固定值」时才用")),
         O("ModbusRead", "Modbus 读", "🟩", "Comm", "从 PLC 读一个寄存器或线圈。",
             T("PLC 地址", "ModbusIp", "PLC 的 IP，填了就自己连；留空则用「通道」"),

@@ -50,6 +50,12 @@
     <SolidColorBrush x:Key="SegTrackBrush" Color="#E9E9EB" />
     <SolidColorBrush x:Key="PreviewBgBrush" Color="#0B0B0F" />
 
+    <!-- ===== 输入框：和白卡片、灰背景都拉开对比，一眼看出这里能填 ===== -->
+    <SolidColorBrush x:Key="InputBrush" Color="#F4F5F7" />
+    <SolidColorBrush x:Key="InputBorderBrush" Color="#D6D7DD" />
+    <SolidColorBrush x:Key="InputFocusBorderBrush" Color="{StaticResource iOSBlue}" />
+    <SolidColorBrush x:Key="InputHintBrush" Color="#9B9BA3" />
+
     <!-- ===== iOS 系统颜色画刷（供图标/强调使用） ===== -->
     <SolidColorBrush x:Key="iOSBlueBrush" Color="{StaticResource iOSBlue}" />
     <SolidColorBrush x:Key="iOSGreenBrush" Color="{StaticResource iOSGreen}" />

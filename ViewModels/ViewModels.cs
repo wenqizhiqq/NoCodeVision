@@ -3785,6 +3785,64 @@ public class FlowViewModel : ViewModelBase
             return;
         }
 
+        if (key == "align")
+        {
+            // 对位：九点平移标定（像素当量）→ 五点旋转标定（旋转中心）→ 两张图各找 mark → XYR 换算 → 发 Modbus
+            var adir = Helpers.AppPaths.ToStoredPath(Helpers.AppPaths.ResolvePath(@"Projects\对位标定\图"));
+            var aStd = Helpers.AppPaths.ToStoredPath(Helpers.AppPaths.ResolvePath(@"Projects\对位标定\图\对位标定板.png"));
+            var aCur = Helpers.AppPaths.ToStoredPath(Helpers.AppPaths.ResolvePath(@"Projects\对位标定\图\当前件.png"));
+            var aTpl = Helpers.AppPaths.ToStoredPath(Helpers.AppPaths.ResolvePath(@"Projects\对位标定\图\模板mark.png"));
+            // 九点：机台走 3×3，每行「像素X,像素Y,机台X,机台Y」
+            var apts = "200,200,17.7024,31.8606\n400,200,27.4838,33.9397\n600,200,37.2653,36.0188\n"
+                     + "200,400,15.6232,41.6421\n400,400,25.4047,43.7212\n600,400,35.1862,45.8003\n"
+                     + "200,600,13.5441,51.4235\n400,600,23.3256,53.5027\n600,600,33.1071,55.5818";
+            // 五点：绕旋转中心转 5 个角度，每行「像素X,像素Y,转角」
+            var rpts = "450.0000,300.0000,0\n346.3526,442.6584,72\n178.6474,388.2003,144\n"
+                     + "178.6474,211.7997,216\n346.3526,157.3416,288";
+            flow.Steps = new ObservableCollection<VisionFlowStep>
+            {
+                MkStep(1, "拍张照片", "读标准件", s => { s.CaptureMode = "打开文件"; s.ImageSource = aStd; }),
+                MkStep(2, "九点平移标定", "像素当量", s => { s.CalcExpression = apts; s.OutputVar = "mmPerPx"; }),
+                MkStep(3, "五点旋转标定", "旋转中心", s => { s.CalcExpression = rpts; s.OutputVar = "rotCenter"; }),
+                MkStep(4, "图里找图案", "找标准件 mark", s =>
+                {
+                    // 模板存成文件，换一张图还能用同一个模板（不然每张图都从自己身上抠，角度永远是 0）
+                    s.MatchMode = "灰度匹配";
+                    s.TemplateFile = aTpl;
+                    s.RoiX = 690; s.RoiY = 590; s.RoiW = 120; s.RoiH = 120;
+                    s.ScoreThreshold = 0.6; s.PyramidLevel = 0; s.AngleStart = -20; s.AngleStop = 20; s.AngleStep = 1;
+                    s.TopN = 1; s.Overlap = 0.3; s.OutputVar = "markStd";
+                }),
+                MkStep(5, "拍张照片", "读当前件", s => { s.CaptureMode = "打开文件"; s.ImageSource = aCur; }),
+                MkStep(6, "图里找图案", "找当前件 mark", s =>
+                {
+                    s.MatchMode = "灰度匹配";
+                    s.TemplateFile = aTpl;
+                    s.RoiX = 710; s.RoiY = 600; s.RoiW = 120; s.RoiH = 120;
+                    s.ScoreThreshold = 0.6; s.PyramidLevel = 0; s.AngleStart = -20; s.AngleStop = 20; s.AngleStep = 1;
+                    s.TopN = 1; s.Overlap = 0.3; s.OutputVar = "markCur";
+                }),
+                MkStep(7, "对位换算(XYR)", "算补正量", s => { s.CompareSource = "第6步"; s.CompareVar = "第4步"; s.OutputVar = "dXyr"; }),
+                MkStep(8, "Modbus 写", "发 ΔX", s =>
+                {
+                    s.IoType = "保持寄存器"; s.RoiX = 100; s.CompareSource = "第7步"; s.IndexProbe = 1;
+                    s.Number1 = 1000; s.ModbusPort = 502; s.ModbusUnit = 1; s.ModbusTimeout = 800;
+                }),
+                MkStep(9, "Modbus 写", "发 ΔY", s =>
+                {
+                    s.IoType = "保持寄存器"; s.RoiX = 101; s.CompareSource = "第7步"; s.IndexProbe = 2;
+                    s.Number1 = 1000; s.ModbusPort = 502; s.ModbusUnit = 1; s.ModbusTimeout = 800;
+                }),
+                MkStep(10, "Modbus 写", "发 ΔR", s =>
+                {
+                    s.IoType = "保持寄存器"; s.RoiX = 102; s.CompareSource = "第7步"; s.IndexProbe = 3;
+                    s.Number1 = 1000; s.ModbusPort = 502; s.ModbusUnit = 1; s.ModbusTimeout = 800;
+                }),
+                MkStep(11, "显示结果", "画到图上", s => { s.CompareSource = "第6步"; s.MeasureType = "圆和点"; }),
+            };
+            return;
+        }
+
         if (key == "scratch")
         {
             // 找划痕：拍张照片 → 找划痕（免训练）→ 判个数 → 显示结果
@@ -5784,6 +5842,7 @@ public class FlowViewModel : ViewModelBase
                 ("pcba", "示例：PCBA 元件有无（AOI）", "拍张照片 → 零样本查瑕疵（和一张好板比）→ 判个数（零容忍）→ 显示结果（4 步，图在「PCBA元件有无」工程里）"),
                 ("metrology", "示例：精找圆 + 精找直线", "拍张照片 → 精找圆（亚像素卡尺 + 稳健拟合，切掉一段弧也能拟合）→ 精找直线 → 显示结果（4 步，图在「精找圆找直线」工程里）"),
                 ("edge", "示例：真图找边（难例）", "拍张照片 → 精找直线（暗场里一条很淡的亮带，满屏灰尘）→ 显示结果（3 步，图在「真图找边」工程里）"),
+                ("align", "示例：对位（九点标定 + 五点旋转 + XYR 发 Modbus）", "读标准件 → 九点平移标定（算 X/Y 像素当量=毫米/像素）→ 五点旋转标定（算旋转中心）→ 找标准 mark → 读当前件 → 找当前 mark → 对位换算（ΔX、ΔY 毫米 + ΔR 度）→ Modbus 写 ×3 → 显示结果（11 步，图在「对位标定」工程里；PLC 地址记得改成自己的。相机有畸变的话，先用「镜头标定」拍棋盘格，再在拍照后面加一步「去畸变」）"),
                 ("scratch", "示例：找划痕（免训练）", "拍张照片 → 找划痕（不用标准图、不用训练）→ 判个数 → 显示结果（4 步，图在「上相机划痕」工程里）")), out var key, out var name)) return;
             var flow = new VisionFlow { Name = name, Icon = "🔀" };
             ApplyFlowTemplate(flow, key);
@@ -8001,6 +8060,8 @@ public class FlowViewModel : ViewModelBase
     {
         public bool HasPoint; public double Px, Py;
         public bool HasLine; public double Lx, Ly, Ldx, Ldy;
+        /// <summary>这一步量出来的角度（度）；对位时「坐标转换」会把它换成机台角度。</summary>
+        public bool HasAngle; public double AngleDeg;
         public bool HasCircle; public double Cx, Cy, R;
         public bool HasBox; public double Bx, By, Bw, Bh;
         /// <summary>一次查出多个缺陷时，全部框都存这里，显示结果会一个不落地画出来。</summary>
@@ -9487,7 +9548,13 @@ public class FlowViewModel : ViewModelBase
 
                 int code = ls.CalcTransform();
 
-                if (code != 0) return Fail($"标定失败（代码 {code}）");
+                // 这套接口 1 才是成功：0=矩阵解不出来，-1=点不够 4 个，-2=像素点和机台点数量对不上
+
+                if (code != 1) return Fail(code == -1 ? "标定点不足 4 个（每行：像素X,像素Y,机台X,机台Y）"
+
+                    : code == -2 ? "像素点和机台点数量对不上（每行四个数都要填）"
+
+                    : "标定解不出来（点是不是都排在一条直线上？）");
 
                 double rms = LsTransform.Shared.ReprojectRms();
 
@@ -9502,6 +9569,89 @@ public class FlowViewModel : ViewModelBase
             }
 
 
+
+            case "CalibXY9":
+            {
+                // 九点平移标定：走 3×3 九个位置，每个位置记「像素X,像素Y,机台X,机台Y」
+                var xyLines = (step.CalcExpression ?? "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                var xyImg = new List<Point2f>();
+                var xyWorld = new List<Point2f>();
+                foreach (var raw in xyLines)
+                {
+                    var n = raw.Split(new[] { ',', ';', ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(x => NumOf(x)).ToArray();
+                    if (n.Length >= 4) { xyImg.Add(new Point2f((float)n[0], (float)n[1])); xyWorld.Add(new Point2f((float)n[2], (float)n[3])); }
+                }
+                if (xyImg.Count < 4) return Fail("标定点不足 4 个（每行：像素X,像素Y,机台X,机台Y）");
+                var lxy = LsTransform.Shared;
+                lxy.ClearPoints();
+                lxy.AddImagePoints(xyImg);
+                lxy.AddWorldPoints(xyWorld);
+                if (lxy.CalcTransform() != 1) return Fail("标定解不出来（点是不是都排在一条直线上？）");
+                var hm = LsTransform.Shared.GetTransformData();
+                double kx = Math.Sqrt(hm[0] * hm[0] + hm[3] * hm[3]);   // 图像 X 轴在机台上有多长 = X 当量
+                double ky = Math.Sqrt(hm[1] * hm[1] + hm[4] * hm[4]);   // 图像 Y 轴 = Y 当量
+                double axisDeg = Math.Atan2(hm[3], hm[0]) * 180 / Math.PI;
+                StageCalibration.SetXY(kx, ky, axisDeg);
+                Done($"X当量={kx:F5} 毫米/像素，Y当量={ky:F5}，轴夹角={axisDeg:F2}°",
+                    $"九点标定 · 残差 {LsTransform.Shared.ReprojectRms():F3} 像素");
+                GeoPut(step, new GeoResult { Value = kx, Text = step.ActualValue ?? "" });
+                break;
+            }
+
+            case "CalibRot5":
+            {
+                // 五点旋转标定：同一位置转 5 个角度，每个角度记 mark 的「像素X,像素Y,转角」
+                var rtLines = (step.CalcExpression ?? "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                var rtPts = new List<DvPoint2D>();
+                var rtAngs = new List<double>();
+                foreach (var raw in rtLines)
+                {
+                    var n = raw.Split(new[] { ',', ';', ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(x => NumOf(x)).ToArray();
+                    if (n.Length >= 2)
+                    {
+                        rtPts.Add(new DvPoint2D(n[0], n[1]));
+                        if (n.Length >= 3) rtAngs.Add(n[2]);
+                    }
+                }
+                if (rtPts.Count < 3) return Fail("旋转点不足 3 个（每行：像素X,像素Y,转角）");
+                var fitRt = DvGeometry.FitCircleKasa(rtPts);
+                if (fitRt.Radius < 1) return Fail("这几个点几乎重合，拟合不出圆心：转的角度拉开一点再采");
+                var wc = LsTransform.Shared.GetWorldCoordinate(fitRt.Center.X, fitRt.Center.Y);
+                StageCalibration.SetRot(fitRt.Center.X, fitRt.Center.Y, fitRt.Radius, wc.X, wc.Y);
+                string span = rtAngs.Count > 0 ? $"转了 {rtAngs.Min():0.#}~{rtAngs.Max():0.#}°" : "没填转角";
+                Done($"旋转中心=({fitRt.Center.X:F2},{fitRt.Center.Y:F2}) 像素，半径 {fitRt.Radius:F2} 像素",
+                    $"{span}，机台=({wc.X:F3},{wc.Y:F3})，每度≈{StageCalibration.MmPerDeg:F4}mm");
+                GeoPut(step, new GeoResult { HasPoint = true, Px = fitRt.Center.X, Py = fitRt.Center.Y, Value = fitRt.Radius, Text = step.ActualValue ?? "" });
+                break;
+            }
+
+            case "AlignXyr":
+            {
+                var curM = GeoOf(flow, step.CompareSource, step);
+                var stdM = GeoOf(flow, step.CompareVar, step);
+                if (curM?.HasPoint != true) return Fail("「当前 mark」那一步没有位置");
+                if (stdM?.HasPoint != true) return Fail("「标准件 mark」那一步没有位置");
+                if (!StageCalibration.HasXY) return Fail("还没做九点平移标定：先跑一次「九点平移标定」");
+                if (!StageCalibration.HasRot) return Fail("还没做旋转中心标定：先跑一次「五点旋转标定」");
+                double AngOf(GeoResult g) => g.HasAngle ? g.AngleDeg : (g.HasLine ? Math.Atan2(g.Ldy, g.Ldx) * 180 / Math.PI : 0);
+                double dRot = AngOf(curM) - AngOf(stdM);          // 当前比标准多转了多少
+                // 先把当前点按 -dRot 绕旋转中心转回标准姿态，再看差多少
+                double rad = -dRot * Math.PI / 180;
+                double dxp = curM.Px - StageCalibration.RotCenterPx, dyp = curM.Py - StageCalibration.RotCenterPy;
+                double ux = dxp * Math.Cos(rad) - dyp * Math.Sin(rad);
+                double uy = dxp * Math.Sin(rad) + dyp * Math.Cos(rad);
+                double dPx = stdM.Px - (StageCalibration.RotCenterPx + ux);
+                double dPy = stdM.Py - (StageCalibration.RotCenterPy + uy);
+                double mmX = dPx * StageCalibration.MmPerPxX;
+                double mmY = dPy * StageCalibration.MmPerPxY;
+                double mmR = -dRot;
+                Done($"补正 ΔX={mmX:F3} ΔY={mmY:F3} mm，ΔR={mmR:F3}°", $"像素差 ({dPx:F2},{dPy:F2}) 像素");
+                GeoPut(step, new GeoResult { Value = mmX, HasPoint = true, Px = curM.Px, Py = curM.Py,
+                    HasAngle = true, AngleDeg = mmR, Text = step.ActualValue ?? "" });
+                break;
+            }
 
             case "CalibManual":
 
@@ -9529,9 +9679,35 @@ public class FlowViewModel : ViewModelBase
 
                 double wx = wpt.X, wy = wpt.Y;
 
-                Done($"机台坐标=({wx:F3},{wy:F3})", "像素→机台");
+                // 前面带角度就一起换算（对位要的是 X、Y、R 三个数）
 
-                GeoPut(step, new GeoResult { HasPoint = true, Px = wx, Py = wy });
+                double? ang = a.HasAngle ? a.AngleDeg
+
+                    : (a.HasLine ? Math.Atan2(a.Ldy, a.Ldx) * 180 / Math.PI : null);
+
+                if (ang.HasValue)
+
+                {
+
+                    double wang = LsTransform.Shared.GetWorldAngle(ang.Value);
+
+                    Done($"机台坐标=({wx:F3},{wy:F3}) 角度={wang:F2}°", "像素→机台");
+
+                    GeoPut(step, new GeoResult { HasPoint = true, Px = wx, Py = wy, Value = wx,
+
+                        HasAngle = true, AngleDeg = wang, Text = step.ActualValue ?? "" });
+
+                }
+
+                else
+
+                {
+
+                    Done($"机台坐标=({wx:F3},{wy:F3})", "像素→机台");
+
+                    GeoPut(step, new GeoResult { HasPoint = true, Px = wx, Py = wy, Value = wx, Text = step.ActualValue ?? "" });
+
+                }
 
                 break;
 
@@ -10495,6 +10671,26 @@ public class FlowViewModel : ViewModelBase
 
                     if (rawVal == 0 && srcGeo.Text.Length > 0) rawVal = NumOf(srcGeo.Text);
 
+                    // 一步出了好几个数（机台坐标 X、Y 再加角度）：按「取第几个数」挑
+
+                    int pick = step.IndexProbe;
+
+                    if (pick >= 1)
+
+                    {
+
+                        var srcStep = flow?.Steps.FirstOrDefault(s => s.Index == GeoIndex(step.CompareSource, step));
+
+                        var ns = System.Text.RegularExpressions.Regex.Matches(
+
+                            (srcStep?.ActualValue ?? "") + " " + srcGeo.Text, @"[-+]?[0-9]*\.?[0-9]+");
+
+                        if (ns.Count >= pick) rawVal = double.Parse(ns[pick - 1].Value, System.Globalization.CultureInfo.InvariantCulture);
+
+                        else if (pick > 1) return Fail($"「{step.CompareSource}」凑不出第 {pick} 个数");
+
+                    }
+
                 }
 
                 double scale = step.Number1 > 0 ? step.Number1 : 1;
@@ -11326,7 +11522,31 @@ public class FlowViewModel : ViewModelBase
 
                         var roi = TplRoi(step, srcMat);
 
-                        matcher.SetTemplateFromRoi(roi);
+                        // 选了「模板图」文件就用文件里的模板（换个件、换张图还能用同一个模板），没选才从 ROI 里抠
+
+                        var tplPath = Helpers.AppPaths.ResolvePath(step.TemplateFile);
+
+                        bool usedTplFile = false;
+
+                        if (!string.IsNullOrWhiteSpace(tplPath) && File.Exists(tplPath))
+
+                        {
+
+                            using var tplImg = Cv2.ImRead(tplPath, ImreadModes.Grayscale);
+
+                            if (!tplImg.Empty())
+
+                            {
+
+                                matcher.SetTemplate(tplImg);
+
+                                usedTplFile = true;
+
+                            }
+
+                        }
+
+                        if (!usedTplFile) matcher.SetTemplateFromRoi(roi);
 
                         matcher.ScaleRange = step.ScaleRange;
 
@@ -11357,6 +11577,7 @@ public class FlowViewModel : ViewModelBase
                             {
                                 HasBox = true, Bx = r0.LeftTopX, By = r0.LeftTopY, Bw = r0.TemplateWidth, Bh = r0.TemplateHeight,
                                 HasPoint = true, Px = r0.CenterX, Py = r0.CenterY, Value = r0.Score, Text = $"θ{r0.Angle:F1}",
+                                HasAngle = true, AngleDeg = r0.Angle,
                             });
                             _curProductScore = r0.Score;
                             if (r0.Score < step.ScoreThreshold) _curProductOk = false;

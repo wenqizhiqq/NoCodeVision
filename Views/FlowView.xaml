@@ -112,7 +112,7 @@
         </DataTemplate>
 
         <DataTemplate x:Key="StepItemTemplate">
-            <Grid Height="40">
+            <Grid MinHeight="40">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="170" SharedSizeGroup="StepColFunc" />
                     <ColumnDefinition Width="*" />
@@ -130,9 +130,18 @@
                         </TextBlock.Text>
                     </TextBlock>
                 </StackPanel>
-                <TextBlock Grid.Column="1" Text="{Binding ValueText}" Style="{StaticResource AppleLabel}" FontSize="12"
-                           VerticalAlignment="Center" Margin="10,0,4,0" TextTrimming="CharacterEllipsis"
-                           ToolTip="{Binding ActualValue}" />
+                <!-- 当前值：长的自动换行（最多两行），下面一行再补状态和参数，别浪费这一列的宽度 -->
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,4,4,4">
+                    <TextBlock Text="{Binding ValueText}" Style="{StaticResource AppleLabel}" FontSize="12"
+                               TextWrapping="Wrap" MaxHeight="32" ToolTip="{Binding ActualValue}" />
+                    <DockPanel Margin="0,2,0,0">
+                        <TextBlock Text="{Binding StatusText}" FontSize="11" DockPanel.Dock="Left"
+                                   Foreground="{StaticResource TextMutedBrush}" />
+                        <TextBlock Text="{Binding ParamSummary}" FontSize="11" Margin="10,0,0,0"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   TextTrimming="CharacterEllipsis" ToolTip="{Binding ParamSummary}" />
+                    </DockPanel>
+                </StackPanel>
                 <TextBlock Grid.Column="2" Text="{Binding CostMs, StringFormat='{}{0:F1}'}" Style="{StaticResource AppleSubLabel}"
                            VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,0,14,0"
                            TextTrimming="CharacterEllipsis" ToolTip="{Binding CostMs, StringFormat='{}{0:F1} ms'}" />
@@ -334,7 +343,7 @@
                         <TextBlock Grid.Column="0" Text="功能" Style="{StaticResource AppleSubLabel}" Margin="14,0,4,0" FontWeight="SemiBold" Height="14" VerticalAlignment="Center"
                                    ToolTip="第几步 + 用的哪个算子" />
                         <TextBlock Grid.Column="1" Text="当前值" Style="{StaticResource AppleSubLabel}" Margin="10,0,4,0" FontWeight="SemiBold" Height="14" VerticalAlignment="Center"
-                                   ToolTip="这一步跑完的结果；角度类的步骤只显示多少度" />
+                                   ToolTip="这一步跑完的结果（长了会换行）；下面那行是状态和参数" />
                         <TextBlock Grid.Column="2" Text="耗时" Style="{StaticResource AppleSubLabel}" Margin="10,0,14,0" FontWeight="SemiBold" Height="14" VerticalAlignment="Center" HorizontalAlignment="Right" />
                     </Grid>
                     <ListBox Grid.Row="1" ItemsSource="{Binding SelectedFlow.Steps}" SelectedItem="{Binding SelectedStep}"
@@ -524,6 +533,10 @@
                                             <ColumnDefinition Width="106" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
                                         <Border Grid.Column="0" Style="{StaticResource OpBadge}">
                                             <TextBlock Style="{StaticResource OpBadgeText}" Text="{Binding No}" />
                                         </Border>
@@ -548,6 +561,21 @@
                                                   Visibility="{Binding Kind, Converter={StaticResource KindVis}, ConverterParameter=Choice}"
                                                   ctrl:DynBind.Target="Selected" ctrl:DynBind.Path="{Binding Path=Path}"
                                                   ToolTip="{Binding Help}" />
+                                    <!-- 说明直接摆在框下面：这一格要填什么、范围多少、默认多少 -->
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,4,0,0"
+                                               Text="{Binding Help}" FontSize="11" TextWrapping="Wrap"
+                                               Foreground="{StaticResource TextMutedBrush}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Help}" Value="">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -601,7 +629,7 @@
                                 </Border>
                                 <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="结果写入"
                                            ToolTip="把这一步的实测值存进这个变量，后面判定、发PLC、存表都取它" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.OutputVar, Mode=TwoWay, FallbackValue=dMeasure}" />
+                                <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="存成哪个变量名，比如 dMark" Text="{Binding SelectedStep.OutputVar, Mode=TwoWay, FallbackValue=dMeasure}" />
                             </DockPanel>
                             <DockPanel Style="{StaticResource AppleRow}">
                                 <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="跑完读数是" />
@@ -715,7 +743,7 @@
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
                         </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="图像源" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.ImageSource, Converter={StaticResource BinPath}, FallbackValue=''}" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="点右边按钮选图片，也可以自己打路径" Text="{Binding SelectedStep.ImageSource, Converter={StaticResource BinPath}, FallbackValue=''}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <!-- 「打开文件夹」时把文件夹亮出来：不然只看到一个空图像源，不知道图从哪来 -->
@@ -726,7 +754,7 @@
                             </Border>
                                 <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="图片文件夹"
                                            ToolTip="流程每跑一次这一步换下一张，跑完一轮从头开始" />
-                                <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.FolderPath, Converter={StaticResource BinPath}, FallbackValue='还没选'}" />
+                                <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="点右边按钮选文件夹，也可以自己打路径" Text="{Binding SelectedStep.FolderPath, Converter={StaticResource BinPath}, FallbackValue='还没选'}" />
                             </DockPanel>
                             <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding CaptureFolderInfo, FallbackValue=''}"
                                        Margin="16,0,16,6" TextWrapping="Wrap" />
@@ -1166,7 +1194,7 @@
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="6" />
                         </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="模板文件（存下来的那一小块图）" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.TemplateFile, FallbackValue=''}" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="点右边按钮选模板图/标准图" Text="{Binding SelectedStep.TemplateFile, FallbackValue=''}" />
                         </DockPanel>
                         </StackPanel>
                         <!-- 右：源图（ROI 拖拽绘制模板区域） -->
@@ -1425,7 +1453,7 @@
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="4" />
                         </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="比较变量" ToolTip="拿这一步的结果和哪个变量做比较" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.CompareVar, FallbackValue='score'}" Width="120" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="变量名，比如 score" Text="{Binding SelectedStep.CompareVar, FallbackValue='score'}" Width="120" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
@@ -1972,7 +2000,7 @@
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="3" />
                         </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="等待条件" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.WaitCondition, FallbackValue='signal == 1'}" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="等什么条件，比如 signal == 1" Text="{Binding SelectedStep.WaitCondition, FallbackValue='signal == 1'}" />
                         </DockPanel>
                     </StackPanel>
                 </Border>
@@ -2002,7 +2030,7 @@
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
                         </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="通讯通道" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.CommChannel, FallbackValue='PLC-串口'}" Width="140" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="用「通讯」页建好的通道名" Text="{Binding SelectedStep.CommChannel, FallbackValue='PLC-串口'}" Width="140" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
@@ -2028,7 +2056,7 @@
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="4" />
                         </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="指令内容" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.CommContent, FallbackValue='M100=1'}" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="要发出去的内容，比如 M100=1" Text="{Binding SelectedStep.CommContent, FallbackValue='M100=1'}" />
                         </DockPanel>
                     </StackPanel>
                 </Border>
@@ -2088,7 +2116,7 @@
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="3" />
                         </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="输出变量" ToolTip="命中结果写入的变量名" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.OutputVar, FallbackValue='colorHit'}" Width="120" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="存成哪个变量名，比如 dMark" Text="{Binding SelectedStep.OutputVar, FallbackValue='colorHit'}" Width="120" />
                         </DockPanel>
                     </StackPanel>
                 </Border>
@@ -2344,7 +2372,7 @@
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="4" />
                         </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="循环变量" ToolTip="计数变量名，如 i" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.LoopVar, FallbackValue='i'}" Width="80" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="计数器名字，比如 i" Text="{Binding SelectedStep.LoopVar, FallbackValue='i'}" Width="80" />
                         </DockPanel>
                     </StackPanel>
                 </Border>
@@ -2404,7 +2432,7 @@
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
                         </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="表达式" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.CalcExpression, FallbackValue='a + b * 2'}" Width="200" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="写算式或数据，比如 a + b * 2" Text="{Binding SelectedStep.CalcExpression, FallbackValue='a + b * 2'}" Width="200" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
@@ -2451,7 +2479,7 @@
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="2" />
                         </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="保存路径" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.SavePath, FallbackValue='Data/result.csv'}" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="存到哪个文件，比如 Data/result.csv" Text="{Binding SelectedStep.SavePath, FallbackValue='Data/result.csv'}" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
@@ -2489,7 +2517,7 @@
                             <TextBlock Style="{StaticResource OpBadgeText}" Text="1" />
                         </Border>
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="提示内容" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedStep.NotifyMessage, FallbackValue='检测完成'}" Width="200" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="弹给操作员看的一句话" Text="{Binding SelectedStep.NotifyMessage, FallbackValue='检测完成'}" Width="200" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">

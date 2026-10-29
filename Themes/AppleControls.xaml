@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ctrl="clr-namespace:NoCodeVision.Views.Controls">
 <!-- 温启志：18719361399  混淆: 温m启u志m：d1o8u7c1q9l3p6g1a3a9l9 -->
 
 
@@ -59,22 +60,61 @@
         <Setter Property="Margin" Value="6,0,0,0" />
     </Style>
 
-    <!-- ===== 文本输入（iOS 行内值样式） ===== -->
+    <!-- ===== 文本输入：灰底描边圆角，空着的时候框里有灰字告诉你填什么 ===== -->
     <Style x:Key="AppleTextField" TargetType="TextBox">
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="{StaticResource InputBorderBrush}" />
+        <Setter Property="Background" Value="{StaticResource InputBrush}" />
         <Setter Property="HorizontalAlignment" Value="Right" />
         <Setter Property="TextAlignment" Value="Right" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="MinWidth" Value="160" />
+        <Setter Property="Padding" Value="9,5" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="CaretBrush" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="bd" CornerRadius="7"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <Grid>
+                            <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}"
+                                          HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" />
+                            <TextBlock x:Name="ph" Visibility="Collapsed"
+                                       Text="{Binding (ctrl:Hint.Text), RelativeSource={RelativeSource TemplatedParent}}"
+                                       TextTrimming="CharacterEllipsis"
+                                       TextAlignment="{TemplateBinding TextAlignment}"
+                                       FontSize="{TemplateBinding FontSize}"
+                                       Foreground="{StaticResource InputHintBrush}"
+                                       Margin="{TemplateBinding Padding}" VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Text" Value="">
+                            <Setter TargetName="ph" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource InputFocusBorderBrush}" />
+                            <Setter TargetName="bd" Property="Background" Value="{StaticResource SurfaceBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="bd" Property="Opacity" Value="0.55" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
-    <!-- ===== 紧凑内联文本框（表格/列表格内使用） ===== -->
+    <!-- ===== 紧凑内联文本框（表格格子里用：只留灰底，不画边框，免得表格发糊） ===== -->
     <Style x:Key="AppleTextFieldInline" TargetType="TextBox" BasedOn="{StaticResource AppleTextField}">
         <Setter Property="MinWidth" Value="0" />
-        <Setter Property="Padding" Value="0,6,6,6" />
+        <Setter Property="Padding" Value="6,4" />
+        <Setter Property="BorderThickness" Value="0" />
     </Style>
 
     <!-- ===== iOS 风格下拉框 ===== -->
@@ -102,8 +142,9 @@
     </Style>
 
     <Style x:Key="AppleComboBox" TargetType="ComboBox">
-        <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Background" Value="{StaticResource InputBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource InputBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="12,8" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
@@ -122,7 +163,9 @@
                                       Focusable="False">
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
-                                    <Border Background="{TemplateBinding Background}" CornerRadius="10" Padding="{TemplateBinding Padding}">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="8"
+                                          BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                                          Padding="{TemplateBinding Padding}">
                                         <DockPanel LastChildFill="True">
                                             <Path DockPanel.Dock="Right"
                                                   Data="M0,0 L6,6 L12,0"

@@ -187,7 +187,7 @@
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="明暗曲线" ToolTip="调整中间调的明暗，画面发灰时调它" />
                                         <Slider Grid.Column="1" Minimum="0.5" Maximum="3" TickFrequency="0.05" Value="{Binding Gamma}" VerticalAlignment="Center" Margin="8,0" />
-                                        <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding Gamma, StringFormat={}{0:F2}}" />
+                                        <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" ctrl:Hint.Text="1.0 是不调整" Text="{Binding Gamma, StringFormat={}{0:F2}}" />
                                     </Grid>
                                     <Grid Style="{StaticResource CompactField}">
                                         <Grid.ColumnDefinitions>
@@ -197,7 +197,7 @@
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="亮度" />
                                         <Slider Grid.Column="1" Minimum="-100" Maximum="100" TickFrequency="1" Value="{Binding Brightness}" VerticalAlignment="Center" Margin="8,0" />
-                                        <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding Brightness}" />
+                                        <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" ctrl:Hint.Text="-255 ~ 255，0 是不调整" Text="{Binding Brightness}" />
                                     </Grid>
                                     <Grid Style="{StaticResource CompactField}">
                                         <Grid.ColumnDefinitions>
@@ -207,7 +207,7 @@
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="对比度" />
                                         <Slider Grid.Column="1" Minimum="-100" Maximum="100" TickFrequency="1" Value="{Binding Contrast}" VerticalAlignment="Center" Margin="8,0" />
-                                        <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding Contrast}" />
+                                        <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" ctrl:Hint.Text="0 是不调整" Text="{Binding Contrast}" />
                                     </Grid>
                                     <Grid Style="{StaticResource CompactField}">
                                         <Grid.ColumnDefinitions>
@@ -217,7 +217,7 @@
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="锐度" />
                                         <Slider Grid.Column="1" Minimum="0" Maximum="100" TickFrequency="1" Value="{Binding Sharpness}" VerticalAlignment="Center" Margin="8,0" />
-                                        <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding Sharpness}" />
+                                        <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" ctrl:Hint.Text="0 是不锐化" Text="{Binding Sharpness}" />
                                     </Grid>
                                 </WrapPanel>
                             </Border>
@@ -244,15 +244,15 @@
                                         <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="R/G/B" />
                                         <StackPanel Grid.Column="1" Margin="0,0,4,0">
                                             <TextBlock Text="R" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding WhiteBalanceR}" TextAlignment="Left" />
+                                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="比如 1.0" Text="{Binding WhiteBalanceR}" TextAlignment="Left" />
                                         </StackPanel>
                                         <StackPanel Grid.Column="2" Margin="0,0,4,0">
                                             <TextBlock Text="G" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding WhiteBalanceG}" TextAlignment="Left" />
+                                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="比如 1.0" Text="{Binding WhiteBalanceG}" TextAlignment="Left" />
                                         </StackPanel>
                                         <StackPanel Grid.Column="3">
                                             <TextBlock Text="B" Style="{StaticResource AppleSubLabel}" FontSize="10" />
-                                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding WhiteBalanceB}" TextAlignment="Left" />
+                                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="比如 1.0" Text="{Binding WhiteBalanceB}" TextAlignment="Left" />
                                         </StackPanel>
                                     </Grid>
                                 </StackPanel>
@@ -305,7 +305,7 @@
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="每秒拍几张" ToolTip="一秒钟能拍多少张图" />
                                         <Slider Grid.Column="1" Minimum="1" Maximum="120" TickFrequency="1" Value="{Binding FrameRate}" VerticalAlignment="Center" Margin="8,0" />
-                                        <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" Text="{Binding FrameRate, StringFormat={}{0:F1}}" />
+                                        <TextBox Grid.Column="2" Style="{StaticResource AppleTextField}" ctrl:Hint.Text="每秒几张，比如 30" Text="{Binding FrameRate, StringFormat={}{0:F1}}" />
                                     </Grid>
                                     <Grid Style="{StaticResource CompactField}">
                                         <Grid.ColumnDefinitions>
@@ -314,7 +314,7 @@
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="存几张" />
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding BufferCount}" Width="64" />
+                                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="缓存几张，比如 4" Text="{Binding BufferCount}" Width="64" />
                                             <TextBlock Style="{StaticResource AppleUnit}" Text="张" />
                                         </StackPanel>
                                     </Grid>
@@ -325,7 +325,7 @@
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="等多久" ToolTip="最多等多少毫秒，等不到就判失败" />
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding TimeoutMs}" Width="64" />
+                                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="毫秒，比如 5000" Text="{Binding TimeoutMs}" Width="64" />
                                             <TextBlock Style="{StaticResource AppleUnit}" Text="ms" />
                                         </StackPanel>
                                     </Grid>
@@ -432,7 +432,7 @@
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="包大小" />
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding PacketSize}" Width="64" />
+                                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="字节，比如 1024" Text="{Binding PacketSize}" Width="64" />
                                             <TextBlock Style="{StaticResource AppleUnit}" Text="字节" />
                                         </StackPanel>
                                     </Grid>
@@ -443,7 +443,7 @@
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0" Style="{StaticResource CompactLabel}" Text="包间隔" />
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding InterPacketDelay}" Width="64" />
+                                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="毫秒，比如 10" Text="{Binding InterPacketDelay}" Width="64" />
                                             <TextBlock Style="{StaticResource AppleUnit}" Text="tick" />
                                         </StackPanel>
                                     </Grid>

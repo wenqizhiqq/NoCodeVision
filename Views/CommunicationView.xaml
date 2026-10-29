@@ -110,12 +110,12 @@
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="网口参数" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="IP 地址" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedConfig.NetIp, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="IP，比如 192.168.1.10" Text="{Binding SelectedConfig.NetIp, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="端口" />
-                            <TextBox Style="{StaticResource AppleTextField}" Text="{Binding SelectedConfig.NetPort, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="端口，Modbus 一般 502" Text="{Binding SelectedConfig.NetPort, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
@@ -141,17 +141,17 @@
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="UDP 参数" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="目标 IP" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetIp, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="IP，比如 192.168.1.10" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetIp, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="目标端口" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetPort, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="端口，Modbus 一般 502" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetPort, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="本地端口" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.LocalPort, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="本机监听端口，比如 9000" DockPanel.Dock="Right" Text="{Binding SelectedConfig.LocalPort, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
@@ -178,17 +178,17 @@
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="Modbus-TCP 参数" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="从站 IP" ToolTip="对方设备（PLC/触摸屏）在网络里的地址" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetIp, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="IP，比如 192.168.1.10" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetIp, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="端口" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetPort, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="端口，Modbus 一般 502" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetPort, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="单元 ID" ToolTip="一台设备里多个从站时用来区分编号，常见填 1" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.UnitId, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="从站号，一般 1" DockPanel.Dock="Right" Text="{Binding SelectedConfig.UnitId, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <TextBlock Style="{StaticResource AppleSubLabel}" Margin="14,6,14,8" Text="发送命令：r 地址 [数量] 读保持寄存器；w 地址 值… 写；c 地址 0/1 写线圈；i 地址 [数量] 读输入寄存器。" />
                     </StackPanel>
@@ -210,37 +210,37 @@
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="MQTT 参数" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="Broker IP" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetIp, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="IP，比如 192.168.1.10" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetIp, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="端口" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetPort, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="端口，Modbus 一般 502" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetPort, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="客户端 ID" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.ClientId, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="客户端 ID，不能和别人重复" DockPanel.Dock="Right" Text="{Binding SelectedConfig.ClientId, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="用户名" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Username, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="账号，没有就空着" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Username, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="密码" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Password, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="密码，没有就空着" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Password, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="发布主题" ToolTip="MQTT 的频道名：发的主题和对方订阅的主题必须同名才收得到" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Topic, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="发的主题，比如 vision/result" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Topic, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="订阅主题" ToolTip="MQTT 的频道名：订阅了才能收到对方发来的消息" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.SubTopics, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="要收的主题，多个用逗号分开" DockPanel.Dock="Right" Text="{Binding SelectedConfig.SubTopics, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <TextBlock Style="{StaticResource AppleSubLabel}" Margin="14,6,14,8" Text="连接后自动订阅「订阅主题」（逗号分隔）；发送框内容发布到「发布主题」。" />
                     </StackPanel>
@@ -262,7 +262,7 @@
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="HTTP / REST 参数" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="URL" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Url, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="完整地址，比如 http://192.168.1.20:8080/api" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Url, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
@@ -294,7 +294,7 @@
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="WebSocket 参数" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="URL" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Url, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="完整地址，比如 http://192.168.1.20:8080/api" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Url, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <TextBlock Style="{StaticResource AppleSubLabel}" Margin="14,6,14,8" Text="支持 ws:// 与 wss://；发送框文本经 WebSocket 双向收发。" />
                     </StackPanel>
@@ -316,27 +316,27 @@
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="西门子 S7 参数" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="PLC IP" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetIp, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="IP，比如 192.168.1.10" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetIp, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="端口" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetPort, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="端口，Modbus 一般 502" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetPort, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="机架" ToolTip="西门子 PLC 的位置编号，常见 0" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Rack, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="机架号，一般 0" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Rack, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="槽" ToolTip="西门子 PLC 的插槽编号，S7-1200/1500 常见 1 或 0" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Slot, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="插槽号，一般 0 或 1" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Slot, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="DB 号" ToolTip="西门子 PLC 的数据块编号" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Db, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="数据块编号，比如 10" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Db, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <TextBlock Style="{StaticResource AppleSubLabel}" Margin="14,6,14,8" Text="发送命令：r 地址 [数量] 读 DBn.DBW 地址；w 地址 值… 写（n=DB 号）。注：握手过程是通用做法，需接真机核对。" />
                     </StackPanel>
@@ -358,22 +358,22 @@
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="三菱 MC（3E 帧）参数" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="PLC IP" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetIp, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="IP，比如 192.168.1.10" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetIp, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="端口" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetPort, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="端口，Modbus 一般 502" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetPort, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="默认软元件" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Element, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="元素/变量名，比如 DB1.DBW0" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Element, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="站号" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Station, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="站号，比如 1" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Station, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <TextBlock Style="{StaticResource AppleSubLabel}" Margin="14,6,14,8" Text="发送命令：r 软元件地址 [数量] 读；w 软元件地址 值… 写（如 r D100 5 / w D100 1234）。" />
                     </StackPanel>
@@ -395,27 +395,27 @@
                         <TextBlock Style="{StaticResource AppleSectionHeader}" Text="欧姆龙 FINS（UDP）参数" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="PLC IP" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetIp, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="IP，比如 192.168.1.10" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetIp, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="端口" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetPort, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="端口，Modbus 一般 502" DockPanel.Dock="Right" Text="{Binding SelectedConfig.NetPort, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="目标节点" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.FinsDna, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="目标节点号，比如 12" DockPanel.Dock="Right" Text="{Binding SelectedConfig.FinsDna, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="源节点" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.FinsSna, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="源节点号，比如 10" DockPanel.Dock="Right" Text="{Binding SelectedConfig.FinsSna, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <Rectangle Style="{StaticResource AppleDivider}" />
                         <DockPanel Style="{StaticResource AppleRow}">
                             <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="默认软元件" />
-                            <TextBox Style="{StaticResource AppleTextField}" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Element, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
+                            <TextBox Style="{StaticResource AppleTextField}" ctrl:Hint.Text="元素/变量名，比如 DB1.DBW0" DockPanel.Dock="Right" Text="{Binding SelectedConfig.Element, UpdateSourceTrigger=PropertyChanged}" MinWidth="150" />
                         </DockPanel>
                         <TextBlock Style="{StaticResource AppleSubLabel}" Margin="14,6,14,8" Text="发送命令：r 软元件地址 [数量] 读；w 软元件地址 值… 写（如 r D100 5 / w D100 1234）。" />
                     </StackPanel>
@@ -465,8 +465,7 @@
                             </StackPanel>
                             <TextBox Style="{StaticResource AppleTextField}" HorizontalAlignment="Stretch" TextAlignment="Left"
                                      MinWidth="120" Text="{Binding SendText, UpdateSourceTrigger=PropertyChanged}"
-                                     BorderThickness="1" BorderBrush="{StaticResource LineBrush}" Padding="8"
-                                     Background="{StaticResource SurfaceBrush}" />
+                                     Padding="10,7" ctrl:Hint.Text="要发出去的内容，比如 M100=1；回车即发" />
                         </DockPanel>
                     </StackPanel>
                 </Border>
