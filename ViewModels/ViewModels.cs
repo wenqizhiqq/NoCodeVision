@@ -403,10 +403,10 @@ public class VisionFlowStep : ViewModelBase
 
     private string _labelName = "";
 
-    /// <summary>零样本查瑕疵：结果怎么看（热图+框 / 只画框 / 只要热图）。</summary>
-    public string HeatMode { get => _heatMode; set => SetField(ref _heatMode, value); }
+    /// <summary>零样本查瑕疵：要不要把差异铺成热力图（关掉就只在缺陷处画红框）。</summary>
+    public bool HeatMapOn { get => _heatMapOn; set => SetField(ref _heatMapOn, value); }
 
-    private string _heatMode = "热图+框";
+    private bool _heatMapOn = true;
 
 
 
@@ -8007,8 +8007,6 @@ public class FlowViewModel : ViewModelBase
         public System.Collections.Generic.List<(double X, double Y, double W, double H)> Boxes = new();
         /// <summary>零样本查瑕疵算出的热力图（谁有它，「显示结果」就拿它当底图）。</summary>
         public OpenCvSharp.Mat? Heat;
-        /// <summary>只要热图：显示结果就不要再往上面画框。</summary>
-        public bool HeatOnly;
         public double Value; public string Text = "";
     }
 
@@ -8909,8 +8907,8 @@ public class FlowViewModel : ViewModelBase
 
                 var (zsDefects, zsDiff, zsDx, zsDy, zsAng, zsTh, zsNote) = ZeroShot.Run(zsCur, zsGold, zsParam);
 
-                // 热力图：差多少铺成什么颜色（越红差得越多）；选「只画框」就不做
-                Mat? zsHeat = (step.HeatMode ?? "") == "只画框" ? null : ZeroShot.Heatmap(zsCur, zsDiff, zsTh);
+                // 热力图：差多少铺成什么颜色（越红差得越多）；关掉就退回只画红框
+                Mat? zsHeat = step.HeatMapOn ? ZeroShot.Heatmap(zsCur, zsDiff, zsTh) : null;
 
                 zsDiff.Dispose();
 
@@ -8929,7 +8927,7 @@ public class FlowViewModel : ViewModelBase
                     GeoPut(step, new GeoResult { Value = zsDefects.Count, HasPoint = true, Px = d0.X + d0.W / 2, Py = d0.Y + d0.H / 2,
                         HasBox = true, Bx = d0.X, By = d0.Y, Bw = d0.W, Bh = d0.H,
                         Boxes = zsDefects.Take(100).Select(d => (d.X, d.Y, d.W, d.H)).ToList(),
-                        Heat = zsHeat, HeatOnly = (step.HeatMode ?? "") == "只要热图" });
+                        Heat = zsHeat });
 
                 }
 
@@ -8939,7 +8937,7 @@ public class FlowViewModel : ViewModelBase
 
                     Done("没查出缺陷", zsNote);
 
-                    GeoPut(step, new GeoResult { Value = 0, Heat = zsHeat, HeatOnly = (step.HeatMode ?? "") == "只要热图" });
+                    GeoPut(step, new GeoResult { Value = 0, Heat = zsHeat });
 
                 }
 
@@ -8949,7 +8947,7 @@ public class FlowViewModel : ViewModelBase
 
                 var zsBase = zsHeat ?? zsCur;
 
-                using (var zsDraw = (step.HeatMode ?? "") == "只要热图" ? zsBase.Clone() : ZeroShot.Draw(zsBase, zsDefects))
+                using (var zsDraw = ZeroShot.Draw(zsBase, zsDefects))
 
                     ResultImage = MatToBitmapSource(zsDraw);
 
@@ -10262,7 +10260,7 @@ public class FlowViewModel : ViewModelBase
 
                     var green = new Scalar(60, 230, 60);
 
-                    bool shape = step.MeasureType != "只要文字" && main?.HeatOnly != true && extra?.HeatOnly != true;
+                    bool shape = step.MeasureType != "只要文字";
 
                     foreach (var gg in new[] { main, extra })
 
