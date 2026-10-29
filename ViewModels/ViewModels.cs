@@ -7865,6 +7865,8 @@ public class FlowViewModel : ViewModelBase
         public bool HasLine; public double Lx, Ly, Ldx, Ldy;
         public bool HasCircle; public double Cx, Cy, R;
         public bool HasBox; public double Bx, By, Bw, Bh;
+        /// <summary>一次查出多个缺陷时，全部框都存这里，显示结果会一个不落地画出来。</summary>
+        public System.Collections.Generic.List<(double X, double Y, double W, double H)> Boxes = new();
         public double Value; public string Text = "";
     }
 
@@ -8599,7 +8601,9 @@ public class FlowViewModel : ViewModelBase
 
                         Value = scLines.Count, HasPoint = true, Px = l0.X + l0.W / 2, Py = l0.Y + l0.H / 2,
 
-                        HasBox = true, Bx = l0.X, By = l0.Y, Bw = l0.W, Bh = l0.H
+                        HasBox = true, Bx = l0.X, By = l0.Y, Bw = l0.W, Bh = l0.H,
+
+                        Boxes = scLines.Take(100).Select(l => (l.X, l.Y, l.W, l.H)).ToList()
 
                     });
 
@@ -8674,7 +8678,8 @@ public class FlowViewModel : ViewModelBase
                     Done($"缺陷 {zsDefects.Count} 个，最大 {d0.Area:F0} 像素 @({d0.X + d0.W / 2:F0},{d0.Y + d0.H / 2:F0})", zsNote);
 
                     GeoPut(step, new GeoResult { Value = zsDefects.Count, HasPoint = true, Px = d0.X + d0.W / 2, Py = d0.Y + d0.H / 2,
-                        HasBox = true, Bx = d0.X, By = d0.Y, Bw = d0.W, Bh = d0.H });
+                        HasBox = true, Bx = d0.X, By = d0.Y, Bw = d0.W, Bh = d0.H,
+                        Boxes = zsDefects.Take(100).Select(d => (d.X, d.Y, d.W, d.H)).ToList() });
 
                 }
 
@@ -10019,6 +10024,13 @@ public class FlowViewModel : ViewModelBase
 
                             Cv2.Rectangle(canvas, new Rect((int)Math.Round(gg.Bx), (int)Math.Round(gg.By),
                                 Math.Max(2, (int)Math.Round(gg.Bw)), Math.Max(2, (int)Math.Round(gg.Bh))), red, 2);
+
+                        if (shape)
+
+                            foreach (var bx in gg.Boxes)
+
+                                Cv2.Rectangle(canvas, new Rect((int)Math.Round(bx.X), (int)Math.Round(bx.Y),
+                                    Math.Max(2, (int)Math.Round(bx.W)), Math.Max(2, (int)Math.Round(bx.H))), red, 2);
 
                         if (shape && gg.HasPoint)
 
