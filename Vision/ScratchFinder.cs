@@ -22,6 +22,9 @@ public sealed class ScratchParam
     /// <summary>外接框里线条占的比例上限：划痕是细线，占比低；实心块（字、条码）占比高。</summary>
     public double MaxFill { get; set; } = 0.18;
 
+    /// <summary>划痕粗细：0=细划痕（1~3 像素宽）1=一般 2=粗划痕。</summary>
+    public int Mode { get; set; } = 1;
+
     /// <summary>框起来只看这一块（null = 整张图）。</summary>
     public Rect? Roi { get; set; }
 }
@@ -62,12 +65,14 @@ public static class ScratchFinder
 
         using var g = new Mat();
         Cv2.GaussianBlur(work, g, new Size(3, 3), 0, 0, BorderTypes.Reflect);
-        using var kernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new Size(31, 31));
+        // 黑帽核比划痕宽一点才压得住：细划痕用 11，一般 21，粗的 31（半分辨率）
+        int hatK = p.Mode <= 0 ? 11 : p.Mode >= 2 ? 31 : 21;
+        using var kernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new Size(hatK, hatK));
         using var bh = new Mat();
         Cv2.MorphologyEx(g, bh, MorphTypes.BlackHat, kernel);
         bh.CopyTo(resp);
 
-        double th = Math.Max(20.0, 140.0 - Math.Clamp(p.Sensitivity, 0, 100));
+        double th = Math.Max(4.0, (140.0 - Math.Clamp(p.Sensitivity, 0, 100)) * (p.Mode <= 0 ? 0.35 : 1.0));
         using var bin = new Mat();
         Cv2.Threshold(bh, bin, th, 255, ThresholdTypes.Binary);
         using var k5 = Cv2.GetStructuringElement(MorphShapes.Ellipse, new Size(5, 5));
@@ -78,8 +83,9 @@ public static class ScratchFinder
         using var centroids = new Mat();
         int n = Cv2.ConnectedComponentsWithStats(bin, labels, stats, centroids, PixelConnectivity.Connectivity8);
 
-        double minLen = Math.Max(20.0, p.MinLength * WorkScale);
-        double maxW = Math.Max(2.0, p.MaxWidth * WorkScale);
+        double minLen = Math.Max(8.0, p.MinLength * WorkScale);
+        double maxW = Math.Max(1.5, p.MaxWidth * WorkScale);
+        double maxFill = p.Mode <= 0 ? 0.85 : p.MaxFill;
         double inv = 1.0 / WorkScale;
 
         for (int i = 1; i < n; i++)
@@ -92,7 +98,7 @@ public static class ScratchFinder
             double len = Math.Sqrt((double)w * w + (double)h * h);
             if (len < minLen) continue;
             double fill = area / (double)(w * h);
-            if (fill > p.MaxFill) continue;
+            if (fill > maxFill) continue;
 
             using var roiLabels = new Mat(labels, new Rect(x, y, w, h));
             using var mask = new Mat();

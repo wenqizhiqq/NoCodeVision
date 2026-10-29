@@ -3697,7 +3697,7 @@ public class FlowViewModel : ViewModelBase
             flow.Steps = new ObservableCollection<VisionFlowStep>
             {
                 MkStep(1, "拍张照片", "读上相机图", s => { s.CaptureMode = "打开文件夹"; s.FolderPath = sdir; }),
-                MkStep(2, "找划痕", "找划痕", s => { s.Number1 = 80; s.Number2 = 300; s.AreaMax = 44; s.IndexProbe = 0; }),
+                MkStep(2, "找划痕", "找划痕", s => { s.MatchMode = "细划痕"; s.Number1 = 100; s.Number2 = 120; s.AreaMax = 12; s.IndexProbe = 0; }),
                 MkStep(3, "判个数对不对", "划痕判定", s => { s.CompareSource = "第2步"; s.AreaMin = 0; s.AreaMax = 0; }),
                 MkStep(4, "显示结果", "画到图上", s => { s.CompareSource = "第2步"; s.MeasureType = "框"; }),
             };
@@ -8552,6 +8552,8 @@ public class FlowViewModel : ViewModelBase
                 var scParam = new Vision.ScratchParam
 
                 {
+
+                    Mode = step.MatchMode == "细划痕" ? 0 : step.MatchMode == "粗划痕" ? 2 : 1,
 
                     Sensitivity = step.Number1 <= 0 ? 80 : step.Number1,
 
