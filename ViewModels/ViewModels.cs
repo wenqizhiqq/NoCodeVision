@@ -381,6 +381,30 @@ public class VisionFlowStep : ViewModelBase
 
 
 
+    // ===== 跳转 / 跳转到（按名字找落点，不用记第几步） =====
+
+    /// <summary>跳转：什么情况才跳（总是跳 / 上一步合格 / 上一步不合格 / 当前值大于等于 / 当前值小于等于）。</summary>
+    public string JumpCondition { get => _jumpCondition; set => SetField(ref _jumpCondition, value); }
+
+    private string _jumpCondition = "上一步不合格";
+
+    /// <summary>跳转：比数值时用的那个数。</summary>
+    public double JumpWhen { get => _jumpWhen; set => SetField(ref _jumpWhen, value); }
+
+    private double _jumpWhen;
+
+    /// <summary>跳转：跳到哪个名字（填「跳转到」那一步起的名字）。</summary>
+    public string JumpTargetName { get => _jumpTargetName; set => SetField(ref _jumpTargetName, value); }
+
+    private string _jumpTargetName = "";
+
+    /// <summary>跳转到（落点）：这里叫什么名字，给「跳转」当目的地。</summary>
+    public string LabelName { get => _labelName; set => SetField(ref _labelName, value); }
+
+    private string _labelName = "";
+
+
+
     public double MoveDistance { get => _moveDistance; set => SetField(ref _moveDistance, value); }
 
     private double _moveDistance;
@@ -4130,6 +4154,32 @@ public class FlowViewModel : ViewModelBase
 
     int BlockNo(string key) => OperatorCatalog.Find(_selectedStep?.StepType)?.BlockNo(key) ?? 0;
 
+    /// <summary>「跳转」这一步按名字找到的落点，填错名字当场提示。</summary>
+    public string SelectedJumpResolve
+    {
+        get
+        {
+            var st = _selectedStep;
+            if (st == null || st.StepType != "Jump") return "";
+            if (string.IsNullOrWhiteSpace(st.JumpTargetName)) return "还没填名字：填「跳转到」那一步起的名字";
+            int at = LabelIndex(_selectedFlow, st.JumpTargetName);
+            if (at < 0) return $"没找到叫「{st.JumpTargetName.Trim()}」的「跳转到」，现在不会跳";
+            var t = _selectedFlow!.Steps[at];
+            return $"会跳到 第{t.Index}步「{(string.IsNullOrWhiteSpace(t.LabelName) ? t.Name : t.LabelName)}」";
+        }
+    }
+
+    /// <summary>「跳转到」这一步被哪些「跳转」调用。</summary>
+    public string SelectedLabelCallers
+    {
+        get
+        {
+            var st = _selectedStep;
+            if (st == null || st.StepType != "JumpTo") return "";
+            return CallersText(_selectedFlow, st.LabelName);
+        }
+    }
+
     /// <summary>有没有选中步骤（右上角「运行状态」卡片显隐用）。</summary>
     public bool HasSelectedStep => _selectedStep != null;
 
@@ -4148,6 +4198,8 @@ public class FlowViewModel : ViewModelBase
         OnPropertyChanged(nameof(SelectedBlockOutputNo));
         OnPropertyChanged(nameof(HasSelectedStep));
         OnPropertyChanged(nameof(CaptureFolderInfo));
+        OnPropertyChanged(nameof(SelectedJumpResolve));
+        OnPropertyChanged(nameof(SelectedLabelCallers));
     }
 
 
@@ -7813,7 +7865,15 @@ public class FlowViewModel : ViewModelBase
 
     private void UnwireStep(VisionFlowStep step) => step.PropertyChanged -= StepPropertyChanged;
 
-    private void StepPropertyChanged(object? sender, PropertyChangedEventArgs e) => RequestSave();
+    private void StepPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(VisionFlowStep.JumpTargetName) or nameof(VisionFlowStep.LabelName))
+        {
+            OnPropertyChanged(nameof(SelectedJumpResolve));
+            OnPropertyChanged(nameof(SelectedLabelCallers));
+        }
+        RequestSave();
+    }
 
 
 
@@ -11112,6 +11172,29 @@ public class FlowViewModel : ViewModelBase
                 break;
             }
 
+            case "Jump":
+            {
+                bool hold = JumpHolds(flow, step, out string why);
+                int at = LabelIndex(flow, step.JumpTargetName);
+                string where = at >= 0
+                    ? $"第{flow!.Steps[at].Index}步「{flow.Steps[at].LabelName}」"
+                    : $"没找到名字「{(step.JumpTargetName ?? "").Trim()}」";
+                Done(hold
+                        ? (at >= 0 ? $"{why} → 跳到{where}" : $"{why}，但{where}，只能顺序往下")
+                        : $"{why}，顺序往下",
+                    string.IsNullOrWhiteSpace(step.JumpTargetName) ? "还没填跳转名字" : $"{step.JumpCondition} → {step.JumpTargetName.Trim()}");
+                step.StatusText = hold && at >= 0 ? "已跳转" : "不跳";
+                break;
+            }
+
+            case "JumpTo":
+            {
+                Done(CallersText(flow, step.LabelName),
+                    string.IsNullOrWhiteSpace(step.LabelName) ? "还没起名字" : step.LabelName.Trim());
+                step.StatusText = "落点";
+                break;
+            }
+
             default: return false;
 
         }
@@ -11982,6 +12065,72 @@ public class FlowViewModel : ViewModelBase
 
     }
 
+    /// <summary>「跳转到」按名字找落点：返回步骤在集合里的下标，找不到返回 -1。</summary>
+    static int LabelIndex(VisionFlow? flow, string? name)
+    {
+        if (flow == null || string.IsNullOrWhiteSpace(name)) return -1;
+        var key = name.Trim();
+        for (int i = 0; i < flow.Steps.Count; i++)
+        {
+            var s = flow.Steps[i];
+            if (s.StepType == "JumpTo" && string.Equals((s.LabelName ?? "").Trim(), key, StringComparison.OrdinalIgnoreCase))
+                return i;
+        }
+        return -1;
+    }
+
+    /// <summary>这个落点被哪些「跳转」调用（给面板显示）。</summary>
+    static string CallersText(VisionFlow? flow, string? label)
+    {
+        if (string.IsNullOrWhiteSpace(label)) return "还没起名字：起个名字，别人才跳得过来";
+        if (flow == null) return "";
+        var hits = flow.Steps
+            .Where(s => s.StepType == "Jump" && string.Equals((s.JumpTargetName ?? "").Trim(), label.Trim(), StringComparison.OrdinalIgnoreCase))
+            .Select(s => s.Index).ToList();
+        return hits.Count == 0 ? "还没有哪一步跳到这里" : "被 第 " + string.Join("、", hits) + " 步调用";
+    }
+
+    static bool IsFailStatus(string? status)
+    {
+        var s = status ?? "";
+        return s.Contains("不合格") || s.Contains("失败") || s.Contains("未完成") || s.Contains("出错") || s.Contains("要复核");
+    }
+
+    static bool IsOkStatus(string? status)
+    {
+        var s = status ?? "";
+        if (IsFailStatus(s)) return false;
+        return s.Contains("合格") || s.Contains("成功") || s.Contains("完成") || s.Contains("通过") || s.Contains("正常");
+    }
+
+    /// <summary>跳转的条件到底成不成立；why 是给表里看的一句人话。</summary>
+    bool JumpHolds(VisionFlow? flow, VisionFlowStep step, out string why)
+    {
+        var cond = string.IsNullOrWhiteSpace(step.JumpCondition) ? "总是跳" : step.JumpCondition.Trim();
+        var prev = flow?.Steps.FirstOrDefault(s => s.Index == step.Index - 1);
+        why = cond;
+        switch (cond)
+        {
+            case "总是跳":
+                return true;
+            case "上一步合格":
+                return prev != null && IsOkStatus(prev.StatusText);
+            case "上一步不合格":
+                return prev != null && IsFailStatus(prev.StatusText);
+            case "当前值大于等于":
+            case "当前值小于等于":
+            {
+                double v = NumOf(prev?.ActualValue);
+                bool hold = cond == "当前值大于等于" ? v >= step.JumpWhen : v <= step.JumpWhen;
+                why = $"上一步读数 {v:0.###} {cond.Replace("当前值", "")} {step.JumpWhen:0.###}";
+                return hold;
+            }
+            default:
+                return false;
+        }
+    }
+
+
     /// <summary>根据逻辑列决定下一行：如果/并且/或者 条件不成立跳到「否则」（没有则整块跳过）；循环 跳回最近「如果」；跳出 越过最近「循环」行。</summary>
 
     private int NextStepIndex(VisionFlow? flow, int i)
@@ -11993,6 +12142,15 @@ public class FlowViewModel : ViewModelBase
         if (steps == null || i < 0 || i >= steps.Count) return i + 1;
 
         var step = steps[i];
+
+        // 跳转：条件成立就跳到同名「跳转到」那一步；名字没找到就顺序往下
+        if (step.StepType == "Jump")
+        {
+            if (!JumpHolds(flow, step, out _)) return i + 1;
+            int at = LabelIndex(flow, step.JumpTargetName);
+            return at >= 0 ? at : i + 1;
+        }
+        if (step.StepType == "JumpTo") return i + 1;
 
         switch (step.LogicRelation)
 

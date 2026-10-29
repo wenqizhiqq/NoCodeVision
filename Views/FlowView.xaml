@@ -552,6 +552,20 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <!-- 跳转 / 跳转到：落点解析 + 被谁调用 -->
+                        <StackPanel Visibility="{Binding SelectedStep.StepType, Converter={StaticResource KindVis}, ConverterParameter='Jump,JumpTo'}">
+                            <Rectangle Style="{StaticResource AppleDivider}" />
+                            <DockPanel Style="{StaticResource AppleRow}"
+                                       Visibility="{Binding SelectedStep.StepType, Converter={StaticResource KindVis}, ConverterParameter=Jump}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="会跳到哪" Width="70" />
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding SelectedJumpResolve}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                            </DockPanel>
+                            <DockPanel Style="{StaticResource AppleRow}"
+                                       Visibility="{Binding SelectedStep.StepType, Converter={StaticResource KindVis}, ConverterParameter=JumpTo}">
+                                <TextBlock Style="{StaticResource AppleLabel}" DockPanel.Dock="Left" Text="谁跳到这" Width="70" />
+                                <TextBlock Style="{StaticResource AppleSubLabel}" Text="{Binding SelectedLabelCallers}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                            </DockPanel>
+                        </StackPanel>
                         <!-- 通讯类步骤：不用跑流程就能测通不通 -->
                         <StackPanel Visibility="{Binding SelectedStep.StepType, Converter={StaticResource KindVis}, ConverterParameter='ModbusWrite,ModbusRead,ModbusReadArr,TcpSend'}">
                             <Rectangle Style="{StaticResource AppleDivider}" />
