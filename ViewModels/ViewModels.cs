@@ -438,6 +438,11 @@ public class VisionFlowStep : ViewModelBase
 
 
 
+    /// <summary>找划痕：偏离直线的比例下限（0.05=5%）。标签边框、面板凹槽都是笔直的线，偏离很小；真划痕是弯的。</summary>
+    public double BendMin { get => _bendMin; set => SetField(ref _bendMin, value); }
+
+    private double _bendMin = 0.05;
+
     public double Number3 { get => _number3; set => SetField(ref _number3, value); }
 
     private double _number3 = 30;
@@ -3697,7 +3702,7 @@ public class FlowViewModel : ViewModelBase
             flow.Steps = new ObservableCollection<VisionFlowStep>
             {
                 MkStep(1, "拍张照片", "读上相机图", s => { s.CaptureMode = "打开文件夹"; s.FolderPath = sdir; }),
-                MkStep(2, "找划痕", "找划痕", s => { s.MatchMode = "细划痕"; s.Number1 = 100; s.Number2 = 120; s.AreaMax = 12; s.IndexProbe = 0; s.RoiX = 0; s.RoiY = 0; s.RoiW = 0; s.RoiH = 0; }),
+                MkStep(2, "找划痕", "找划痕", s => { s.MatchMode = "一般"; s.Number1 = 80; s.Number2 = 300; s.AreaMax = 44; s.BendMin = 0.05; s.IndexProbe = 0; s.RoiX = 1900; s.RoiY = 500; s.RoiW = 1500; s.RoiH = 2100; }),
                 MkStep(3, "判个数对不对", "划痕判定", s => { s.CompareSource = "第2步"; s.AreaMin = 0; s.AreaMax = 0; }),
                 MkStep(4, "显示结果", "画到图上", s => { s.CompareSource = "第2步"; s.MeasureType = "框"; }),
             };
@@ -8560,6 +8565,8 @@ public class FlowViewModel : ViewModelBase
                     MinLength = step.Number2 <= 0 ? 300 : step.Number2,
 
                     MaxWidth = step.AreaMax <= 0 ? 44 : step.AreaMax,
+
+                    MinBend = Math.Clamp(step.BendMin, 0, 0.5),
 
                     // 只有用户真的拖过框才算 ROI：新建步骤的默认值是 10,10,120,80，不处理会把整图当成只找左上角一小块
                     Roi = step.RoiW > 2 && step.RoiH > 2 && !(step.RoiX == 10 && step.RoiY == 10 && step.RoiW == 120 && step.RoiH == 80)

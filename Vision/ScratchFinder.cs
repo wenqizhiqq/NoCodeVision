@@ -25,6 +25,9 @@ public sealed class ScratchParam
     /// <summary>划痕粗细：0=细划痕（1~3 像素宽）1=一般 2=粗划痕。</summary>
     public int Mode { get; set; } = 1;
 
+    /// <summary>偏离直线的比例下限（0.05=5%）：标签边框、面板凹槽是笔直的线，偏离小会被挡掉；填 0 不挡。</summary>
+    public double MinBend { get; set; } = 0.05;
+
     /// <summary>框起来只看这一块（null = 整张图）。</summary>
     public Rect? Roi { get; set; }
 }
@@ -109,7 +112,7 @@ public static class ScratchFinder
             bool hole = false;
             for (int c = 0; c < cs.Length; c++)
             {
-                if (hier[c].Parent >= 0 && Cv2.ContourArea(cs[c]) > 200) { hole = true; break; }
+                if (hier[c].Parent >= 0 && Cv2.ContourArea(cs[c]) > 40) { hole = true; break; }
             }
             if (hole) continue;
 
@@ -118,6 +121,31 @@ public static class ScratchFinder
             Cv2.MinMaxLoc(dt, out _, out double maxDt);
             double width = 2 * maxDt;
             if (width < 1.5 || width > maxW) continue;
+
+            // 弯不弯：把这条线自己拟合一条直线，看最远的点偏离多少
+            double bend = 0;
+            using (var nz = new Mat())
+            {
+                Cv2.FindNonZero(mask, nz);
+                if (nz.Rows > 2)
+                {
+                    using var pts = new Mat();
+                    nz.ConvertTo(pts, MatType.CV_32F);
+                    using var fit = new Mat();
+                    Cv2.FitLine(pts, fit, DistanceTypes.L2, 0, 0.01, 0.01);
+                    float vx = fit.At<float>(0), vy = fit.At<float>(1);
+                    float x0 = fit.At<float>(2), y0 = fit.At<float>(3);
+                    double maxDev = 0;
+                    for (int k = 0; k < pts.Rows; k++)
+                    {
+                        var v = pts.At<Vec2f>(k);
+                        double d = Math.Abs((v.Item0 - x0) * vy - (v.Item1 - y0) * vx);
+                        if (d > maxDev) maxDev = d;
+                    }
+                    bend = Math.Max(0, maxDev - width / 2) / Math.Max(1.0, len);
+                }
+            }
+            if (p.MinBend > 0 && bend < p.MinBend) continue;
 
             lines.Add(new ScratchLine(
                 (roi.X + x) * inv, (roi.Y + y) * inv, w * inv, h * inv,
