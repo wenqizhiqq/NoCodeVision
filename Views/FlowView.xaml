@@ -574,15 +574,7 @@
                                 <TextBlock Style="{StaticResource AppleSubLabel}" Text="还没有图：先在「拍张照片」选一张，或直接跑一次流程"
                                            Margin="12,10,12,0"
                                            Visibility="{Binding ResultPreview, Converter={StaticResource NullToVisibilityConverter}}" />
-                                <Image Source="{Binding ResultPreview}" Stretch="Uniform">
-                                    <Image.Height>
-                                        <MultiBinding Converter="{StaticResource AspectHeight}">
-                                            <Binding Path="ActualWidth" ElementName="ShowResultPreviewBox" />
-                                            <Binding Path="ResultPreview.PixelWidth" />
-                                            <Binding Path="ResultPreview.PixelHeight" />
-                                        </MultiBinding>
-                                    </Image.Height>
-                                </Image>
+                                <ctrl:ZoomPanImage Source="{Binding ResultPreview}" Height="{Binding ActualWidth, ElementName=ShowResultPreviewBox, Converter={StaticResource WidthToHeight}, ConverterParameter=0.8333}" />
                                 </StackPanel>
                             </Border>
                         </StackPanel>

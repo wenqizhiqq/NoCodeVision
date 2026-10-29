@@ -92,21 +92,9 @@
                         <StackPanel>
                             <TextBlock Style="{StaticResource AppleSectionHeader}" Text="实时预览" />
                             <Border Margin="14,4,14,8" Background="{StaticResource PreviewBgBrush}" CornerRadius="10"
-                                    HorizontalAlignment="Stretch" MaxHeight="320">
-                                <Viewbox Stretch="Uniform">
-                                    <Grid Width="{Binding Width}" Height="{Binding Height}" Background="{StaticResource PreviewBgBrush}">
-                                        <Image Source="{Binding CameraLiveImage}" Stretch="Uniform" IsHitTestVisible="False">
-                                            <Image.Style>
-                                                <Style TargetType="Image">
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding CameraLiveImage}" Value="{x:Null}">
-                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Image.Style>
-                                        </Image>
+                                    HorizontalAlignment="Stretch" Height="320">
+                                <Grid>
+                                        <ctrl:ZoomPanImage Source="{Binding CameraLiveImage}" />
                                         <Border HorizontalAlignment="Center" VerticalAlignment="Center" Background="#1C1C22"
                                                 CornerRadius="8" Padding="12,6">
                                             <Border.Style>
@@ -121,8 +109,7 @@
                                             </Border.Style>
                                             <TextBlock Text="{Binding StatusText}" Foreground="#8E8E93" FontSize="13" />
                                         </Border>
-                                    </Grid>
-                                </Viewbox>
+                                </Grid>
                             </Border>
                         </StackPanel>
                     </Border>

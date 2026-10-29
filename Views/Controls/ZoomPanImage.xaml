@@ -1,0 +1,27 @@
+<UserControl x:Class="NoCodeVision.Views.Controls.ZoomPanImage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d">
+<!-- 温启志：18719361399  只读看图：滚轮以光标为中心缩放，中键/右键拖拽平移，双击复位 -->
+
+    <Border Background="{StaticResource PreviewBgBrush}" CornerRadius="8" ClipToBounds="True">
+        <Grid x:Name="Root" Background="Transparent">
+            <Canvas x:Name="Host" HorizontalAlignment="Left" VerticalAlignment="Top">
+                <Canvas.RenderTransform>
+                    <TransformGroup>
+                        <ScaleTransform x:Name="Scale" ScaleX="1" ScaleY="1" />
+                        <TranslateTransform x:Name="Move" X="0" Y="0" />
+                    </TransformGroup>
+                </Canvas.RenderTransform>
+                <Image x:Name="Pic" Stretch="Fill" IsHitTestVisible="False"
+                       RenderOptions.BitmapScalingMode="HighQuality" />
+            </Canvas>
+
+            <TextBlock x:Name="Hint" Text="滚轮缩放 · 中键或右键拖动平移 · 双击复位"
+                       HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="8"
+                       FontSize="10.5" Foreground="{StaticResource TextMutedBrush}" IsHitTestVisible="False" />
+        </Grid>
+    </Border>
+</UserControl>
