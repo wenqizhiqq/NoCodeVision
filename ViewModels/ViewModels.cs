@@ -3792,18 +3792,23 @@ public class FlowViewModel : ViewModelBase
             var aStd = Helpers.AppPaths.ToStoredPath(Helpers.AppPaths.ResolvePath(@"Projects\对位标定\图\对位标定板.png"));
             var aCur = Helpers.AppPaths.ToStoredPath(Helpers.AppPaths.ResolvePath(@"Projects\对位标定\图\当前件.png"));
             var aTpl = Helpers.AppPaths.ToStoredPath(Helpers.AppPaths.ResolvePath(@"Projects\对位标定\图\模板mark.png"));
-            // 九点：机台走 3×3，每行「像素X,像素Y,机台X,机台Y」
-            var apts = "200,200,17.7024,31.8606\n400,200,27.4838,33.9397\n600,200,37.2653,36.0188\n"
-                     + "200,400,15.6232,41.6421\n400,400,25.4047,43.7212\n600,400,35.1862,45.8003\n"
-                     + "200,600,13.5441,51.4235\n400,600,23.3256,53.5027\n600,600,33.1071,55.5818";
-            // 五点：绕旋转中心转 5 个角度，每行「像素X,像素Y,转角」
-            var rpts = "450.0000,300.0000,0\n346.3526,442.6584,72\n178.6474,388.2003,144\n"
-                     + "178.6474,211.7997,216\n346.3526,157.3416,288";
+            var aStdDir = Helpers.AppPaths.ToStoredPath(Helpers.AppPaths.ResolvePath(@"Projects\对位标定\标准件"));
+            var aCurDir = Helpers.AppPaths.ToStoredPath(Helpers.AppPaths.ResolvePath(@"Projects\对位标定\当前件"));
+            var aPts9 = Helpers.AppPaths.ToStoredPath(Helpers.AppPaths.ResolvePath(@"Projects\对位标定\九点"));
+            var aPts5 = Helpers.AppPaths.ToStoredPath(Helpers.AppPaths.ResolvePath(@"Projects\对位标定\五点"));
             flow.Steps = new ObservableCollection<VisionFlowStep>
             {
-                MkStep(1, "拍张照片", "读标准件", s => { s.CaptureMode = "打开文件"; s.ImageSource = aStd; }),
-                MkStep(2, "九点平移标定", "像素当量", s => { s.CalcExpression = apts; s.OutputVar = "mmPerPx"; }),
-                MkStep(3, "五点旋转标定", "旋转中心", s => { s.CalcExpression = rpts; s.OutputVar = "rotCenter"; }),
+                MkStep(1, "拍张照片", "读标准件", s => { s.CaptureMode = "打开文件夹"; s.FolderPath = aStdDir; s.ImageSource = aStd; }),
+                MkStep(2, "九点平移标定", "看 9 张照片算当量", s =>
+                {
+                    s.FolderPath = aPts9; s.TemplateFile = aTpl; s.NominalValue = 10; s.TargetX = 0; s.TargetY = 0;
+                    s.OutputVar = "mmPerPx";
+                }),
+                MkStep(3, "五点旋转标定", "看 5 张照片算中心", s =>
+                {
+                    s.FolderPath = aPts5; s.TemplateFile = aTpl; s.InputValue = "0,72,144,216,288";
+                    s.OutputVar = "rotCenter";
+                }),
                 MkStep(4, "图里找图案", "找标准件 mark", s =>
                 {
                     // 模板存成文件，换一张图还能用同一个模板（不然每张图都从自己身上抠，角度永远是 0）
@@ -3813,7 +3818,7 @@ public class FlowViewModel : ViewModelBase
                     s.ScoreThreshold = 0.6; s.PyramidLevel = 0; s.AngleStart = -20; s.AngleStop = 20; s.AngleStep = 1;
                     s.TopN = 1; s.Overlap = 0.3; s.OutputVar = "markStd";
                 }),
-                MkStep(5, "拍张照片", "读当前件", s => { s.CaptureMode = "打开文件"; s.ImageSource = aCur; }),
+                MkStep(5, "拍张照片", "读当前件", s => { s.CaptureMode = "打开文件夹"; s.FolderPath = aCurDir; s.ImageSource = aCur; }),
                 MkStep(6, "图里找图案", "找当前件 mark", s =>
                 {
                     s.MatchMode = "灰度匹配";
@@ -5842,7 +5847,7 @@ public class FlowViewModel : ViewModelBase
                 ("pcba", "示例：PCBA 元件有无（AOI）", "拍张照片 → 零样本查瑕疵（和一张好板比）→ 判个数（零容忍）→ 显示结果（4 步，图在「PCBA元件有无」工程里）"),
                 ("metrology", "示例：精找圆 + 精找直线", "拍张照片 → 精找圆（亚像素卡尺 + 稳健拟合，切掉一段弧也能拟合）→ 精找直线 → 显示结果（4 步，图在「精找圆找直线」工程里）"),
                 ("edge", "示例：真图找边（难例）", "拍张照片 → 精找直线（暗场里一条很淡的亮带，满屏灰尘）→ 显示结果（3 步，图在「真图找边」工程里）"),
-                ("align", "示例：对位（九点标定 + 五点旋转 + XYR 发 Modbus）", "读标准件 → 九点平移标定（算 X/Y 像素当量=毫米/像素）→ 五点旋转标定（算旋转中心）→ 找标准 mark → 读当前件 → 找当前 mark → 对位换算（ΔX、ΔY 毫米 + ΔR 度）→ Modbus 写 ×3 → 显示结果（11 步，图在「对位标定」工程里；PLC 地址记得改成自己的。相机有畸变的话，先用「镜头标定」拍棋盘格，再在拍照后面加一步「去畸变」）"),
+                ("align", "示例：对位（9张照片标定 + 5张照片转中心 + XYR 发 Modbus）", "读标准件 → 九点平移标定（给 9 张走位照片 + 模板图，自动算出 X/Y 像素当量）→ 五点旋转标定（给 5 张转角照片，自动算出旋转中心）→ 找标准 mark → 读当前件 → 找当前 mark → 对位换算（ΔX、ΔY 毫米 + ΔR 度）→ Modbus 写 ×3 → 显示结果（11 步，照片在「对位标定」工程里；PLC 地址记得改成自己的。相机有畸变的话，先用「镜头标定」拍棋盘格，再在拍照后面加一步「去畸变」）"),
                 ("scratch", "示例：找划痕（免训练）", "拍张照片 → 找划痕（不用标准图、不用训练）→ 判个数 → 显示结果（4 步，图在「上相机划痕」工程里）")), out var key, out var name)) return;
             var flow = new VisionFlow { Name = name, Icon = "🔀" };
             ApplyFlowTemplate(flow, key);
@@ -9572,17 +9577,46 @@ public class FlowViewModel : ViewModelBase
 
             case "CalibXY9":
             {
-                // 九点平移标定：走 3×3 九个位置，每个位置记「像素X,像素Y,机台X,机台Y」
-                var xyLines = (step.CalcExpression ?? "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                // 九点平移标定：① 给照片文件夹 + 模板图，按文件名顺序逐张找 mark，机台坐标按网格和步距推
+                //               ② 不给照片：手填「像素X,像素Y,机台X,机台Y」
                 var xyImg = new List<Point2f>();
                 var xyWorld = new List<Point2f>();
-                foreach (var raw in xyLines)
+                string xyMode = "";
+                if (!string.IsNullOrWhiteSpace(step.FolderPath))
                 {
-                    var n = raw.Split(new[] { ',', ';', ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)
-                        .Select(x => NumOf(x)).ToArray();
-                    if (n.Length >= 4) { xyImg.Add(new Point2f((float)n[0], (float)n[1])); xyWorld.Add(new Point2f((float)n[2], (float)n[3])); }
+                    var shots = PhotoCalibration.FindAll(Helpers.AppPaths.ResolvePath(step.FolderPath),
+                        Helpers.AppPaths.ResolvePath(step.TemplateFile), out var shotNote, 0.6,
+                        (int)Math.Clamp(step.PyramidLevel, 0, 6),
+                        -20, 20, step.AngleStep <= 0 ? 1 : step.AngleStep);
+                    if (shots.Count < 4)
+                        return Fail($"照片里只找到 {shots.Count} 个 mark（至少 4 个，正常 9 个）" + (shotNote.Length > 0 ? "：" + shotNote : ""));
+                    int side = (int)Math.Round(Math.Sqrt(shots.Count));
+                    if (side * side != shots.Count)
+                        return Fail($"标定照片要凑成方形：4 张(2×2) 或 9 张(3×3)，现在 {shots.Count} 张");
+                    double stepMm = step.NominalValue > 0 ? step.NominalValue : 10;
+                    for (int i = 0; i < shots.Count; i++)
+                    {
+                        int row = i / side, col = i % side;
+                        double mx = step.TargetX + (col - (side - 1) / 2.0) * stepMm;
+                        double my = step.TargetY + ((side - 1) / 2.0 - row) * stepMm;   // 图上越靠下，机台 Y 越小
+                        xyImg.Add(new Point2f((float)shots[i].X, (float)shots[i].Y));
+                        xyWorld.Add(new Point2f((float)mx, (float)my));
+                    }
+                    xyMode = $"{shots.Count} 张照片";
+                    if (shotNote.Length > 0) xyMode += "（" + shotNote + "）";
                 }
-                if (xyImg.Count < 4) return Fail("标定点不足 4 个（每行：像素X,像素Y,机台X,机台Y）");
+                else
+                {
+                    var xyLines = (step.CalcExpression ?? "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var raw in xyLines)
+                    {
+                        var n = raw.Split(new[] { ',', ';', ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)
+                            .Select(x => NumOf(x)).ToArray();
+                        if (n.Length >= 4) { xyImg.Add(new Point2f((float)n[0], (float)n[1])); xyWorld.Add(new Point2f((float)n[2], (float)n[3])); }
+                    }
+                    if (xyImg.Count < 4) return Fail("标定点不足 4 个：要么选一个装标定照片的文件夹，要么每行填 像素X,像素Y,机台X,机台Y");
+                    xyMode = $"{xyImg.Count} 个手填点";
+                }
                 var lxy = LsTransform.Shared;
                 lxy.ClearPoints();
                 lxy.AddImagePoints(xyImg);
@@ -9594,33 +9628,56 @@ public class FlowViewModel : ViewModelBase
                 double axisDeg = Math.Atan2(hm[3], hm[0]) * 180 / Math.PI;
                 StageCalibration.SetXY(kx, ky, axisDeg);
                 Done($"X当量={kx:F5} 毫米/像素，Y当量={ky:F5}，轴夹角={axisDeg:F2}°",
-                    $"九点标定 · 残差 {LsTransform.Shared.ReprojectRms():F3} 像素");
+                    $"{xyMode} · 残差 {LsTransform.Shared.ReprojectRms():F3} 像素");
                 GeoPut(step, new GeoResult { Value = kx, Text = step.ActualValue ?? "" });
                 break;
             }
 
             case "CalibRot5":
             {
-                // 五点旋转标定：同一位置转 5 个角度，每个角度记 mark 的「像素X,像素Y,转角」
-                var rtLines = (step.CalcExpression ?? "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                // 五点旋转标定：① 照片文件夹 + 模板图 + 转角列表；② 手填「像素X,像素Y,转角」
                 var rtPts = new List<DvPoint2D>();
                 var rtAngs = new List<double>();
-                foreach (var raw in rtLines)
+                string rtMode = "";
+                if (!string.IsNullOrWhiteSpace(step.FolderPath))
                 {
-                    var n = raw.Split(new[] { ',', ';', ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)
-                        .Select(x => NumOf(x)).ToArray();
-                    if (n.Length >= 2)
+                    var shots = PhotoCalibration.FindAll(Helpers.AppPaths.ResolvePath(step.FolderPath),
+                        Helpers.AppPaths.ResolvePath(step.TemplateFile), out var shotNote, 0.6,
+                        (int)Math.Clamp(step.PyramidLevel, 0, 6),
+                        -20, 20, step.AngleStep <= 0 ? 1 : step.AngleStep);
+                    if (shots.Count < 3)
+                        return Fail($"照片里只找到 {shots.Count} 个 mark（至少 3 个，正常 5 个）" + (shotNote.Length > 0 ? "：" + shotNote : ""));
+                    var angs = (step.InputValue ?? "").Split(new[] { ',', '，', ';', ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(x => NumOf(x)).ToList();
+                    for (int i = 0; i < shots.Count; i++)
                     {
-                        rtPts.Add(new DvPoint2D(n[0], n[1]));
-                        if (n.Length >= 3) rtAngs.Add(n[2]);
+                        rtPts.Add(new DvPoint2D(shots[i].X, shots[i].Y));
+                        if (i < angs.Count) rtAngs.Add(angs[i]);
                     }
+                    rtMode = $"{shots.Count} 张照片";
+                    if (shotNote.Length > 0) rtMode += "（" + shotNote + "）";
                 }
-                if (rtPts.Count < 3) return Fail("旋转点不足 3 个（每行：像素X,像素Y,转角）");
+                else
+                {
+                    var rtLines = (step.CalcExpression ?? "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var raw in rtLines)
+                    {
+                        var n = raw.Split(new[] { ',', ';', ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)
+                            .Select(x => NumOf(x)).ToArray();
+                        if (n.Length >= 2)
+                        {
+                            rtPts.Add(new DvPoint2D(n[0], n[1]));
+                            if (n.Length >= 3) rtAngs.Add(n[2]);
+                        }
+                    }
+                    if (rtPts.Count < 3) return Fail("旋转点不足 3 个：要么选装旋转照片的文件夹，要么每行填 像素X,像素Y,转角");
+                    rtMode = $"{rtPts.Count} 个手填点";
+                }
                 var fitRt = DvGeometry.FitCircleKasa(rtPts);
                 if (fitRt.Radius < 1) return Fail("这几个点几乎重合，拟合不出圆心：转的角度拉开一点再采");
                 var wc = LsTransform.Shared.GetWorldCoordinate(fitRt.Center.X, fitRt.Center.Y);
                 StageCalibration.SetRot(fitRt.Center.X, fitRt.Center.Y, fitRt.Radius, wc.X, wc.Y);
-                string span = rtAngs.Count > 0 ? $"转了 {rtAngs.Min():0.#}~{rtAngs.Max():0.#}°" : "没填转角";
+                string span = rtAngs.Count > 0 ? $"{rtMode}，转了 {rtAngs.Min():0.#}~{rtAngs.Max():0.#}°" : rtMode;
                 Done($"旋转中心=({fitRt.Center.X:F2},{fitRt.Center.Y:F2}) 像素，半径 {fitRt.Radius:F2} 像素",
                     $"{span}，机台=({wc.X:F3},{wc.Y:F3})，每度≈{StageCalibration.MmPerDeg:F4}mm");
                 GeoPut(step, new GeoResult { HasPoint = true, Px = fitRt.Center.X, Py = fitRt.Center.Y, Value = fitRt.Radius, Text = step.ActualValue ?? "" });
