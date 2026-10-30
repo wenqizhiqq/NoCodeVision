@@ -8968,12 +8968,26 @@ public class FlowViewModel : ViewModelBase
             {
                 var alSrc = _sharedImage;
                 if (alSrc == null || alSrc.Empty()) return Fail("没有图像");
+                // 画了框就只在框里找：砂面背景的噪点直接被裁掉（裂纹这种细线不会被淹没）
+                var alRoi = ScratchRoi(step);
+                int alOx = 0, alOy = 0;
+                Mat? alCrop = null;
+                if (alRoi is OpenCvSharp.Rect rr0 && rr0.X >= 0 && rr0.Y >= 0
+                    && rr0.X + rr0.Width <= alSrc.Width && rr0.Y + rr0.Height <= alSrc.Height)
+                {
+                    alCrop = new Mat(alSrc, rr0);
+                    alOx = rr0.X; alOy = rr0.Y;
+                    alSrc = alCrop;
+                }
                 var (alDefects, alScore, alThr, alNote) = ZeroShotAlone.Run(alSrc,
                     step.Number1 <= 0 ? 75 : step.Number1, step.AreaMin <= 0 ? 150 : step.AreaMin);
                 Mat? alHeat = null;
                 if (step.HeatMapOn && !alScore.Empty())
                     alHeat = ZeroShot.Heatmap(alSrc, alScore, (alDefects.Count > 0 ? Math.Max(alThr, alDefects.Max(d => d.Peak) * 0.6) : alThr * 2) * 255.0 / 40.0);
                 alScore.Dispose();
+                if (alOx != 0 || alOy != 0)
+                    alDefects = alDefects.Select(d => d with { X = d.X + alOx, Y = d.Y + alOy }).ToList();
+                alCrop?.Dispose();
                 int alAllow = (int)Math.Max(0, step.IndexProbe);
                 bool alOk = alDefects.Count <= alAllow;
                 if (alDefects.Count > 0)
