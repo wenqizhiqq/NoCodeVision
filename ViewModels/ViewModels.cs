@@ -3868,6 +3868,27 @@ public class FlowViewModel : ViewModelBase
             return;
         }
 
+        if (key == "defect")
+        {
+            // 缺陷检测（喷砂面）：一张图就挑，不用标准图；样张已裁掉倒角反光圈，不然报警会全跑到那道亮边上
+            var ddir = Helpers.AppPaths.ToStoredPath(Helpers.AppPaths.ResolvePath(@"Projects\缺陷检测\图"));
+            flow.Steps = new ObservableCollection<VisionFlowStep>
+            {
+                MkStep(1, "拍张照片", "读一张图", s => { s.CaptureMode = "打开文件夹"; s.FolderPath = ddir; }),
+                MkStep(2, "零样本", "挑出不对劲的", s =>
+                {
+                    s.Number1 = 75;      // 灵敏度
+                    s.AreaMin = 150;     // 最小缺陷面积
+                    s.HeatMapOn = true;
+                    s.IndexProbe = 0;    // 零容忍
+                    s.OutputVar = "defectCount";
+                }),
+                MkStep(3, "判个数对不对", "有没有缺陷", s => { s.CompareSource = "第2步"; s.AreaMin = 0; s.AreaMax = 0; }),
+                MkStep(4, "显示结果", "画到图上", s => { s.CompareSource = "第2步"; s.MeasureType = "圆和点"; }),
+            };
+            return;
+        }
+
         if (key == "scratch")
         {
             // 找划痕：拍张照片 → 找划痕（免训练）→ 判个数 → 显示结果
@@ -5872,6 +5893,7 @@ public class FlowViewModel : ViewModelBase
                 ("empty", "空白流程", "不放任何步骤，点上方「➕ 添加」自己一步步搭。"),
                 ("bottle", "示例：瓶底线圈角度", "拍张照片 → 找圆定中心 → 去掉红圈 → 数块找线圈 → 求角度 → 写 Modbus → 判定 → 显示结果（8 步，图在「瓶底线圈角度」工程里）"),
                 ("zs", "示例：零样本（不用标准图）", "拍张照片 → 零样本（只看这一张图，自动挑出和周围不一样的地方：虫子、裂纹、压痕、脏污）→ 显示结果（3 步，样张在「零样本」工程里，换成自己的图直接跑）"),
+                ("defect", "示例：缺陷检测（喷砂面找黑点）", "拍张照片 → 零样本（只看这一张图，把黑点、压痕、脏污挑出来，不用标准图）→ 判个数（零容忍）→ 显示结果（4 步，三张喷砂面样张在「缺陷检测」工程里）"),
                 ("zeroshot", "示例：一样本查瑕疵（要和标准图比）", "拍张照片 → 一样本查瑕疵（和一张标准图比差异，不用训练）→ 判个数 → 显示结果（4 步）"),
                 ("qr", "示例：二维码定位发送", "拍张照片 → 图里找图案定位码 → 读二维码（点阵码增强）→ TCP 发送 → 显示结果（5 步）"),
                 ("barcode", "示例：条码定位发送", "拍张照片 → 图里找图案定位条码 → 读条码 → TCP 发送 → 显示结果（5 步）"),
