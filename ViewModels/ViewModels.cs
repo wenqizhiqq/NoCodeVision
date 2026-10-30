@@ -3726,13 +3726,13 @@ public class FlowViewModel : ViewModelBase
         }
         if (key == "pcba")
         {
-            // PCBA 元件有无：拍张照片 → 零样本查瑕疵（和好板比）→ 判个数 → 显示结果
+            // PCBA 元件有无：拍张照片 → 一样本查瑕疵（和好板比）→ 判个数 → 显示结果
             var pdir = Helpers.AppPaths.ToStoredPath(Helpers.AppPaths.ResolvePath(@"Projects\PCBA元件有无\图"));
             var pgold = Helpers.AppPaths.ToStoredPath(Helpers.AppPaths.ResolvePath(@"Projects\PCBA元件有无\图\标准图.png"));
             flow.Steps = new ObservableCollection<VisionFlowStep>
             {
                 MkStep(1, "拍张照片", "读 PCBA", s => { s.CaptureMode = "打开文件夹"; s.FolderPath = pdir; }),
-                MkStep(2, "零样本查瑕疵", "和好板比", s =>
+                MkStep(2, "一样本查瑕疵", "和好板比", s =>
                 {
                     s.TemplateFile = pgold; s.MatchMode = "平移+旋转";
                     s.Number1 = 55; s.AreaMin = 25; s.IndexProbe = 0;
@@ -3906,7 +3906,7 @@ public class FlowViewModel : ViewModelBase
             flow.Steps = new ObservableCollection<VisionFlowStep>
             {
                 cap,
-                MkStep(2, "零样本查瑕疵", "查瑕疵", s =>
+                MkStep(2, "一样本查瑕疵", "查瑕疵", s =>
                 {
                     s.TemplateFile = Helpers.AppPaths.ToStoredPath(System.IO.Path.Combine(zsDir, "标准图.png"));
                     s.MatchMode = "平移+旋转";
@@ -5192,6 +5192,8 @@ public class FlowViewModel : ViewModelBase
 
         var meta = OperatorCatalog.All.FirstOrDefault(o => o.Name == tool);
 
+        if (meta == null && LegacyToolNames.TryGetValue(tool, out var aliased)) meta = OperatorCatalog.All.FirstOrDefault(o => o.Name == aliased);
+
         if (meta != null) return (meta.Icon, meta.StepType);
 
         return tool switch
@@ -5235,6 +5237,7 @@ public class FlowViewModel : ViewModelBase
         ["等待延时"] = "等一会", ["子流程"] = "调子流程", ["Lua脚本"] = "写段代码", ["轴运动"] = "动轴",
         ["IO控制"] = "开关电", ["气缸动作"] = "伸缩气缸", ["结果输出"] = "报结果", ["数据保存"] = "存文件",
         ["消息提示"] = "弹提示", ["通讯指令"] = "发数据",
+        ["零样本查瑕疵"] = "一样本查瑕疵",
     };
 
     /// <summary>「逻辑」列的旧编程词 → 大白话。执行器 switch 用的是新词，老工程载入时统一改写。</summary>
@@ -5251,6 +5254,13 @@ public class FlowViewModel : ViewModelBase
             {
                 if (LegacyToolNames.TryGetValue(s.Function ?? "", out var plain)) s.Function = plain;
                 if (LegacyLogicNames.TryGetValue(s.LogicRelation ?? "", out var logic)) s.LogicRelation = logic;
+                // 算子改过名，老工程里这一步的类型就查不到了：属性面板一块不认，整页只剩标题。按名字回捞真算子。
+                if (OperatorCatalog.Find(s.StepType) == null)
+                {
+                    var (icon, type) = ToolToIconType(s.Function ?? "");
+                    var healed = OperatorCatalog.Find(type);
+                    if (healed != null) { s.StepType = type; s.Icon = icon; s.Function = healed.Name; }
+                }
             }
     }
 

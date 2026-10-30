@@ -147,8 +147,8 @@
                         </Border>
                         <StackPanel Grid.Column="1">
                             <TextBlock Style="{StaticResource ManualStepTitle}" Text="点左边的「添加逻辑视觉」，选一个示例模板" />
-                            <TextBlock Style="{StaticResource ManualBody}" Text="弹窗里会让你选模板、填名字（名字已经帮你起好了，不改也行）。第一次用建议选「示例：零样本查瑕疵」——它只要一张没问题的标准图，就能找出划伤、脏污、缺料，不用训练模型。点「确定」。" />
-                            <TextBlock Style="{StaticResource ManualSee}" Text="你会看到：左边多了一个流程，中间出现 4 个步骤——拍张照片 / 零样本查瑕疵 / 判个数对不对 / 显示结果。" />
+                            <TextBlock Style="{StaticResource ManualBody}" Text="弹窗里会让你选模板、填名字（名字已经帮你起好了，不改也行）。第一次用建议选「示例：一样本查瑕疵（要和标准图比）」——它只要一张没问题的标准图，就能找出划伤、脏污、缺料，不用训练模型。点「确定」。" />
+                            <TextBlock Style="{StaticResource ManualSee}" Text="你会看到：左边多了一个流程，中间出现 4 个步骤——拍张照片 / 一样本查瑕疵 / 判个数对不对 / 显示结果。" />
                         </StackPanel>
                     </Grid>
 
@@ -207,7 +207,7 @@
                             <TextBlock Style="{StaticResource ManualNumText}" Text="6" />
                         </Border>
                         <StackPanel Grid.Column="1">
-                            <TextBlock Style="{StaticResource ManualStepTitle}" Text="点第 2 步「零样本查瑕疵」，给它一张标准图" />
+                            <TextBlock Style="{StaticResource ManualStepTitle}" Text="点第 2 步「一样本查瑕疵」，给它一张标准图" />
                             <TextBlock Style="{StaticResource ManualBody}" Text="模板已经带了一张标准图，就是 2 标准图 那一行；想换成自己的，点「选标准图」挑一张同款产品、没有瑕疵的照片。3~6 是配准方式、灵敏度、最小缺陷面积、允许几个，第一次全部用默认值。" />
                             <TextBlock Style="{StaticResource ManualWarn}" Text="注意：标准图和被测的件要在同一个工位、同样的灯光下拍，不然会误报。灵敏度越大越敏感，先默认，误报了再往下调。" />
                         </StackPanel>
@@ -415,7 +415,7 @@
                     <Rectangle Style="{StaticResource AppleDivider}" />
                     <StackPanel Style="{StaticResource ManualItem}">
                         <TextBlock Style="{StaticResource ManualItemTitle}" Text="判定一直 NG / 一直 OK" />
-                        <TextBlock Style="{StaticResource ManualItemBody}" Text="看「判一下对不对」那一步的条件表达式，和中间表格里的「当前值」对不对得上。零样本查瑕疵的话，先确认标准图和被测件是同一工位、同样的光；灵敏度先调回默认再慢慢加。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="看「判一下对不对」那一步的条件表达式，和中间表格里的「当前值」对不对得上。一样本查瑕疵的话，先确认标准图和被测件是同一工位、同样的光；灵敏度先调回默认再慢慢加。" />
                     </StackPanel>
                     <Rectangle Style="{StaticResource AppleDivider}" />
                     <StackPanel Style="{StaticResource ManualItem}">
@@ -498,7 +498,7 @@
 
                     <StackPanel Style="{StaticResource ManualItem}">
                         <TextBlock Style="{StaticResource ManualItemTitle}" Text="8.2 先试后买" />
-                        <TextBlock Style="{StaticResource ManualItemBody}" Text="软件里自带多套示例工程和测试图片（瓶底线圈角度、零样本查瑕疵、二维码定位发送、条码定位发送）。可以先用你自己的产品图片把检测效果跑出来，看判得准不准、节拍够不够，确认能用再谈购买——不靠演示视频拍板，靠你自己的件拍板。" />
+                        <TextBlock Style="{StaticResource ManualItemBody}" Text="软件里自带多套示例工程和测试图片（瓶底线圈角度、一样本查瑕疵、二维码定位发送、条码定位发送）。可以先用你自己的产品图片把检测效果跑出来，看判得准不准、节拍够不够，确认能用再谈购买——不靠演示视频拍板，靠你自己的件拍板。" />
                     </StackPanel>
                     <Rectangle Style="{StaticResource AppleDivider}" />
 
