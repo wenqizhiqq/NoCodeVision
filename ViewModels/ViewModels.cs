@@ -3848,6 +3848,26 @@ public class FlowViewModel : ViewModelBase
             return;
         }
 
+        if (key == "zs")
+        {
+            // 零样本：不需要标准图，只拿这一张图，自动挑出和周围不一样的地方
+            var zsd = Helpers.AppPaths.ToStoredPath(Helpers.AppPaths.ResolvePath(@"Projects\零样本\图"));
+            flow.Steps = new ObservableCollection<VisionFlowStep>
+            {
+                MkStep(1, "拍张照片", "读一张图", s => { s.CaptureMode = "打开文件夹"; s.FolderPath = zsd; }),
+                MkStep(2, "零样本", "挑出不对劲的", s =>
+                {
+                    s.Number1 = 75;      // 灵敏度
+                    s.AreaMin = 150;     // 最小缺陷面积
+                    s.HeatMapOn = true;
+                    s.IndexProbe = 0;    // 零容忍
+                    s.OutputVar = "defectCount";
+                }),
+                MkStep(3, "显示结果", "画到图上", s => { s.CompareSource = "第2步"; s.MeasureType = "圆和点"; }),
+            };
+            return;
+        }
+
         if (key == "scratch")
         {
             // 找划痕：拍张照片 → 找划痕（免训练）→ 判个数 → 显示结果
@@ -5841,10 +5861,11 @@ public class FlowViewModel : ViewModelBase
             if (!PromptFlow("添加逻辑视觉流程", $"逻辑视觉流程-{Flows.Count + 1}", Opts(
                 ("empty", "空白流程", "不放任何步骤，点上方「➕ 添加」自己一步步搭。"),
                 ("bottle", "示例：瓶底线圈角度", "拍张照片 → 找圆定中心 → 去掉红圈 → 数块找线圈 → 求角度 → 写 Modbus → 判定 → 显示结果（8 步，图在「瓶底线圈角度」工程里）"),
-                ("zeroshot", "示例：零样本查瑕疵", "拍张照片 → 零样本查瑕疵（和标准图比差异，不用训练）→ 判个数 → 显示结果（4 步）"),
+                ("zs", "示例：零样本（不用标准图）", "拍张照片 → 零样本（只看这一张图，自动挑出和周围不一样的地方：虫子、裂纹、压痕、脏污）→ 显示结果（3 步，样张在「零样本」工程里，换成自己的图直接跑）"),
+                ("zeroshot", "示例：一样本查瑕疵（要和标准图比）", "拍张照片 → 一样本查瑕疵（和一张标准图比差异，不用训练）→ 判个数 → 显示结果（4 步）"),
                 ("qr", "示例：二维码定位发送", "拍张照片 → 图里找图案定位码 → 读二维码（点阵码增强）→ TCP 发送 → 显示结果（5 步）"),
                 ("barcode", "示例：条码定位发送", "拍张照片 → 图里找图案定位条码 → 读条码 → TCP 发送 → 显示结果（5 步）"),
-                ("pcba", "示例：PCBA 元件有无（AOI）", "拍张照片 → 零样本查瑕疵（和一张好板比）→ 判个数（零容忍）→ 显示结果（4 步，图在「PCBA元件有无」工程里）"),
+                ("pcba", "示例：PCBA 元件有无（AOI）", "拍张照片 → 一样本查瑕疵（和一张好板比）→ 判个数（零容忍）→ 显示结果（4 步，图在「PCBA元件有无」工程里）"),
                 ("metrology", "示例：精找圆 + 精找直线", "拍张照片 → 精找圆（亚像素卡尺 + 稳健拟合，切掉一段弧也能拟合）→ 精找直线 → 显示结果（4 步，图在「精找圆找直线」工程里）"),
                 ("edge", "示例：真图找边（难例）", "拍张照片 → 精找直线（暗场里一条很淡的亮带，满屏灰尘）→ 显示结果（3 步，图在「真图找边」工程里）"),
                 ("align", "示例：对位（9张照片标定 + 5张照片转中心 + XYR 发 Modbus）", "读标准件 → 九点平移标定（给 9 张走位照片 + 模板图，自动算出 X/Y 像素当量）→ 五点旋转标定（给 5 张转角照片，自动算出旋转中心）→ 找标准 mark → 读当前件 → 找当前 mark → 对位换算（ΔX、ΔY 毫米 + ΔR 度）→ Modbus 写 ×3 → 显示结果（11 步，照片在「对位标定」工程里；PLC 地址记得改成自己的。相机有畸变的话，先用「镜头标定」拍棋盘格，再在拍照后面加一步「去畸变」）"),
@@ -8951,7 +8972,7 @@ public class FlowViewModel : ViewModelBase
                     step.Number1 <= 0 ? 75 : step.Number1, step.AreaMin <= 0 ? 150 : step.AreaMin);
                 Mat? alHeat = null;
                 if (step.HeatMapOn && !alScore.Empty())
-                    alHeat = ZeroShot.Heatmap(alSrc, alScore, (alDefects.Count > 0 ? Math.Max(alThr, alDefects.Max(d => d.Peak)) : alThr * 2) * 255.0 / 40.0);
+                    alHeat = ZeroShot.Heatmap(alSrc, alScore, (alDefects.Count > 0 ? Math.Max(alThr, alDefects.Max(d => d.Peak) * 0.6) : alThr * 2) * 255.0 / 40.0);
                 alScore.Dispose();
                 int alAllow = (int)Math.Max(0, step.IndexProbe);
                 bool alOk = alDefects.Count <= alAllow;

@@ -608,7 +608,7 @@
                             </DockPanel>
                         </StackPanel>
                         <!-- 显示结果：先看当前图，跑一次后这里就是画好的结果图 -->
-                        <StackPanel x:Name="ShowResultPreviewHost" Visibility="{Binding SelectedStep.StepType, Converter={StaticResource KindVis}, ConverterParameter='ShowResult,ZeroShotAnomaly'}">
+                        <StackPanel x:Name="ShowResultPreviewHost" Visibility="{Binding SelectedStep.StepType, Converter={StaticResource KindVis}, ConverterParameter='ShowResult,ZeroShotAnomaly,ZeroShotAlone'}">
                             <Rectangle Style="{StaticResource AppleDivider}" />
                             <TextBlock Style="{StaticResource AppleSubLabel}" Text="预览（跑一次后这里就变成画好的结果图）" Margin="14,6,14,4" />
                             <Border x:Name="ShowResultPreviewBox" Margin="12,0,12,10" CornerRadius="8" ClipToBounds="True" Background="{StaticResource CanvasBrush}">
