@@ -8943,6 +8943,39 @@ public class FlowViewModel : ViewModelBase
 
 
 
+            case "ZeroShotAlone":
+            {
+                var alSrc = _sharedImage;
+                if (alSrc == null || alSrc.Empty()) return Fail("没有图像");
+                var (alDefects, alScore, alThr, alNote) = ZeroShotAlone.Run(alSrc,
+                    step.Number1 <= 0 ? 75 : step.Number1, step.AreaMin <= 0 ? 150 : step.AreaMin);
+                Mat? alHeat = null;
+                if (step.HeatMapOn && !alScore.Empty())
+                    alHeat = ZeroShot.Heatmap(alSrc, alScore, (alDefects.Count > 0 ? Math.Max(alThr, alDefects.Max(d => d.Peak)) : alThr * 2) * 255.0 / 40.0);
+                alScore.Dispose();
+                int alAllow = (int)Math.Max(0, step.IndexProbe);
+                bool alOk = alDefects.Count <= alAllow;
+                if (alDefects.Count > 0)
+                {
+                    var d0 = alDefects[0];
+                    Done($"发现 {alDefects.Count} 处可疑，最大 {d0.Area:F0} 像素 @({d0.X + d0.W / 2:F0},{d0.Y + d0.H / 2:F0})", alNote);
+                    GeoPut(step, new GeoResult { Value = alDefects.Count, HasPoint = true, Px = d0.X + d0.W / 2, Py = d0.Y + d0.H / 2,
+                        HasBox = true, Bx = d0.X, By = d0.Y, Bw = d0.W, Bh = d0.H,
+                        Boxes = alDefects.Take(100).Select(d => (d.X, d.Y, d.W, d.H)).ToList(), Heat = alHeat });
+                }
+                else
+                {
+                    Done("没查出异常", alNote);
+                    GeoPut(step, new GeoResult { Value = 0, Heat = alHeat });
+                }
+                if (!alOk) _curProductOk = false;
+                step.StatusText = alOk ? "合格" : $"不合格（{alDefects.Count} 处）";
+                var alBase = alHeat ?? alSrc;
+                using (var alDraw = ZeroShotAlone.Draw(alBase, alDefects))
+                    ResultImage = MatToBitmapSource(alDraw);
+                break;
+            }
+
             case "ZeroShotAnomaly":
 
             {
