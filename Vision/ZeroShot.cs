@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using OpenCvSharp;
 
@@ -167,7 +167,7 @@ public static class ZeroShot
     }
 
     /// <summary>
-    /// 差异热力图：把「差多少」铺成颜色（蓝→绿→黄→红），几乎没差的地方保持原图。
+    /// 差异热力图：整块面铺成颜色场（蓝→绿→黄→红，越差越红），零件以外的黑底保持黑。
     /// 门槛按这张图自己的噪声自适应（均值 + 2σ），右上角带一条色标。
     /// </summary>
     public static Mat Heatmap(Mat bgr, Mat diff, double hot = 0, double alpha = 0.8)
@@ -183,16 +183,26 @@ public static class ZeroShot
         Cv2.MeanStdDev(d8, out var mean, out var std);
         double th = hot > 1 ? hot : Math.Max(3, mean.Val0 + 2.0 * std.Val0);
         double floorPx = 0.5 * th;
-        double top = 2.2 * th;
+        double top = 1.55 * th;   // 拉伸终点压近一点：缺陷周围的红黄晕才铺得开（参考软件热区约 2%）
 
-        // 先把差异按阈值拉伸成 0~255（半个阈值=不上色，两倍多阈值=全红），再套 JET 配色
+        // 先把差异按阈值拉伸成 0~255（半个阈值以下算没差，两倍多阈值=全红）
+        using var raw = new Mat();
+        d8.ConvertTo(raw, MatType.CV_8UC1, 255.0 / Math.Max(1e-6, top - floorPx), -floorPx * 255.0 / Math.Max(1e-6, top - floorPx));
+
+        // 色标抬到 JET 的中低段：没差的地方也是亮蓝，不是发黑的藏蓝
         using var norm = new Mat();
-        d8.ConvertTo(norm, MatType.CV_8UC1, 255.0 / Math.Max(1e-6, top - floorPx), -floorPx * 255.0 / Math.Max(1e-6, top - floorPx));
-
+        Cv2.ConvertScaleAbs(raw, norm, 0.82, 46);
         using var jet = new Mat();
         Cv2.ApplyColorMap(norm, jet, ColormapTypes.Jet);
+
+        // 不透明度跟着差异走：背景薄薄铺一层蓝，越差铺得越实；零件以外（黑底）保持原样
         using var a = new Mat();
-        norm.ConvertTo(a, MatType.CV_32FC1, alpha / 255.0);
+        raw.ConvertTo(a, MatType.CV_32FC1, Math.Max(0, alpha - 0.18) / 255.0, 0.18);
+        using var gsrc = new Mat();
+        Cv2.CvtColor(outMat, gsrc, ColorConversionCodes.BGR2GRAY);
+        using var notPart = new Mat();
+        Cv2.Threshold(gsrc, notPart, 8, 255, ThresholdTypes.BinaryInv);
+        a.SetTo(new Scalar(0), notPart);
         using var jetF = new Mat();
         jet.ConvertTo(jetF, MatType.CV_32FC3);
         using var srcF = new Mat();
